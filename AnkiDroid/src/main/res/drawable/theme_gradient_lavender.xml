@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Vertical gradient window background for the lavender theme color.
+     Colors are qualified: values/theme_colors.xml (day) and values-night (dark ambience). -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+    <gradient
+        android:type="linear"
+        android:angle="270"
+        android:startColor="@color/tc_lavender_gradient_top"
+        android:endColor="@color/tc_lavender_gradient_bottom" />
+</shape>

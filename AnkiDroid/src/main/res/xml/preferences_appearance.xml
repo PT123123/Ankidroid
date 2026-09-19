@@ -55,6 +55,15 @@
             android:icon="@drawable/ic_dark_mode_24"
             app:useSimpleSummaryProvider="true"
             />
+        <ListPreference
+            android:defaultValue="@string/theme_color_emerald_value"
+            android:entries="@array/theme_color_labels"
+            android:entryValues="@array/theme_color_values"
+            android:key="@string/theme_color_key"
+            android:title="@string/theme_color"
+            android:icon="@drawable/ic_palette"
+            app:useSimpleSummaryProvider="true"
+            />
     </PreferenceCategory>
     <PreferenceCategory android:title="@string/background_image_title" >
         <Preference

@@ -21,13 +21,5 @@
             android:id="@+id/nav_settings"
             android:icon="@drawable/ic_settings_black"
             android:title="@string/settings"/>
-        <item
-            android:id="@+id/nav_help"
-            android:icon="@drawable/ic_help_black"
-            android:title="@string/help"/>
-        <item
-            android:id="@+id/support_ankidroid"
-            android:icon="@drawable/ic_support_ankidroid"
-            android:title="@string/help_title_support_ankidroid"/>
     </group>
 </menu>

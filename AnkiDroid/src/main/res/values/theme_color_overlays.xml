@@ -1,0 +1,176 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Theme-color overlays applied on top of the active day/night theme
+     (see Themes.applyThemeColor and R.style references from ThemeColor).
+     Colors are qualified resources: values/theme_colors.xml for day,
+     values-night/theme_colors.xml for night. -->
+<resources>
+    <style name="ThemeOverlay.App.ThemeColor.Sky" parent="">
+        <item name="colorPrimary">@color/tc_sky_primary</item>
+        <item name="colorAccent">@color/tc_sky_accent</item>
+        <item name="colorSecondaryContainer">@color/tc_sky_secondary_container</item>
+        <item name="colorSurfaceContainer">@color/tc_sky_surface_container</item>
+        <item name="colorSurfaceContainerHigh">@color/tc_sky_surface_container_high</item>
+        <item name="preferenceCategoryTitleTextColor">@color/tc_sky_pref_category</item>
+        <item name="fab_normal">@color/tc_sky_fab</item>
+        <item name="fab_pressed">@color/tc_sky_fab_pressed</item>
+        <item name="tabActiveIconColor">@color/tc_sky_tab_active_icon</item>
+        <item name="appBarColor">@color/tc_sky_appbar</item>
+        <item name="actionModeBackground">@color/tc_sky_appbar</item>
+        <item name="tabLayoutBackgroundColor">@color/tc_sky_appbar</item>
+        <item name="android:statusBarColor">@color/tc_sky_appbar</item>
+        <item name="android:windowBackground">@drawable/theme_gradient_sky</item>
+    </style>
+
+    <style name="ThemeOverlay.App.ThemeColor.Indigo" parent="">
+        <item name="colorPrimary">@color/tc_indigo_primary</item>
+        <item name="colorAccent">@color/tc_indigo_accent</item>
+        <item name="colorSecondaryContainer">@color/tc_indigo_secondary_container</item>
+        <item name="colorSurfaceContainer">@color/tc_indigo_surface_container</item>
+        <item name="colorSurfaceContainerHigh">@color/tc_indigo_surface_container_high</item>
+        <item name="preferenceCategoryTitleTextColor">@color/tc_indigo_pref_category</item>
+        <item name="fab_normal">@color/tc_indigo_fab</item>
+        <item name="fab_pressed">@color/tc_indigo_fab_pressed</item>
+        <item name="tabActiveIconColor">@color/tc_indigo_tab_active_icon</item>
+        <item name="appBarColor">@color/tc_indigo_appbar</item>
+        <item name="actionModeBackground">@color/tc_indigo_appbar</item>
+        <item name="tabLayoutBackgroundColor">@color/tc_indigo_appbar</item>
+        <item name="android:statusBarColor">@color/tc_indigo_appbar</item>
+        <item name="android:windowBackground">@drawable/theme_gradient_indigo</item>
+    </style>
+
+    <style name="ThemeOverlay.App.ThemeColor.Teal" parent="">
+        <item name="colorPrimary">@color/tc_teal_primary</item>
+        <item name="colorAccent">@color/tc_teal_accent</item>
+        <item name="colorSecondaryContainer">@color/tc_teal_secondary_container</item>
+        <item name="colorSurfaceContainer">@color/tc_teal_surface_container</item>
+        <item name="colorSurfaceContainerHigh">@color/tc_teal_surface_container_high</item>
+        <item name="preferenceCategoryTitleTextColor">@color/tc_teal_pref_category</item>
+        <item name="fab_normal">@color/tc_teal_fab</item>
+        <item name="fab_pressed">@color/tc_teal_fab_pressed</item>
+        <item name="tabActiveIconColor">@color/tc_teal_tab_active_icon</item>
+        <item name="appBarColor">@color/tc_teal_appbar</item>
+        <item name="actionModeBackground">@color/tc_teal_appbar</item>
+        <item name="tabLayoutBackgroundColor">@color/tc_teal_appbar</item>
+        <item name="android:statusBarColor">@color/tc_teal_appbar</item>
+        <item name="android:windowBackground">@drawable/theme_gradient_teal</item>
+    </style>
+
+    <style name="ThemeOverlay.App.ThemeColor.Emerald" parent="">
+        <item name="colorPrimary">@color/tc_emerald_primary</item>
+        <item name="colorAccent">@color/tc_emerald_accent</item>
+        <item name="colorSecondaryContainer">@color/tc_emerald_secondary_container</item>
+        <item name="colorSurfaceContainer">@color/tc_emerald_surface_container</item>
+        <item name="colorSurfaceContainerHigh">@color/tc_emerald_surface_container_high</item>
+        <item name="preferenceCategoryTitleTextColor">@color/tc_emerald_pref_category</item>
+        <item name="fab_normal">@color/tc_emerald_fab</item>
+        <item name="fab_pressed">@color/tc_emerald_fab_pressed</item>
+        <item name="tabActiveIconColor">@color/tc_emerald_tab_active_icon</item>
+        <item name="appBarColor">@color/tc_emerald_appbar</item>
+        <item name="actionModeBackground">@color/tc_emerald_appbar</item>
+        <item name="tabLayoutBackgroundColor">@color/tc_emerald_appbar</item>
+        <item name="android:statusBarColor">@color/tc_emerald_appbar</item>
+        <item name="android:windowBackground">@drawable/theme_gradient_emerald</item>
+    </style>
+
+    <style name="ThemeOverlay.App.ThemeColor.Lime" parent="">
+        <item name="colorPrimary">@color/tc_lime_primary</item>
+        <item name="colorAccent">@color/tc_lime_accent</item>
+        <item name="colorSecondaryContainer">@color/tc_lime_secondary_container</item>
+        <item name="colorSurfaceContainer">@color/tc_lime_surface_container</item>
+        <item name="colorSurfaceContainerHigh">@color/tc_lime_surface_container_high</item>
+        <item name="preferenceCategoryTitleTextColor">@color/tc_lime_pref_category</item>
+        <item name="fab_normal">@color/tc_lime_fab</item>
+        <item name="fab_pressed">@color/tc_lime_fab_pressed</item>
+        <item name="tabActiveIconColor">@color/tc_lime_tab_active_icon</item>
+        <item name="appBarColor">@color/tc_lime_appbar</item>
+        <item name="actionModeBackground">@color/tc_lime_appbar</item>
+        <item name="tabLayoutBackgroundColor">@color/tc_lime_appbar</item>
+        <item name="android:statusBarColor">@color/tc_lime_appbar</item>
+        <item name="android:windowBackground">@drawable/theme_gradient_lime</item>
+    </style>
+
+    <style name="ThemeOverlay.App.ThemeColor.Amber" parent="">
+        <item name="colorPrimary">@color/tc_amber_primary</item>
+        <item name="colorAccent">@color/tc_amber_accent</item>
+        <item name="colorSecondaryContainer">@color/tc_amber_secondary_container</item>
+        <item name="colorSurfaceContainer">@color/tc_amber_surface_container</item>
+        <item name="colorSurfaceContainerHigh">@color/tc_amber_surface_container_high</item>
+        <item name="preferenceCategoryTitleTextColor">@color/tc_amber_pref_category</item>
+        <item name="fab_normal">@color/tc_amber_fab</item>
+        <item name="fab_pressed">@color/tc_amber_fab_pressed</item>
+        <item name="tabActiveIconColor">@color/tc_amber_tab_active_icon</item>
+        <item name="appBarColor">@color/tc_amber_appbar</item>
+        <item name="actionModeBackground">@color/tc_amber_appbar</item>
+        <item name="tabLayoutBackgroundColor">@color/tc_amber_appbar</item>
+        <item name="android:statusBarColor">@color/tc_amber_appbar</item>
+        <item name="android:windowBackground">@drawable/theme_gradient_amber</item>
+    </style>
+
+    <style name="ThemeOverlay.App.ThemeColor.Sunset" parent="">
+        <item name="colorPrimary">@color/tc_sunset_primary</item>
+        <item name="colorAccent">@color/tc_sunset_accent</item>
+        <item name="colorSecondaryContainer">@color/tc_sunset_secondary_container</item>
+        <item name="colorSurfaceContainer">@color/tc_sunset_surface_container</item>
+        <item name="colorSurfaceContainerHigh">@color/tc_sunset_surface_container_high</item>
+        <item name="preferenceCategoryTitleTextColor">@color/tc_sunset_pref_category</item>
+        <item name="fab_normal">@color/tc_sunset_fab</item>
+        <item name="fab_pressed">@color/tc_sunset_fab_pressed</item>
+        <item name="tabActiveIconColor">@color/tc_sunset_tab_active_icon</item>
+        <item name="appBarColor">@color/tc_sunset_appbar</item>
+        <item name="actionModeBackground">@color/tc_sunset_appbar</item>
+        <item name="tabLayoutBackgroundColor">@color/tc_sunset_appbar</item>
+        <item name="android:statusBarColor">@color/tc_sunset_appbar</item>
+        <item name="android:windowBackground">@drawable/theme_gradient_sunset</item>
+    </style>
+
+    <style name="ThemeOverlay.App.ThemeColor.Rose" parent="">
+        <item name="colorPrimary">@color/tc_rose_primary</item>
+        <item name="colorAccent">@color/tc_rose_accent</item>
+        <item name="colorSecondaryContainer">@color/tc_rose_secondary_container</item>
+        <item name="colorSurfaceContainer">@color/tc_rose_surface_container</item>
+        <item name="colorSurfaceContainerHigh">@color/tc_rose_surface_container_high</item>
+        <item name="preferenceCategoryTitleTextColor">@color/tc_rose_pref_category</item>
+        <item name="fab_normal">@color/tc_rose_fab</item>
+        <item name="fab_pressed">@color/tc_rose_fab_pressed</item>
+        <item name="tabActiveIconColor">@color/tc_rose_tab_active_icon</item>
+        <item name="appBarColor">@color/tc_rose_appbar</item>
+        <item name="actionModeBackground">@color/tc_rose_appbar</item>
+        <item name="tabLayoutBackgroundColor">@color/tc_rose_appbar</item>
+        <item name="android:statusBarColor">@color/tc_rose_appbar</item>
+        <item name="android:windowBackground">@drawable/theme_gradient_rose</item>
+    </style>
+
+    <style name="ThemeOverlay.App.ThemeColor.Lavender" parent="">
+        <item name="colorPrimary">@color/tc_lavender_primary</item>
+        <item name="colorAccent">@color/tc_lavender_accent</item>
+        <item name="colorSecondaryContainer">@color/tc_lavender_secondary_container</item>
+        <item name="colorSurfaceContainer">@color/tc_lavender_surface_container</item>
+        <item name="colorSurfaceContainerHigh">@color/tc_lavender_surface_container_high</item>
+        <item name="preferenceCategoryTitleTextColor">@color/tc_lavender_pref_category</item>
+        <item name="fab_normal">@color/tc_lavender_fab</item>
+        <item name="fab_pressed">@color/tc_lavender_fab_pressed</item>
+        <item name="tabActiveIconColor">@color/tc_lavender_tab_active_icon</item>
+        <item name="appBarColor">@color/tc_lavender_appbar</item>
+        <item name="actionModeBackground">@color/tc_lavender_appbar</item>
+        <item name="tabLayoutBackgroundColor">@color/tc_lavender_appbar</item>
+        <item name="android:statusBarColor">@color/tc_lavender_appbar</item>
+        <item name="android:windowBackground">@drawable/theme_gradient_lavender</item>
+    </style>
+
+    <style name="ThemeOverlay.App.ThemeColor.Graphite" parent="">
+        <item name="colorPrimary">@color/tc_graphite_primary</item>
+        <item name="colorAccent">@color/tc_graphite_accent</item>
+        <item name="colorSecondaryContainer">@color/tc_graphite_secondary_container</item>
+        <item name="colorSurfaceContainer">@color/tc_graphite_surface_container</item>
+        <item name="colorSurfaceContainerHigh">@color/tc_graphite_surface_container_high</item>
+        <item name="preferenceCategoryTitleTextColor">@color/tc_graphite_pref_category</item>
+        <item name="fab_normal">@color/tc_graphite_fab</item>
+        <item name="fab_pressed">@color/tc_graphite_fab_pressed</item>
+        <item name="tabActiveIconColor">@color/tc_graphite_tab_active_icon</item>
+        <item name="appBarColor">@color/tc_graphite_appbar</item>
+        <item name="actionModeBackground">@color/tc_graphite_appbar</item>
+        <item name="tabLayoutBackgroundColor">@color/tc_graphite_appbar</item>
+        <item name="android:statusBarColor">@color/tc_graphite_appbar</item>
+        <item name="android:windowBackground">@drawable/theme_gradient_graphite</item>
+    </style>
+</resources>

@@ -4,6 +4,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/navdrawer_items_container"
     style="@style/NavDrawer"
+    android:background="?android:attr/windowBackground"
     android:layout_width="@dimen/nav_drawer_width"
     android:layout_height="match_parent"
     android:layout_gravity="start"

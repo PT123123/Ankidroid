@@ -41,6 +41,7 @@
     <string name="app_theme_key">appTheme</string>
     <string name="day_theme_key">dayTheme</string>
     <string name="night_theme_key">nightTheme</string>
+    <string name="theme_color_key">themeColor</string>
     <string name="pref_deck_picker_background_key">deckPickerBackground</string>
     <string name="pref_remove_wallpaper_key">removeWallPaper</string>
     <string name="study_screen_category_key">studyScreenAppearance</string>

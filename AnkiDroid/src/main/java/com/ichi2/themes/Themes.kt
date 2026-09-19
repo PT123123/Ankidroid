@@ -23,6 +23,7 @@ import com.ichi2.anki.settings.enums.AppTheme
 import com.ichi2.anki.settings.enums.DayTheme
 import com.ichi2.anki.settings.enums.NightTheme
 import com.ichi2.anki.settings.enums.Theme
+import com.ichi2.anki.settings.enums.ThemeColor
 import com.ichi2.themes.Themes.currentTheme
 import timber.log.Timber
 
@@ -39,6 +40,17 @@ object Themes {
     fun setTheme(context: Context) {
         updateCurrentTheme(context)
         context.setTheme(currentTheme.styleResId)
+        applyThemeColor(context)
+    }
+
+    /**
+     * Tints the active theme with the user-selected [ThemeColor] (toolbar, FABs,
+     * containers...). Plain and E-Ink are intentionally monochrome and skipped.
+     */
+    private fun applyThemeColor(context: Context) {
+        if (currentTheme == DayTheme.PLAIN || currentTheme == DayTheme.EINK) return
+        val overlayResId = PrefsRepository(context).themeColor.overlayResId
+        if (overlayResId != 0) context.theme.applyStyle(overlayResId, true)
     }
 
     /**

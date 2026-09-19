@@ -39,6 +39,18 @@
     <!-- night_theme_labels -->
     <string name="night_theme_black">黑色</string>
     <string name="night_theme_dark">深色</string>
+    <!-- theme_color_labels -->
+    <string name="theme_color">主题色</string>
+    <string name="theme_color_sky">天真蓝</string>
+    <string name="theme_color_indigo">星海蓝</string>
+    <string name="theme_color_teal">湖水青</string>
+    <string name="theme_color_emerald">翡翠绿</string>
+    <string name="theme_color_lime">青柠绿</string>
+    <string name="theme_color_amber">鎏金棕</string>
+    <string name="theme_color_sunset">落日橙</string>
+    <string name="theme_color_rose">玫瑰红</string>
+    <string name="theme_color_lavender">薰衣草紫</string>
+    <string name="theme_color_graphite">石墨灰</string>
     <!-- html_size_code_labels -->
     <string name="html_size_code_xx_small">极小</string>
     <string name="html_size_code_x_small">很小</string>

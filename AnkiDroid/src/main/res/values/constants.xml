@@ -201,6 +201,43 @@
         <item>@string/theme_dark_value</item>
     </string-array>
 
+    <!-- Theme colors -->
+    <string name="theme_color_sky_value">1</string>
+    <string name="theme_color_indigo_value">2</string>
+    <string name="theme_color_teal_value">3</string>
+    <string name="theme_color_emerald_value">4</string>
+    <string name="theme_color_lime_value">5</string>
+    <string name="theme_color_amber_value">6</string>
+    <string name="theme_color_sunset_value">7</string>
+    <string name="theme_color_rose_value">8</string>
+    <string name="theme_color_lavender_value">9</string>
+    <string name="theme_color_graphite_value">10</string>
+
+    <string-array name="theme_color_labels">
+        <item>@string/theme_color_sky</item>
+        <item>@string/theme_color_indigo</item>
+        <item>@string/theme_color_teal</item>
+        <item>@string/theme_color_emerald</item>
+        <item>@string/theme_color_lime</item>
+        <item>@string/theme_color_amber</item>
+        <item>@string/theme_color_sunset</item>
+        <item>@string/theme_color_rose</item>
+        <item>@string/theme_color_lavender</item>
+        <item>@string/theme_color_graphite</item>
+    </string-array>
+    <string-array name="theme_color_values">
+        <item>@string/theme_color_sky_value</item>
+        <item>@string/theme_color_indigo_value</item>
+        <item>@string/theme_color_teal_value</item>
+        <item>@string/theme_color_emerald_value</item>
+        <item>@string/theme_color_lime_value</item>
+        <item>@string/theme_color_amber_value</item>
+        <item>@string/theme_color_sunset_value</item>
+        <item>@string/theme_color_rose_value</item>
+        <item>@string/theme_color_lavender_value</item>
+        <item>@string/theme_color_graphite_value</item>
+    </string-array>
+
     <string-array name="sync_media_entries">
         <item>@string/sync_media_always</item>
         <item>@string/sync_media_only_unmetered</item>

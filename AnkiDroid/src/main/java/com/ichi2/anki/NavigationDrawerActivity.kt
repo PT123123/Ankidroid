@@ -49,10 +49,7 @@ import com.ichi2.anki.common.destinations.navigate
 import com.ichi2.anki.common.destinations.toIntent
 import com.ichi2.anki.common.preferences.sharedPrefs
 import com.ichi2.anki.common.utils.android.HandlerUtils
-import com.ichi2.anki.dialogs.help.HelpDialog
-import com.ichi2.anki.utils.ext.showDialogFragment
 import com.ichi2.anki.workarounds.FullDraggableContainerFix
-import com.ichi2.utils.IntentUtil
 import timber.log.Timber
 import com.ichi2.anki.common.android.R as CommonR
 
@@ -399,17 +396,6 @@ abstract class NavigationDrawerActivity(
                     R.id.nav_settings -> {
                         Timber.i("Navigating to settings")
                         openSettings()
-                    }
-
-                    R.id.nav_help -> {
-                        Timber.i("Navigating to help")
-                        showDialogFragment(HelpDialog.newHelpInstance())
-                    }
-
-                    R.id.support_ankidroid -> {
-                        Timber.i("Navigating to support AnkiDroid")
-                        val canRateApp = IntentUtil.canOpenIntent(this, AnkiDroidApp.getMarketIntent(this))
-                        showDialogFragment(HelpDialog.newSupportInstance(canRateApp))
                     }
                 }
             }

@@ -169,6 +169,13 @@ class AppearanceSettingsFragment : SettingsFragment() {
                 ActivityCompat.recreate(requireActivity())
             }
         }
+
+        val themeColorPref = requirePreference<ListPreference>(R.string.theme_color_key)
+        themeColorPref.setOnPreferenceChangeListener { newValue ->
+            if (newValue != themeColorPref.value) {
+                ActivityCompat.recreate(requireActivity())
+            }
+        }
     }
 
     private val backgroundImageResultLauncher =

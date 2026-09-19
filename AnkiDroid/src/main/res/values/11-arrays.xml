@@ -32,6 +32,19 @@
     <string name="night_theme_black">Black</string>
     <string name="night_theme_dark">Dark</string>
 
+    <!-- theme_color_labels -->
+    <string name="theme_color">Theme color</string>
+    <string name="theme_color_sky">Sky Blue</string>
+    <string name="theme_color_indigo">Indigo</string>
+    <string name="theme_color_teal">Teal</string>
+    <string name="theme_color_emerald">Emerald</string>
+    <string name="theme_color_lime">Lime</string>
+    <string name="theme_color_amber">Amber</string>
+    <string name="theme_color_sunset">Sunset</string>
+    <string name="theme_color_rose">Rose</string>
+    <string name="theme_color_lavender">Lavender</string>
+    <string name="theme_color_graphite">Graphite</string>
+
     <!-- html_size_code_labels -->
     <string name="html_size_code_xx_small">xx-small</string>
     <string name="html_size_code_x_small">x-small</string>

@@ -23,6 +23,7 @@ import com.ichi2.anki.settings.enums.HideSystemBars
 import com.ichi2.anki.settings.enums.NightTheme
 import com.ichi2.anki.settings.enums.PrefEnum
 import com.ichi2.anki.settings.enums.ShouldFetchMedia
+import com.ichi2.anki.settings.enums.ThemeColor
 import com.ichi2.anki.settings.enums.ToolbarPosition
 import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KProperty
@@ -370,6 +371,7 @@ open class PrefsRepository(
     var appTheme: AppTheme by enumPref(R.string.app_theme_key, AppTheme.FOLLOW_SYSTEM)
     var dayTheme: DayTheme by enumPref(R.string.day_theme_key, DayTheme.LIGHT)
     var nightTheme: NightTheme by enumPref(R.string.night_theme_key, NightTheme.BLACK)
+    var themeColor: ThemeColor by enumPref(R.string.theme_color_key, ThemeColor.EMERALD)
 
     //endregion
 
@@ -429,8 +431,10 @@ open class PrefsRepository(
 
     /**
      * Whether the switch profile feature is enabled.
+     *
+     * Fork change: multi-account is enabled by default; the developer option can still hide it.
      */
-    val switchProfileEnabled by booleanPref(R.string.pref_enable_switch_profile_key, false)
+    val switchProfileEnabled by booleanPref(R.string.pref_enable_switch_profile_key, true)
 
     // **************************************** UI Config *************************************** //
 
