@@ -116,6 +116,12 @@ open class AnkiActivity(
     AnkiActivityProvider {
     val exportReadyViewModel by viewModels<ExportReadyViewModel>()
 
+    // Multi-account: route this activity's SharedPreferences/private files to the active profile
+    override fun attachBaseContext(newBase: Context) {
+        val app = newBase.applicationContext as? AnkiDroidApp
+        super.attachBaseContext(app?.profileManager?.profileContextFor(newBase) ?: newBase)
+    }
+
     /**
      * Receiver that informs us when a broadcast listen in [broadcastsActions] is received.
      *

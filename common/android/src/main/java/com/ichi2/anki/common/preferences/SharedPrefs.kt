@@ -6,6 +6,14 @@ package com.ichi2.anki.common.preferences
 import android.content.Context
 import android.content.SharedPreferences
 import androidx.preference.PreferenceManager
+import com.ichi2.anki.common.android.ApplicationContextInitializer
 
-/** shorthand method to get the default [SharedPreferences] instance */
-fun Context.sharedPrefs(): SharedPreferences = PreferenceManager.getDefaultSharedPreferences(this)
+/**
+ * shorthand method to get the default [SharedPreferences] instance
+ *
+ * Resolved against the application context so that under multi-account profiles the
+ * [com.ichi2.anki.multiprofile.ProfileContextWrapper] namespacing applies regardless of
+ * which context (activity/service/receiver) the caller holds.
+ */
+fun Context.sharedPrefs(): SharedPreferences =
+    PreferenceManager.getDefaultSharedPreferences(ApplicationContextInitializer.instanceOrNull ?: this)

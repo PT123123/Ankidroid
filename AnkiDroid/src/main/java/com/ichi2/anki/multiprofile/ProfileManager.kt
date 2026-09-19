@@ -33,6 +33,14 @@ class ProfileManager private constructor(
     lateinit var activeProfileContext: Context
         private set
 
+    /** The [ProfileId] whose environment is currently loaded. */
+    private var _activeProfileId: ProfileId? = null
+
+    val activeProfileId: ProfileId
+        get() = _activeProfileId!!
+
+    private lateinit var activeProfileBaseDir: File
+
     /**
      * Stores the Registry of all profiles (ID -> Display Name) and the
      * ID of the currently active profile.
@@ -161,6 +169,8 @@ class ProfileManager private constructor(
                     profileBaseDir = profileBaseDir.file,
                 )
             activeProfileContext = wrapper
+            _activeProfileId = profileId
+            activeProfileBaseDir = profileBaseDir.file
             ensureProfileCollectionPath(wrapper)
         } catch (e: Exception) {
             Timber.w(e, "Failed to load profile context for $profileId")
@@ -169,6 +179,25 @@ class ProfileManager private constructor(
 
         Timber.d("Profile loaded: $profileId at ${profileBaseDir.file.absolutePath}")
     }
+
+    /**
+     * Whether [profileId] is the currently loaded profile.
+     */
+    fun isActive(profileId: ProfileId): Boolean = profileId == activeProfileId
+
+    /**
+     * Wraps [base] so that SharedPreferences and private directories resolve to the
+     * active profile's environment. Activities pass their `attachBaseContext` base
+     * through here so UI-layer storage access is namespaced per profile.
+     *
+     * The default profile is a no-op passthrough.
+     */
+    fun profileContextFor(base: Context): Context =
+        if (activeProfileId.isDefault()) {
+            base
+        } else {
+            ProfileContextWrapper.create(base, activeProfileId, activeProfileBaseDir)
+        }
 
     /**
      * Ensures that a valid collection path is initialized and stored in the profile's shared preferences.

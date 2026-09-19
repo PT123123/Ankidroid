@@ -297,4 +297,14 @@ also changes the interval of the card"
     <string name="profile_name" comment="Label of the text field where the user types the name of a new profile">Profile name</string>
     <string name="profile_name_empty_error" comment="Error shown when the user leaves the profile name empty">Profile name can’t be empty</string>
     <string name="profile_name_too_long_error" comment="Error shown when a profile name exceeds the maximum length. %1$d is the maximum number of characters">Profile name must be %1$d characters or fewer</string>
+
+    <!-- Switch profile -->
+    <string name="rename_profile" comment="Title of the dialog to rename an existing profile">Rename profile</string>
+    <string name="profile_current_label" comment="Badge shown next to the profile currently in use">Current</string>
+    <string name="profile_switch_confirm_title" comment="Title of the confirmation dialog when switching profiles. %1$s is the profile name">Switch to “%1$s”?</string>
+    <string name="profile_switch_confirm_message" comment="Body of the confirmation dialog when switching profiles">AnkiDroid will restart with this profile’s decks, settings and AnkiWeb sign-in.</string>
+    <string name="profile_delete_confirm_title" comment="Title of the confirmation dialog when deleting a profile. %1$s is the profile name">Delete “%1$s”?</string>
+    <string name="profile_delete_confirm_message" comment="Body of the confirmation dialog when deleting a profile">All decks, cards and media of this profile will be permanently deleted. This cannot be undone.</string>
+    <string name="profile_delete_failed" comment="Error shown when a profile cannot be deleted">The profile could not be deleted. Switch to another profile first.</string>
+    <string name="profile_switch_failed" comment="Error shown when switching profiles failed">Could not switch profile. Try again.</string>
 </resources>

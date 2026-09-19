@@ -118,7 +118,7 @@
         <SwitchPreferenceCompat
             android:title="Switch Profile option"
             android:key="@string/pref_enable_switch_profile_key"
-            android:defaultValue="false"/>
+            android:defaultValue="true"/>
         <SwitchPreferenceCompat
             android:title="Bottom navigation bar"
             android:summary="Replaces the navigation drawer with a bottom nav bar"

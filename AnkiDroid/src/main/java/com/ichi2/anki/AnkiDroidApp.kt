@@ -49,6 +49,7 @@ import com.ichi2.anki.logging.FragmentLifecycleLogger
 import com.ichi2.anki.logging.LogType
 import com.ichi2.anki.logging.ProductionCrashReportingTree
 import com.ichi2.anki.logging.RobolectricDebugTree
+import com.ichi2.anki.multiprofile.ProfileManager
 import com.ichi2.anki.navigation.initializeNavigator
 import com.ichi2.anki.observability.ChangeManager
 import com.ichi2.anki.preferences.SharedPreferencesProvider
@@ -95,6 +96,19 @@ open class AnkiDroidApp :
 
     /** Used to avoid showing extra progress dialogs when one already shown. */
     var progressDialogShown = false
+
+    /**
+     * Multi-account support: created before anything reads storage so the whole
+     * process (SharedPreferences, files, WebView cookies) runs in the active
+     * profile's namespaced environment.
+     */
+    lateinit var profileManager: ProfileManager
+        private set
+
+    override fun attachBaseContext(base: Context) {
+        profileManager = ProfileManager.create(base)
+        super.attachBaseContext(profileManager.activeProfileContext)
+    }
 
     /**
      * Executes a setup method: [block], logging execution time.
@@ -565,6 +579,10 @@ open class AnkiDroidApp :
         @get:JvmName("isInitialized")
         val isInitialized: Boolean
             get() = this::instance.isInitialized
+
+        /** The [ProfileManager] of the active account. Requires the app to be initialized. */
+        val profileManager: ProfileManager
+            get() = instance.profileManager
 
         @VisibleForTesting(otherwise = VisibleForTesting.NONE)
         fun simulateRestoreFromBackup() {
