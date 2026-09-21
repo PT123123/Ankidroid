@@ -6,6 +6,18 @@
 > `ProfileContextWrapper`, and `CollectionHelper` before relying on a detail here.
 > If you spot an inaccuracy, please fix it in the same PR or open an issue.
 
+## Status in this fork
+
+Multi-profile / multi-account is **enabled by default** in anki-plus:
+
+- `Prefs.switchProfileEnabled` (`Prefs.kt`) defaults to `true`, so the "Switch Profile" entry is
+  visible in Settings (`HeaderFragment`) and profile routing is active without touching developer options.
+- Every `AnkiActivity` base context is routed through `ProfileManager.profileContextFor()` in
+  `AnkiActivity.attachBaseContext`, so per-profile storage (namespaced prefs, profile root dirs)
+  applies app-wide.
+- It can still be turned off for debugging via Developer options → **"Switch Profile option"**
+  (`pref_enable_switch_profile_key`); flipping it recreates the settings Activity.
+
 ## Glossary
 
 | Term                                     | What it is                                                                                                                                                                                                                     | Where it lives                                                                                                                                                                                  |
