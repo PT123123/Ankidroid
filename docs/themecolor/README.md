@@ -67,7 +67,8 @@ SKY_BLUE day values intentionally replicate upstream's original default blue so 
 restores the classic look.
 
 Night app-bar colors are kept at low brightness in the same hue family so white toolbar text
-stays readable.
+stays readable; since the [UI polish pass](../ui-polish/README.md) they carry a `#E6` alpha so
+the window gradient shows through the bar.
 
 ## Adding a new color
 

@@ -5,7 +5,7 @@
     <color name="tc_sky_primary">#42A5F5</color>
     <color name="tc_sky_accent">#42A5F5</color>
     <color name="tc_sky_secondary_container">#3C5A6E</color>
-    <color name="tc_sky_surface_container">#0F42A5F5</color>
+    <color name="tc_sky_surface_container">#1A42A5F5</color>
     <color name="tc_sky_surface_container_high">#38424A</color>
     <color name="tc_sky_pref_category">#42A5F5</color>
     <color name="tc_sky_fab">#0288D1</color>
@@ -16,7 +16,7 @@
     <color name="tc_indigo_primary">#9FA8DA</color>
     <color name="tc_indigo_accent">#9FA8DA</color>
     <color name="tc_indigo_secondary_container">#414B73</color>
-    <color name="tc_indigo_surface_container">#0F9FA8DA</color>
+    <color name="tc_indigo_surface_container">#1A9FA8DA</color>
     <color name="tc_indigo_surface_container_high">#3A3F52</color>
     <color name="tc_indigo_pref_category">#9FA8DA</color>
     <color name="tc_indigo_fab">#3949AB</color>
@@ -27,7 +27,7 @@
     <color name="tc_teal_primary">#4DB6AC</color>
     <color name="tc_teal_accent">#4DB6AC</color>
     <color name="tc_teal_secondary_container">#2C4B47</color>
-    <color name="tc_teal_surface_container">#0F4DB6AC</color>
+    <color name="tc_teal_surface_container">#1A4DB6AC</color>
     <color name="tc_teal_surface_container_high">#35484A</color>
     <color name="tc_teal_pref_category">#4DB6AC</color>
     <color name="tc_teal_fab">#00796B</color>
@@ -38,7 +38,7 @@
     <color name="tc_emerald_primary">#81C784</color>
     <color name="tc_emerald_accent">#81C784</color>
     <color name="tc_emerald_secondary_container">#33513A</color>
-    <color name="tc_emerald_surface_container">#0F81C784</color>
+    <color name="tc_emerald_surface_container">#1A81C784</color>
     <color name="tc_emerald_surface_container_high">#3A473C</color>
     <color name="tc_emerald_pref_category">#81C784</color>
     <color name="tc_emerald_fab">#388E3C</color>
@@ -49,7 +49,7 @@
     <color name="tc_lime_primary">#DCE775</color>
     <color name="tc_lime_accent">#DCE775</color>
     <color name="tc_lime_secondary_container">#4E5228</color>
-    <color name="tc_lime_surface_container">#0FDCE775</color>
+    <color name="tc_lime_surface_container">#1ADCE775</color>
     <color name="tc_lime_surface_container_high">#44472F</color>
     <color name="tc_lime_pref_category">#DCE775</color>
     <color name="tc_lime_fab">#827717</color>
@@ -60,7 +60,7 @@
     <color name="tc_amber_primary">#D9A85B</color>
     <color name="tc_amber_accent">#D9A85B</color>
     <color name="tc_amber_secondary_container">#5C4A30</color>
-    <color name="tc_amber_surface_container">#0FD9A85B</color>
+    <color name="tc_amber_surface_container">#1AD9A85B</color>
     <color name="tc_amber_surface_container_high">#4A4234</color>
     <color name="tc_amber_pref_category">#D9A85B</color>
     <color name="tc_amber_fab">#8A5F2A</color>
@@ -71,7 +71,7 @@
     <color name="tc_sunset_primary">#FFB74D</color>
     <color name="tc_sunset_accent">#FFB74D</color>
     <color name="tc_sunset_secondary_container">#6B4A26</color>
-    <color name="tc_sunset_surface_container">#0FFFB74D</color>
+    <color name="tc_sunset_surface_container">#1AFFB74D</color>
     <color name="tc_sunset_surface_container_high">#4C4234</color>
     <color name="tc_sunset_pref_category">#FFB74D</color>
     <color name="tc_sunset_fab">#EF6C00</color>
@@ -82,7 +82,7 @@
     <color name="tc_rose_primary">#F48FB1</color>
     <color name="tc_rose_accent">#F48FB1</color>
     <color name="tc_rose_secondary_container">#5D3547</color>
-    <color name="tc_rose_surface_container">#0FF48FB1</color>
+    <color name="tc_rose_surface_container">#1AF48FB1</color>
     <color name="tc_rose_surface_container_high">#4A3A42</color>
     <color name="tc_rose_pref_category">#F48FB1</color>
     <color name="tc_rose_fab">#C2185B</color>
@@ -93,7 +93,7 @@
     <color name="tc_lavender_primary">#B39DDB</color>
     <color name="tc_lavender_accent">#B39DDB</color>
     <color name="tc_lavender_secondary_container">#4A4160</color>
-    <color name="tc_lavender_surface_container">#0FB39DDB</color>
+    <color name="tc_lavender_surface_container">#1AB39DDB</color>
     <color name="tc_lavender_surface_container_high">#413C4E</color>
     <color name="tc_lavender_pref_category">#B39DDB</color>
     <color name="tc_lavender_fab">#5E35B1</color>
@@ -104,23 +104,23 @@
     <color name="tc_graphite_primary">#90A4AE</color>
     <color name="tc_graphite_accent">#90A4AE</color>
     <color name="tc_graphite_secondary_container">#3E4C54</color>
-    <color name="tc_graphite_surface_container">#0F90A4AE</color>
+    <color name="tc_graphite_surface_container">#1A90A4AE</color>
     <color name="tc_graphite_surface_container_high">#3F484D</color>
     <color name="tc_graphite_pref_category">#90A4AE</color>
     <color name="tc_graphite_fab">#455A64</color>
     <color name="tc_graphite_fab_pressed">#37474F</color>
     <color name="tc_graphite_tab_active_icon">#90A4AE</color>
 <!-- Muted dark app bar so white toolbar text stays readable -->
-    <color name="tc_sky_appbar">#143A4E</color>
-    <color name="tc_indigo_appbar">#2C3358</color>
-    <color name="tc_teal_appbar">#14403A</color>
-    <color name="tc_emerald_appbar">#1F4A28</color>
-    <color name="tc_lime_appbar">#44471F</color>
-    <color name="tc_amber_appbar">#4E3A1E</color>
-    <color name="tc_sunset_appbar">#573313</color>
-    <color name="tc_rose_appbar">#55263A</color>
-    <color name="tc_lavender_appbar">#39305A</color>
-    <color name="tc_graphite_appbar">#33424B</color>
+    <color name="tc_sky_appbar">#E6143A4E</color>
+    <color name="tc_indigo_appbar">#E62C3358</color>
+    <color name="tc_teal_appbar">#E614403A</color>
+    <color name="tc_emerald_appbar">#E61F4A28</color>
+    <color name="tc_lime_appbar">#E644471F</color>
+    <color name="tc_amber_appbar">#E64E3A1E</color>
+    <color name="tc_sunset_appbar">#E6573313</color>
+    <color name="tc_rose_appbar">#E655263A</color>
+    <color name="tc_lavender_appbar">#E639305A</color>
+    <color name="tc_graphite_appbar">#E633424B</color>
 <!-- Window background gradients: night = dark hue fading to deep blue #0A2442 -->
     <color name="tc_sky_gradient_top">#0E3A52</color>
     <color name="tc_sky_gradient_bottom">#0A2442</color>

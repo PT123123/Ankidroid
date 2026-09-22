@@ -2,6 +2,11 @@
 
 <resources xmlns:tools="http://schemas.android.com/tools" tools:ignore="DuplicateCrowdInStrings">
     <style name="Base.Theme.Light" parent="@style/Theme.Material3.Light.NoActionBar">
+        <!-- Fork UI polish: shared-axis window transitions + modern corner radii -->
+        <item name="android:windowAnimationStyle">@style/Animation.App.WindowTransitions</item>
+        <item name="shapeAppearanceSmallComponent">@style/ShapeAppearance.App.Small</item>
+        <item name="shapeAppearanceMediumComponent">@style/ShapeAppearance.App.Medium</item>
+        <item name="shapeAppearanceLargeComponent">@style/ShapeAppearance.App.Large</item>
         <!-- Android colors -->
         <item name="colorPrimary">@color/material_light_blue_500</item>
         <item name="colorPrimaryDark">@color/material_light_blue_700</item>
@@ -14,7 +19,7 @@
 
         <item name="colorSurfaceContainerHighest">?attr/colorSurfaceContainer</item>
         <item name="colorSurfaceContainerHigh">#E4F5FD</item>
-        <item name="colorSurfaceContainer">#0F03A9F4</item>
+        <item name="colorSurfaceContainer">#1A03A9F4</item>
         <item name="colorSurfaceContainerLow">?android:attr/colorBackground</item>
 
         <item name="android:textColor">@color/text_color_light</item>
@@ -123,7 +128,7 @@
         <item name="textAllCaps">false</item>
         <!--Custom Tabs colors-->
         <item name="customTabNavBarColor">@color/material_light_blue_500</item>
-        <item name="popupBackgroundColor">@android:color/white</item>
+        <item name="popupBackgroundColor">@color/popup_background_theme_light</item>
         <item name="overflowAndPopupMenuIconColor">#9e000000</item>
         <!-- StatusBar -->
         <item name="android:statusBarColor">?attr/colorPrimary</item>
@@ -151,7 +156,7 @@
         <item name="alertDialogTheme">@style/ThemeOverlay.AnkiDroid.AlertDialog</item>
 
         <!-- ProgressDialog-->
-        <item name="dialogBackground">@color/white</item>
+        <item name="dialogBackground">#F2FFFFFF</item>
 
         <item name="checkMediaListBackground">@color/material_blue_grey_050</item>
         <item name="checkMediaListForeground">@color/material_grey_700</item>
@@ -172,9 +177,9 @@
 
         <item name="badgeErrorColor">#f45000</item>
         <item name="badgeWarningColor">#ff5e13</item>
-        <item name="widgetStrokeWidth">0dp</item>
-        <item name="widgetStrokeColor">@color/transparent</item>
-        <item name="studyScreenElevation">0.8dp</item>
+        <item name="widgetStrokeWidth">1dp</item>
+        <item name="widgetStrokeColor">#14000000</item>
+        <item name="studyScreenElevation">2dp</item>
         <item name="whiteboardToolbarCardStyle">?attr/materialCardViewStyle</item>
     </style>
 

@@ -10,6 +10,11 @@
     <color name="theme_dark_drawer_item">#DEFFFFFF</color>
 
     <style name="Base.Theme.Dark" parent="@style/Theme.Material3.Dark.NoActionBar">
+        <!-- Fork UI polish: shared-axis window transitions + modern corner radii -->
+        <item name="android:windowAnimationStyle">@style/Animation.App.WindowTransitions</item>
+        <item name="shapeAppearanceSmallComponent">@style/ShapeAppearance.App.Small</item>
+        <item name="shapeAppearanceMediumComponent">@style/ShapeAppearance.App.Medium</item>
+        <item name="shapeAppearanceLargeComponent">@style/ShapeAppearance.App.Large</item>
         <!-- Android colors -->
         <item name="colorPrimary">@color/material_blue_400</item>
         <item name="colorOnPrimary">@color/white</item>
@@ -29,7 +34,7 @@
 
         <item name="colorSurfaceContainerHighest">?attr/colorSurfaceContainer</item>
         <item name="colorSurfaceContainerHigh">#424C54</item>
-        <item name="colorSurfaceContainer">#0F42A5F5</item>
+        <item name="colorSurfaceContainer">#1A42A5F5</item>
         <item name="colorSurfaceContainerLow">?android:attr/colorBackground</item>
         <!-- Widget colors -->
         <item name="widgetColorActivated">?attr/colorAccent</item>
@@ -160,7 +165,7 @@
         <item name="preferenceTheme">@style/PreferenceThemeOverlay.AnkiDroid</item>
 
         <!-- ProgressDialog-->
-        <item name="dialogBackground">#ff303030</item>
+        <item name="dialogBackground">#F0303030</item>
         <item name="progressDialogButtonTextColor">@color/material_light_blue_400</item>
 
         <item name="checkMediaListBackground">@color/material_grey_700</item>
@@ -180,9 +185,9 @@
 
         <item name="badgeErrorColor">#f45000</item>
         <item name="badgeWarningColor">#ff5e13</item>
-        <item name="widgetStrokeWidth">0dp</item>
-        <item name="widgetStrokeColor">@color/transparent</item>
-        <item name="studyScreenElevation">0.8dp</item>
+        <item name="widgetStrokeWidth">1dp</item>
+        <item name="widgetStrokeColor">#26FFFFFF</item>
+        <item name="studyScreenElevation">2dp</item>
         <item name="whiteboardToolbarCardStyle">?attr/materialCardViewStyle</item>
     </style>
 

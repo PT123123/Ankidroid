@@ -10,6 +10,26 @@
         <item name="android:windowExitAnimation">@anim/translucent_exit</item>
     </style>
 
+    <!-- Shared-axis style activity transitions: slide + fade + slight scale -->
+    <style name="Animation.App.WindowTransitions" parent="@android:style/Animation.Activity">
+        <item name="android:activityOpenEnterAnimation">@anim/window_open_enter</item>
+        <item name="android:activityOpenExitAnimation">@anim/window_open_exit</item>
+        <item name="android:activityCloseEnterAnimation">@anim/window_close_enter</item>
+        <item name="android:activityCloseExitAnimation">@anim/window_close_exit</item>
+    </style>
+
+    <!-- Fork-wide corner radii: modernize every Material3 widget (cards, buttons,
+         sheets, FABs...) that resolves its shape through these theme slots -->
+    <style name="ShapeAppearance.App.Small" parent="ShapeAppearance.Material3.SmallComponent">
+        <item name="cornerSize">12dp</item>
+    </style>
+    <style name="ShapeAppearance.App.Medium" parent="ShapeAppearance.Material3.MediumComponent">
+        <item name="cornerSize">16dp</item>
+    </style>
+    <style name="ShapeAppearance.App.Large" parent="ShapeAppearance.Material3.LargeComponent">
+        <item name="cornerSize">24dp</item>
+    </style>
+
     <!-- Nav drawer style to set width specified by Material Design specification -->
     <style name="NavDrawer">
         <item name="android:layout_marginRight">@dimen/nav_drawer_margin_offset</item>

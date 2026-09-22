@@ -2,6 +2,8 @@
 <resources xmlns:tools="http://schemas.android.com/tools" tools:ignore="DuplicateCrowdInStrings">
     <style name="Base.Theme.Light.Eink" parent="Base.Theme.Light">
         <item name="isLightTheme">true</item>
+        <!-- E-Ink: no motion, no shadows, flat paper look -->
+        <item name="android:windowAnimationStyle">@null</item>
 
         <item name="colorPrimary">@color/black</item>
         <item name="colorPrimaryDark">@color/black</item>
