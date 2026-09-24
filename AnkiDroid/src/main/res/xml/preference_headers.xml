@@ -96,6 +96,14 @@
         android:icon="@drawable/ic_switch_profile"
         android:fragment="com.ichi2.anki.preferences.profiles.SwitchProfilesFragment" />
 
+    <!-- LAN sync (fork feature): sync between devices on the same network, no AnkiWeb -->
+    <com.ichi2.preferences.HeaderPreference
+        android:key="@string/pref_lansync_screen_key"
+        android:title="@string/lansync_title"
+        android:summary="@string/lansync_summary"
+        android:icon="@drawable/ic_sync"
+        android:fragment="com.ichi2.anki.lansync.LanSyncFragment" />
+
     <!-- Keybinding preferences -->
     <com.ichi2.preferences.HeaderPreference
         android:fragment="com.ichi2.anki.preferences.ControlsSettingsFragment"

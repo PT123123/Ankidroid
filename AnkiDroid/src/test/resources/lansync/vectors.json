@@ -1,0 +1,38 @@
+{
+    "_comment": "SPEC-v2 §4.6 互操作向量；由 anki-desktop/tools/lansync_vectors.py 生成，勿手改",
+    "checksum_sha256": "a4590d0aff4e4f963eb89069a7d7b07dd88b80559198be02ea43db6390a16939",
+    "envelope": {
+        "aad": "6d77a43d|1700000000",
+        "header_urlsafe_b64": "eyJraWQiOiI2ZDc3YTQzZCIsInRzIjoxNzAwMDAwMDAwLCJub25jZSI6IkFBRUNBd1FGQmdjSUNRb0wiLCJjdCI6IjRQckhBaCtJVkh0VkhkaGZSb3JoZXRxdXFnZ1M2TmtiUGpXbCJ9",
+        "json": {
+            "ct": "4PrHAh+IVHtVHdhfRorhetquqggS6NkbPjWl",
+            "kid": "6d77a43d",
+            "nonce": "AAECAwQFBgcICQoL",
+            "ts": 1700000000
+        },
+        "route_key_hex": "ecff1b8809348a5ecba2f62a46a55a303882517da455462161221da0803f1085"
+    },
+    "inputs": {
+        "contribution_a_hex": "000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f",
+        "contribution_b_hex": "202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f",
+        "device_id_a": "11111111-1111-4111-8111-111111111111",
+        "device_id_b": "22222222-2222-4222-8222-222222222222",
+        "nonce_hex": "000102030405060708090a0b",
+        "pair_code": "123456",
+        "plaintext_utf8": "{\"since\":0}",
+        "route": "devices/sync",
+        "ts": 1700000000
+    },
+    "pairing": {
+        "kid": "6d77a43d",
+        "pair_wrap_key_hex": "9a417560a591cef1fbf10b799061e7e72e57a83cd77dae0837397d139d1bdcbe",
+        "pair_wrapped_contribution_a": {
+            "ct": "evNZg2cMOTvet9pu/mKR3uXsYRRVAFN8/glcYvnoLmtOWBJrxObqVUv25Bjreb/k",
+            "kid": "pair",
+            "nonce": "AAECAwQFBgcICQoL",
+            "ts": 1700000000
+        },
+        "security_code": "ca92",
+        "shared_secret_hex": "692efee3eaceb67570d9d4df80a00339bc8c6fcb2cfb986d9aef920b56352f64"
+    }
+}

@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  ~ SPDX-License-Identifier: GPL-3.0-or-later
+  ~ SPDX-FileCopyrightText: 2026 PT123123 <31439216+PT123123@users.noreply.github.com>
+  -->
+<!--
+  Strings of the fork-local LAN sync feature. They are marked non-translatable on purpose: the
+  feature is not exposed upstream yet, so it must not reach Crowdin and lock in translations of
+  wording that is still moving. See docs/lansync/README.md.
+-->
+<resources>
+    <string
+        name="lansync_title"
+        maxLength="41"
+        translatable="false">LAN sync</string>
+    <string name="lansync_summary" translatable="false">Sync devices on the same network, without AnkiWeb</string>
+
+    <string name="lansync_enable" translatable="false">Enable LAN sync</string>
+    <string name="lansync_enable_hint" translatable="false">While this screen is open, the device advertises itself on the local network. Data only moves with devices you paired with; pairing codes expire after five minutes and can be used once.</string>
+    <string name="lansync_warning" translatable="false">v2 traffic is encrypted and only flows with paired devices. The plaintext v1 downgrade stays refused until you explicitly allow it below - only do that on a network you control, and check the activity list after each session.</string>
+    <string name="lansync_foreground_note" translatable="false">Syncing stops as soon as you leave this screen, unless keep-online is on.</string>
+
+    <string name="lansync_this_device" translatable="false">This device</string>
+    <string name="lansync_device_name" translatable="false">Device name</string>
+    <string name="lansync_rename" translatable="false">Rename</string>
+    <string name="lansync_not_on_lan" translatable="false">No local network address - connect to Wi-Fi first</string>
+    <string name="lansync_serving" translatable="false">Advertising on port %1$d</string>
+    <string name="lansync_stopped" translatable="false">Not advertising</string>
+    <string name="lansync_hub_active" translatable="false">Hub sync active: %1$s</string>
+
+    <string name="lansync_peers" translatable="false">Devices on this network</string>
+    <string name="lansync_no_peers" translatable="false">No other device found yet. Open LAN sync there too, or add it by address.</string>
+    <string name="lansync_online" translatable="false">Online</string>
+    <string name="lansync_offline" translatable="false">Offline</string>
+    <string name="lansync_last_sync" translatable="false">Last sync %1$s</string>
+    <string name="lansync_never_synced" translatable="false">Never synced</string>
+    <string name="lansync_sync" translatable="false">Sync</string>
+    <string name="lansync_sync_all" translatable="false">Sync all online</string>
+    <string name="lansync_add_device" translatable="false">Add by address</string>
+    <string name="lansync_add_device_hint" translatable="false">192.168.1.20 or 192.168.1.20:5600</string>
+    <string name="lansync_forget" translatable="false">Forget device</string>
+    <string name="lansync_forget_confirm" translatable="false">Remove %1$s and its pairing keys from this phone? The other device keeps its own copy of the collection.</string>
+
+    <string name="lansync_paired" translatable="false">paired</string>
+    <string name="lansync_v1_unpaired" translatable="false">v1, unpaired</string>
+    <string name="lansync_device_security" translatable="false">Security code %1$s - compare it with the other device before syncing</string>
+    <string name="lansync_need_pairing" translatable="false">Not paired yet - data planes are refused until you pair.</string>
+    <string name="lansync_mode_hub" translatable="false">hub</string>
+    <string name="lansync_mode_apkg" translatable="false">apkg</string>
+    <string name="lansync_mode_plaintext" translatable="false">plaintext v1</string>
+
+    <string name="lansync_pair" translatable="false">Pair</string>
+    <string name="lansync_pair_hint" translatable="false">Show a code here, then type that code on the other device (or type its code here). Once the two devices are paired, each shows a short security code next to the other one in the device list - only sync while those codes match.</string>
+    <string name="lansync_pair_show_code" translatable="false">Show my code</string>
+    <string name="lansync_pair_showing" translatable="false">Your pairing code</string>
+    <string name="lansync_pair_security_note" translatable="false">After the other device enters this code, both screens show a security code in their device list. Compare them there.</string>
+    <string name="lansync_pair_expires" translatable="false">Expires in %1$d s - a code works once only.</string>
+    <string name="lansync_pair_verify_warning" translatable="false">If the security codes on the two screens do not match, an attacker sits between you. Forget the device and pair again.</string>
+    <string name="lansync_pair_done" translatable="false">Done</string>
+    <string name="lansync_pair_new_code" translatable="false">New code</string>
+    <string name="lansync_pair_with" translatable="false">Pair with %1$s</string>
+    <string name="lansync_pair_code_label" translatable="false">6-digit code from the other device</string>
+
+    <string name="lansync_schedule" translatable="false">Auto-sync</string>
+    <string name="lansync_schedule_hint" translatable="false">Also syncs shortly after local edits and when a paired peer comes online.</string>
+    <string name="lansync_schedule_off" translatable="false">Off</string>
+    <string name="lansync_keep_online" translatable="false">Keep online</string>
+    <string name="lansync_keep_online_hint" translatable="false">Keeps serving via a persistent notification after this screen closes. Some phone makers kill background services aggressively - exclude this app from battery optimisation if peers stop finding it.</string>
+    <string name="lansync_keep_online_running" translatable="false">LAN sync stays reachable while this notification shows.</string>
+    <string name="lansync_keep_online_dead" translatable="false">Keep-online is on but the server is not running - tap the switch off and on again.</string>
+
+    <string name="lansync_plaintext_title" translatable="false">Allow plaintext v1 (dangerous)</string>
+    <string name="lansync_plaintext_hint" translatable="false">Lets unpaired v1 devices push and pull whole collections with no encryption and no authentication. Every such round is marked in the activity list. Turn it off again once the legacy exchange is done.</string>
+
+    <string name="lansync_activity" translatable="false">Activity</string>
+    <string name="lansync_rounds" translatable="false">Recent rounds</string>
+    <string name="lansync_clear_log" translatable="false">Clear</string>
+    <string name="lansync_direction_push" translatable="false">in</string>
+    <string name="lansync_direction_pull" translatable="false">out</string>
+    <string name="lansync_direction_probe" translatable="false">found</string>
+    <string name="lansync_result_ok" translatable="false">ok</string>
+    <string name="lansync_result_error" translatable="false">failed</string>
+    <string name="lansync_result_busy" translatable="false">busy</string>
+
+    <string name="lansync_step_exporting" translatable="false">Exporting collection…</string>
+    <string name="lansync_step_sending" translatable="false">Sending to %1$s…</string>
+    <string name="lansync_step_requesting" translatable="false">Asking %1$s for its collection…</string>
+    <string name="lansync_step_receiving" translatable="false">Receiving from %1$s…</string>
+    <string name="lansync_step_importing" translatable="false">Merging into your collection…</string>
+    <string name="lansync_step_probing" translatable="false">Checking %1$s…</string>
+    <string name="lansync_step_pairing" translatable="false">Pairing with %1$s…</string>
+    <string name="lansync_step_hub" translatable="false">Hub-syncing with %1$s…</string>
+
+    <string name="lansync_msg_sync_ok" translatable="false">Sync complete</string>
+    <string name="lansync_msg_sync_partial" translatable="false">Sync only partly succeeded - see the activity list</string>
+    <string name="lansync_msg_sync_failed" translatable="false">Sync failed - see the activity list</string>
+    <string name="lansync_msg_added" translatable="false">Device added</string>
+    <string name="lansync_msg_add_failed" translatable="false">Could not reach a sync peer at that address</string>
+    <string name="lansync_msg_removed" translatable="false">Device forgotten</string>
+    <string name="lansync_msg_renamed" translatable="false">Device name updated</string>
+    <string name="lansync_msg_busy" translatable="false">Another sync is already running</string>
+    <string name="lansync_msg_setting_saved" translatable="false">Setting saved</string>
+    <string name="lansync_msg_paired" translatable="false">Paired - keys exchanged</string>
+    <string name="lansync_msg_pair_failed" translatable="false">Pairing failed - wrong, used or expired code</string>
+</resources>
