@@ -37,3 +37,16 @@ alias jdk25='export JAVA_HOME=/Library/Java/JavaVirtualMachines/temurin-25.jdk/C
 ```
 
 To support a newer daemon JDK long-term, raise `jvmVersionUpperBound` in `build.gradle.kts`.
+
+## just shortcuts
+
+CLI builds on this fork need a larger Gradle heap than `gradle.properties` sets (3g), so the
+[`Justfile`](../../Justfile) at the repository root wraps the invocation:
+
+```bash
+just build    # ./gradlew -Dorg.gradle.jvmargs=-Xmx8g :AnkiDroid:assemblePlayDebug
+just install  # adb install -r -t the arm64-v8a playDebug APK
+just deploy   # build + install
+```
+
+Override the ABI with `just ABI=x86_64 install`.
