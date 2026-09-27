@@ -132,6 +132,10 @@ timber = "5.0.1"
 # In the past, releases have been published before the changelog
 triplet = "4.0.0"
 turbine = "1.2.1"
+# https://github.com/zxing/zxing/releases
+zxingCore = "3.5.3"
+# https://github.com/journeyapps/zxing-android-embedded/releases
+zxingEmbedded = "4.3.0"
 
 [libraries]
 acra-limiter = { module = "ch.acra:acra-limiter", version.ref = "acra" }
@@ -240,6 +244,8 @@ roborazzi = { group = "io.github.takahirom.roborazzi", name = "roborazzi", versi
 roborazzi-rule = { group = "io.github.takahirom.roborazzi", name = "roborazzi-junit-rule", version.ref = "roborazzi" }
 cashapp-turbine = { module = "app.cash.turbine:turbine", version.ref = "turbine" }
 test-parameter-injector = { module = "com.google.testparameterinjector:test-parameter-injector", version.ref = "testParameterInjector" }
+zxing-core = { module = "com.google.zxing:core", version.ref = "zxingCore" }
+journeyapps-zxing-android-embedded = { module = "com.journeyapps:zxing-android-embedded", version.ref = "zxingEmbedded" }
 
 [plugins]
 

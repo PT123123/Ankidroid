@@ -17,9 +17,11 @@ Settings → **局域网同步 / LAN sync** (`LanSyncFragment`). Turn the switch
 1. serves the v2 HTTP API on the Wi-Fi interface,
 2. announces itself (`ANKI-LAN/2` + `ANKIPLUS-LAN/1` UDP, `_ankisync._tcp` + `_ankiplus-sync._tcp`
    NSD) so other v2/v1 devices find it,
-3. pairs with a peer — a 6-digit code typed over, then a 4-hex security code shown on both screens
-   *after* commit so the two can be eyeballed against each other (SPEC-v2 §4.1: it is a hash of the
-   shared key, so before commit there is nothing honest to display),
+3. pairs with a peer — one device shows a **pairing QR** (connection info + a one-shot 6-digit code
+   in one ticket, SPEC-v2 §4.7) and the other scans it with the camera; typing the code and
+   `ip:port` by hand still works as the fallback. Either way, after commit both screens show a
+   4-hex security code to eyeball against each other (SPEC-v2 §4.1: it is a hash of the shared key,
+   so before commit there is nothing honest to display),
 4. syncs with paired peers in whichever data plane both sides support, on a schedule and on
    events (SPEC-v2 §8), not only when the user taps Sync.
 
@@ -87,6 +89,17 @@ of silently landing wherever. `lan_sync` storage remains app-global on purpose (
   to try a second ciphertext, since the wrap key has ~20 bits of entropy behind it.
   Errors: 401 `pair_invalid` (wrong code and unknown code are the same answer), 409
   `pair_consumed`, 410 `pair_expired`, 429 `pair_throttled`.
+- **Pairing QR (SPEC-v2 §4.7)** — the primary handoff, and **not a new route**: `LanPairQr.encode`
+  builds a ticket (`anki-lan-pair/1` + compact JSON, key order `t v id nk nm h p c`, **pure ASCII**
+  so device names ride as `\uXXXX`) from a live local session + our address/port; `LanQrRender.bitmap`
+  turns that text into a `Bitmap` for the dialog. Scanning decodes to the same
+  `LanDevice` the manual form would have produced and calls the existing `pairWith(device, code)`,
+  so one-shot consumption, wrap layers and the security code are all still §4.1's. The ticket's
+  `id`/`nm` are **display-only**: the trust row is written from the commit answer's `peer_info`.
+  A code from our own device is refused (`LanPeerRejectException`) rather than self-paired.
+  Manual "show digits" + "add by ip:port" remain as fallback; the anchor against a
+  man-in-the-middle is still comparing the 4-digit security codes on both screens, and the UI says
+  so — scanning proves reachability, not identity.
 - **Envelopes**: every protected request carries `X-Anki-Sync: ANKI-LAN/2` and `X-Anki-Kid`, plus
   `X-Anki-Peer`/`X-Anki-Peer-Id` (URL-encoded display name and device id) for the peer's activity
   log. **The envelope is the request body itself** on the
@@ -108,7 +121,9 @@ of silently landing wherever. `lan_sync` storage remains app-global on purpose (
 - **Default-deny**: an unpaired caller never reaches a data-plane route (403 `not_paired`).
   The legacy plaintext `/export` + `/import` pair is refused until the user explicitly flips
   **允许明文 v1** on the screen; every round through it is tagged `SECURITY: plaintext-v1` in the
-  activity log. Hand-written HKDF on `javax.crypto` only — no new dependencies (SPEC-v2 §2).
+  activity log. Hand-written HKDF on `javax.crypto` only — the crypto stack itself still pulls
+  **no** new dependencies (SPEC-v2 §2); the only new libraries in this feature are the two zxing
+  artifacts below, which never touch key material.
 - **HTTP/1.1 keep-alive** (§5.1): a response produced before the caller's body was read must hang
   up, or the leftover bytes become the next request's status line and the client sees a 400 out of
   nowhere. `serve()` tracks that with a per-request `bodyRead` flag instead of sprinkling
@@ -132,12 +147,19 @@ of silently landing wherever. `lan_sync` storage remains app-global on purpose (
   all an un-upgraded fork can do — gets the v1 DTO (`id`/`platform`/`appVersion`). One merged
   payload cannot serve both, because the two disagree on `protocol`, the one field that must not
   lie.
+- **Pairing QR is the third path, and the only one that needs no multicast** (SPEC-v2 §4.7): on an
+  AP with client isolation — or a guest network, or a VPN that swallows broadcasts — NSD and UDP
+  both go quiet and the two devices can still meet, because the address arrives optically. It is a
+  *handoff*, not a discovery protocol: nothing is advertised, and the scanner still has to reach
+  `h:p` over TCP to commit. Manual `ip:port` entry remains the last resort.
 
 Protocol-1 peers appear labelled "v1, unpaired"; they can only sync if the plaintext opt-in is on.
 
 ## HTTP API (v2 routes)
 
 Bound to `0.0.0.0`, port 5600 with fallbacks up to 5610, advertised via NSD/`/info`.
+Scanning a pairing QR **adds no route**: the ticket only carries what the manual form asks you to
+type, and the scanner then calls `/pair/commit` like any other client.
 
 | Route | Purpose | Auth |
 |---|---|---|
@@ -210,6 +232,8 @@ syncable only through the explicit plaintext opt-in until paired again.
 | `LanProtocol.kt` | v2 wire constants + v1 compat, `LanPeerInfo`/`LanDevice`/`LanRoundDetail`, announce encode/decode (dual magic), mode negotiation, IPv4 helpers. Android-free on purpose. |
 | `LanCrypto.kt` | HKDF-SHA256 (RFC 5869), per-route AES-256-GCM envelopes, pairing wrap + `pair/wrap` route, derived kid/security code, replay window |
 | `LanPairing.kt` | pairing-code state machine (TTL 5 min, one-shot, no existence oracle) |
+| `LanPairQr.kt` | §4.7 ticket text ↔ fields (kotlinx.serialization, fixed key order, ASCII-escaped); `not_our_qr` for foreign codes; `toManualDevice()` |
+| `LanQrRender.kt` | ticket text → `Bitmap` via zxing `QRCodeWriter` (`CHARACTER_SET=UTF-8` is load-bearing) |
 | `LanAddresses.kt` | interface enumeration / "which address is reachable by peers" |
 | `LanStore.kt` | app-global persistence incl. `lan_sync_secrets`, round rows, v1 migration |
 | `LanEngine.kt` | rounds: mode selection, apkg push/pull legs, plaintext v1 legs, pairing client, enveloped requests |
@@ -219,10 +243,15 @@ syncable only through the explicit plaintext opt-in until paired again.
 | `LanScheduler.kt` | period loops, run-soon triggers, write debounce, self-heal |
 | `LanKeepAliveService.kt` | optional foreground "keep online" with standing notification |
 | `LanSyncManager.kt` | owns server/discovery/scheduler lifetime, probe/verify, pairing API, notify-pull |
-| `LanSyncViewModel.kt` / `LanSyncScreen.kt` / `LanSyncFragment.kt` | Compose UI: pairing dialogs, mode badges, schedule, round details, plaintext warning |
+| `LanSyncViewModel.kt` / `LanSyncScreen.kt` / `LanSyncFragment.kt` | Compose UI: pairing dialogs (show ticket as a scannable QR + scan the peer's with the camera), mode badges, schedule, round details, plaintext warning |
 
 Strings: `res/values/21-lansync.xml`, all `translatable="false"`. Entry point unchanged
 (`pref_lansync_screen_key` + `HeaderPreference`).
+
+Camera scanning uses `com.journeyapps:zxing-android-embedded` (its `CaptureActivity` ships the
+manifest entry and the `CAMERA` permission through the library merge, so no hand-written camera
+code) and `com.google.zxing:core` for rendering — both declared in `gradle/libs.versions.toml`.
+They are UI-layer only: nothing in the protocol or crypto path depends on them.
 
 ### Why the collection never blocks a socket
 
@@ -243,10 +272,17 @@ no device, no emulator.
 - **`LanInteropVectorsTest`** — replays `src/test/resources/lansync/vectors.json`, the file
   `anki-desktop/tools/lansync_vectors.py` generates from the *desktop* implementation: combines the
   two contributions, derives kid + security code + pair wrap key, unwraps a byte-exact wrapped
-  envelope, derives a route key, and opens a desktop-sealed envelope incl. its urlsafe header
-  form. This is the only test on either side that can catch "self-consistent here, unreadable
-  there" — 6 tests, all of them interop.
+  envelope, derives a route key, opens a desktop-sealed envelope incl. its urlsafe header form, and
+  re-encodes the desktop's **pairing-QR ticket text** (its device name carries non-ASCII + a `"`,
+  which is what pins the ASCII escaping on both ends). This is the only test on either side that can
+  catch "self-consistent here, unreadable there" — 7 tests, all of them interop.
 - `LanPairingTest` — 5-min TTL, one-shot consumption, wrong code is uniform, begin replaces, prune.
+- `LanPairQrTest` — ticket key order + compact separators, byte-exact match against the desktop's
+  generated text, decode tolerates unknown fields, foreign QR → `not_our_qr` (not a parse crash),
+  and the local rejections: bad code/address/port/id/`t`/version.
+- `LanQrRenderTest` — the bitmap this module renders is decoded back by zxing and equals the input
+  byte-for-byte; a *deliberately UTF-8-naive* read-back still yields a parsable ticket (the ASCII
+  ticket is what makes that true); refuses to render blank text.
 - `LanStoreTest` — v2 switches default-safe, secrets isolated to their own file and dropped by
   `forget()`, derived kid + security code persist, pairing sessions and round rows persist, v1
   migration is one-shot.
@@ -282,4 +318,10 @@ Wi-Fi are needed; also SPEC-v2 §11's checklist):
   media worker), incl. the full-sync backup path.
 - Foreground keep-online surviving OEM power managers, and the 30 s re-probe/6 s rediscovery
   behaviour on flaky networks.
+- **Camera pairing (SPEC-v2 §4.7)**: what the JVM proves is that *our* renderer's bitmap decodes
+  back to *our* ticket text. It cannot prove that `CaptureActivity` opens on a given OEM camera
+  stack, that the runtime `CAMERA` permission dialog / back-gesture / orientation behave, that a
+  phone can read a code off a laptop panel (moiré, refresh rate, viewing angle), or that the
+  scanner's default hints accept an ASCII ticket from a third-party renderer. Also unproven: the
+  Compose dialog itself (QR sizing, "scan" button placement) — UI is never screenshot-tested here.
 - UI correctness (per local policy, no screenshot automation was used).

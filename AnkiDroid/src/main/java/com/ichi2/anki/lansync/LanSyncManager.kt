@@ -224,6 +224,36 @@ object LanSyncManager {
 
     fun activePairingSession(): LanPairSession? = store.pairing.activeSession()
 
+    /**
+     * The pairing QR text (SPEC-v2 §4.7) for the current local session: this device's
+     * identity + reachable endpoint + the live pairing code, so the peer can just scan it instead
+     * of typing digits. Null when there is no live session or no usable LAN address yet — the UI
+     * keeps showing the digits in that case (QR is an accelerator, not a requirement).
+     */
+    fun buildPairingTicket(): String? {
+        val session = activePairingSession() ?: return null
+        val host = _selfAddress.value ?: return null
+        return LanPairQr.encode(
+            deviceId = store.deviceId,
+            name = store.deviceName,
+            kind = "android",
+            host = host,
+            port = _selfPort.value,
+            pairCode = session.pairCode,
+        )
+    }
+
+    /**
+     * Scanner half: pair with the endpoint a scanned ticket points at, using its carried code.
+     *
+     * @throws LanPeerRejectException when the ticket is our own screen — committing to ourselves
+     * would put this device in its own trust list.
+     */
+    suspend fun pairWithTicket(ticket: LanPairTicket): LanDevice {
+        if (store.isSelf(ticket.deviceId)) throw LanPeerRejectException("This QR is this device's own code")
+        return pairWith(ticket.toManualDevice(), ticket.pairCode)
+    }
+
     // endregion
 
     /**

@@ -5,7 +5,9 @@ package com.ichi2.anki.lansync
 
 import android.text.format.DateUtils
 import android.text.format.Formatter
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.annotation.StringRes
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -19,6 +21,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -47,6 +50,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
@@ -62,6 +67,8 @@ import com.ichi2.compose.theme.AnkiDroidTheme
 import com.ichi2.compose.theme.dimensions
 import com.ichi2.compose.ui.dialogs.TextInputDialog
 import com.ichi2.compose.ui.preview.ThemePreviews
+import com.journeyapps.barcodescanner.ScanContract
+import com.journeyapps.barcodescanner.ScanOptions
 import androidx.appcompat.R as AppCompatR
 
 /**
@@ -88,6 +95,7 @@ fun LanSyncScreen(
     keepOnline: Boolean,
     scheduleSeconds: Int,
     pairingSession: LanPairSession?,
+    pairingTicket: String?,
     hubEndpoint: String?,
     @StringRes message: Int?,
     onMessageShown: () -> Unit,
@@ -99,6 +107,7 @@ fun LanSyncScreen(
     onPairHere: () -> Unit,
     onPairHereDismissed: () -> Unit,
     onPairWithCode: (LanDevice, String) -> Unit,
+    onScanResult: (String) -> Unit,
     onSync: (LanDevice) -> Unit,
     onSyncAll: () -> Unit,
     onAdd: (String) -> Unit,
@@ -120,6 +129,20 @@ fun LanSyncScreen(
     var addRequested by remember { mutableStateOf(false) }
     var forgetTarget by remember { mutableStateOf<LanPeerRow?>(null) }
     var pairTarget by remember { mutableStateOf<LanPeerRow?>(null) }
+    // The library's capture activity asks for the camera permission itself, so there is no
+    // pre-flight here; a cancelled scan simply reports no contents.
+    val scanLauncher =
+        rememberLauncherForActivityResult(ScanContract()) { result ->
+            result.contents?.let(onScanResult)
+        }
+    val scanPrompt = stringResource(R.string.lansync_scan_prompt)
+    val scanOptions =
+        remember(scanPrompt) {
+            ScanOptions()
+                .setBeepEnabled(false)
+                .setOrientationLocked(false)
+                .setPrompt(scanPrompt)
+        }
     val onlinePeers = peers.count { it.online }
     val hasV1Peers = peers.any { it.device.protocol < LanProtocol.VERSION }
 
@@ -161,9 +184,11 @@ fun LanSyncScreen(
                 item {
                     PairingControls(
                         session = pairingSession,
+                        ticketText = pairingTicket,
                         busy = busy,
                         onShowMyCode = onPairHere,
                         onDismissMyCode = onPairHereDismissed,
+                        onScanQr = { scanLauncher.launch(scanOptions) },
                     )
                 }
                 item {
@@ -398,13 +423,20 @@ private fun SelfCard(
     }
 }
 
+/** Module pixels rendered once per ticket, then scaled into [QR_DISPLAY_DP]. */
+private const val QR_PIXELS = 336
+
+private val QR_DISPLAY_DP = 168.dp
+
 /** Pairing: "show my code" (responder) lives here; initiating lives on each unpaired peer row. */
 @Composable
 private fun PairingControls(
     session: LanPairSession?,
+    ticketText: String?,
     busy: Boolean,
     onShowMyCode: () -> Unit,
     onDismissMyCode: () -> Unit,
+    onScanQr: () -> Unit,
 ) {
     Card(
         modifier = Modifier.cardSection(),
@@ -424,6 +456,13 @@ private fun PairingControls(
                 ) {
                     Text(stringResource(R.string.lansync_pair_show_code))
                 }
+                Button(
+                    onClick = onScanQr,
+                    enabled = !busy,
+                    modifier = Modifier.padding(top = MaterialTheme.dimensions.space100),
+                ) {
+                    Text(stringResource(R.string.lansync_scan_qr))
+                }
             } else {
                 Text(stringResource(R.string.lansync_pair_showing), style = MaterialTheme.typography.titleMedium)
                 Text(
@@ -431,6 +470,31 @@ private fun PairingControls(
                     style = MaterialTheme.typography.headlineMedium,
                     fontFamily = FontFamily.Monospace,
                 )
+                ticketText?.let { text ->
+                    // A QR is only scannable against a light background, whatever the app theme is.
+                    val bitmap = remember(text) { LanQrRender.bitmap(text, QR_PIXELS) }
+                    Text(
+                        text = stringResource(R.string.lansync_pair_qr_caption),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(top = MaterialTheme.dimensions.space100),
+                    )
+                    Box(
+                        modifier =
+                            Modifier
+                                .padding(top = MaterialTheme.dimensions.space100)
+                                .size(QR_DISPLAY_DP)
+                                .background(Color.White, RoundedCornerShape(4.dp))
+                                .padding(MaterialTheme.dimensions.space100),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Image(
+                            bitmap = bitmap.asImageBitmap(),
+                            contentDescription = stringResource(R.string.lansync_pair_qr_image),
+                            modifier = Modifier.fillMaxSize(),
+                        )
+                    }
+                }
                 Text(
                     text = stringResource(R.string.lansync_pair_security_note),
                     style = MaterialTheme.typography.bodyMedium,
@@ -448,6 +512,9 @@ private fun PairingControls(
                 Row(horizontalArrangement = Arrangement.spacedBy(MaterialTheme.dimensions.space100)) {
                     TextButton(onClick = onDismissMyCode) { Text(stringResource(R.string.lansync_pair_done)) }
                     TextButton(onClick = onShowMyCode) { Text(stringResource(R.string.lansync_pair_new_code)) }
+                    TextButton(onClick = onScanQr, enabled = !busy) {
+                        Text(stringResource(R.string.lansync_scan_qr))
+                    }
                 }
             }
         }
@@ -882,6 +949,7 @@ private fun LanSyncScreenPreview() {
             keepOnline = false,
             scheduleSeconds = 300,
             pairingSession = null,
+            pairingTicket = null,
             hubEndpoint = null,
             message = null,
             onMessageShown = {},
@@ -893,6 +961,7 @@ private fun LanSyncScreenPreview() {
             onPairHere = {},
             onPairHereDismissed = {},
             onPairWithCode = { _, _ -> },
+            onScanResult = {},
             onSync = {},
             onSyncAll = {},
             onAdd = {},

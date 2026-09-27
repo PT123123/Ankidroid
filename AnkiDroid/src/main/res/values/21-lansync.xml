@@ -50,7 +50,11 @@
     <string name="lansync_mode_plaintext" translatable="false">plaintext v1</string>
 
     <string name="lansync_pair" translatable="false">Pair</string>
-    <string name="lansync_pair_hint" translatable="false">Show a code here, then type that code on the other device (or type its code here). Once the two devices are paired, each shows a short security code next to the other one in the device list - only sync while those codes match.</string>
+    <string name="lansync_pair_hint" translatable="false">Quick path: open LAN sync on the other device, tap Pair there, then tap Scan QR below and point the camera at its code - the QR carries both its address and its pairing code. No camera: type the six digits it shows into Pair on its row. Either way, once paired each device shows a short security code beside the other one in the device list - only sync while those codes match.</string>
+    <string name="lansync_scan_qr" translatable="false">Scan QR</string>
+    <string name="lansync_scan_prompt" translatable="false">Point at the other device\'s pairing QR</string>
+    <string name="lansync_pair_qr_caption" translatable="false">Or let the other device scan this code - it carries the address and the digits above</string>
+    <string name="lansync_pair_qr_image" translatable="false">Pairing QR code</string>
     <string name="lansync_pair_show_code" translatable="false">Show my code</string>
     <string name="lansync_pair_showing" translatable="false">Your pairing code</string>
     <string name="lansync_pair_security_note" translatable="false">After the other device enters this code, both screens show a security code in their device list. Compare them there.</string>
@@ -102,4 +106,5 @@
     <string name="lansync_msg_setting_saved" translatable="false">Setting saved</string>
     <string name="lansync_msg_paired" translatable="false">Paired - keys exchanged</string>
     <string name="lansync_msg_pair_failed" translatable="false">Pairing failed - wrong, used or expired code</string>
+    <string name="lansync_msg_scan_not_pair_qr" translatable="false">That is not an Anki pairing code - ask the other device to show its LAN sync QR</string>
 </resources>

@@ -26,6 +26,7 @@ class LanInteropVectorsTest {
         val inputs: Inputs,
         val pairing: Pairing,
         val envelope: Envelope,
+        @SerialName("pair_qr") val pairQr: PairQr,
     )
 
     @Serializable
@@ -56,6 +57,29 @@ class LanInteropVectorsTest {
         @SerialName("header_urlsafe_b64") val headerUrlSafeB64: String,
         val json: LanEnvelope,
         @SerialName("route_key_hex") val routeKeyHex: String,
+    )
+
+    @Serializable
+    private class PairQr(
+        val magic: String,
+        val desktop: TicketCase,
+        val android: TicketCase,
+    )
+
+    @Serializable
+    private class TicketCase(
+        val inputs: TicketInputs,
+        val text: String,
+    )
+
+    @Serializable
+    private class TicketInputs(
+        @SerialName("device_id") val deviceId: String,
+        val name: String,
+        val kind: String,
+        val host: String,
+        val port: Int,
+        @SerialName("pair_code") val pairCode: String,
     )
 
     private val vectors: Vectors by lazy {
@@ -152,6 +176,33 @@ class LanInteropVectorsTest {
                 window = LanReplayWindow(),
             )
         assertEquals(v.inputs.plaintextUtf8, opened.decodeToString())
+    }
+
+    @Test
+    fun `the pairing QR ticket encodes and parses byte-identically to the desktop`() {
+        assertEquals(LanPairQr.MAGIC, vectors.pairQr.magic)
+        for (case in listOf(vectors.pairQr.desktop, vectors.pairQr.android)) {
+            val i = case.inputs
+            // Our encoder must produce the desktop's exact text (key order, separators, escaping).
+            val encoded =
+                LanPairQr.encode(
+                    deviceId = i.deviceId,
+                    name = i.name,
+                    kind = i.kind,
+                    host = i.host,
+                    port = i.port,
+                    pairCode = i.pairCode,
+                )
+            assertEquals(case.text, encoded)
+            // And we must read the desktop's text back into the same fields.
+            val decoded = LanPairQr.decode(case.text)
+            assertEquals(i.deviceId, decoded.deviceId)
+            assertEquals(i.name, decoded.name)
+            assertEquals(i.kind, decoded.kind)
+            assertEquals(i.host, decoded.host)
+            assertEquals(i.port, decoded.port)
+            assertEquals(i.pairCode, decoded.pairCode)
+        }
     }
 
     private fun String.hexToBytes(): ByteArray =

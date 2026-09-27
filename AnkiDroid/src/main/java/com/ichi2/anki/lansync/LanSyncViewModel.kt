@@ -174,6 +174,41 @@ class LanSyncViewModel : ViewModel() {
         }
     }
 
+    /**
+     * Pairing QR text (SPEC-v2 §4.7) for the live session, or null while there is no code or no LAN
+     * address - the digits stay on screen as the manual fallback either way.
+     */
+    val pairingTicket: StateFlow<String?> =
+        combine(_pairingSession, manager.selfAddress, manager.selfPort) { session, address, _ ->
+            if (session == null || address == null) null else manager.buildPairingTicket()
+        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
+
+    /** Scanner half: a QR was read (camera or imported image); decode its ticket and pair. */
+    fun pairWithScanned(text: String) {
+        if (_busy.value) return
+        val ticket =
+            try {
+                LanPairQr.decode(text)
+            } catch (e: LanPairQrException) {
+                Timber.i(e, "Scanned code is not a pairing ticket (%s)", e.code)
+                viewModelScope.launch { send(R.string.lansync_msg_scan_not_pair_qr) }
+                return
+            }
+        _busy.value = true
+        viewModelScope.launch {
+            val result = runCatching { manager.pairWithTicket(ticket) }
+            _busy.value = false
+            result
+                .onSuccess {
+                    refreshHubEndpoint()
+                    send(R.string.lansync_msg_paired)
+                }.onFailure { error ->
+                    Timber.i(error, "QR pairing with %s failed", ticket.name)
+                    send(R.string.lansync_msg_pair_failed)
+                }
+        }
+    }
+
     fun renameSelf(name: String) {
         if (name.isBlank()) return
         manager.setSelfName(name)

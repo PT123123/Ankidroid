@@ -51,6 +51,7 @@ class LanSyncFragment : Fragment() {
                     val keepOnline by viewModel.keepOnline.collectAsStateWithLifecycle()
                     val scheduleSeconds by viewModel.scheduleSeconds.collectAsStateWithLifecycle()
                     val pairingSession by viewModel.pairingSession.collectAsStateWithLifecycle()
+                    val pairingTicket by viewModel.pairingTicket.collectAsStateWithLifecycle()
                     val hubEndpoint by viewModel.hubEndpoint.collectAsStateWithLifecycle()
                     var message by remember { mutableStateOf<Int?>(null) }
 
@@ -73,6 +74,7 @@ class LanSyncFragment : Fragment() {
                         keepOnline = keepOnline,
                         scheduleSeconds = scheduleSeconds,
                         pairingSession = pairingSession,
+                        pairingTicket = pairingTicket,
                         hubEndpoint = hubEndpoint,
                         message = message,
                         onMessageShown = { message = null },
@@ -84,6 +86,7 @@ class LanSyncFragment : Fragment() {
                         onPairHere = viewModel::beginPairingHere,
                         onPairHereDismissed = viewModel::dismissPairingHere,
                         onPairWithCode = viewModel::pairWithCode,
+                        onScanResult = viewModel::pairWithScanned,
                         onSync = viewModel::sync,
                         onSyncAll = viewModel::syncAll,
                         onAdd = viewModel::addPeer,
