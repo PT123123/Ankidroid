@@ -33,7 +33,7 @@
     <string name="night_theme_dark">Dark</string>
 
     <!-- theme_color_labels -->
-    <string name="theme_color">Theme color</string>
+    <string name="theme_color" maxLength="41" comment="Preference title in the settings screen">Theme color</string>
     <string name="theme_color_sky">Sky Blue</string>
     <string name="theme_color_indigo">Indigo</string>
     <string name="theme_color_teal">Teal</string>

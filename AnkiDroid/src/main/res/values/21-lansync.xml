@@ -17,7 +17,6 @@
 
     <string name="lansync_enable" translatable="false">Enable LAN sync</string>
     <string name="lansync_enable_hint" translatable="false">While this screen is open, the device advertises itself on the local network. Data only moves with devices you paired with; pairing codes expire after five minutes and can be used once.</string>
-    <string name="lansync_warning" translatable="false">v2 traffic is encrypted and only flows with paired devices. The plaintext v1 downgrade stays refused until you explicitly allow it below - only do that on a network you control, and check the activity list after each session.</string>
     <string name="lansync_foreground_note" translatable="false">Syncing stops as soon as you leave this screen, unless keep-online is on.</string>
 
     <string name="lansync_this_device" translatable="false">This device</string>
