@@ -11,9 +11,9 @@ import android.webkit.CookieManager
 import android.webkit.ValueCallback
 import android.webkit.WebView
 import androidx.core.content.edit
+import androidx.preference.PreferenceManager
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import com.ichi2.anki.common.preferences.sharedPrefs
 import com.ichi2.anki.common.storage.CollectionHelper.PREF_COLLECTION_PATH
 import com.ichi2.anki.multiprofile.ProfileManager.Companion.KEY_LAST_ACTIVE_PROFILE_ID
 import com.ichi2.anki.multiprofile.ProfileManager.Companion.KEY_WEBVIEW_PROFILE_ID
@@ -44,6 +44,13 @@ class ProfileManagerTest {
 
     private val prefs: SharedPreferences
         get() = context.getSharedPreferences(PROFILE_REGISTRY_FILENAME, Context.MODE_PRIVATE)
+
+    /**
+     * The profile's own default SharedPreferences, which is what [ProfileManager] reads and writes:
+     * [com.ichi2.anki.common.preferences.sharedPrefs] would resolve against the application context
+     * and therefore ignore the profile namespace outside of a restarted process.
+     */
+    private fun Context.profilePrefs(): SharedPreferences = PreferenceManager.getDefaultSharedPreferences(this)
 
     @Before
     fun setUp() {
@@ -325,7 +332,7 @@ class ProfileManagerTest {
         with(ProfileManager.ProfileSwitchContext) { manager.switchActiveProfile(ashishId) }
 
         val reloaded = ProfileManager.create(context)
-        val deckPath = reloaded.activeProfileContext.sharedPrefs().getString(PREF_COLLECTION_PATH, null)
+        val deckPath = reloaded.activeProfileContext.profilePrefs().getString(PREF_COLLECTION_PATH, null)
 
         val expected = File(context.getExternalFilesDir(null), ashishId.value).absolutePath
         assertEquals(expected, deckPath)
@@ -338,7 +345,7 @@ class ProfileManagerTest {
         with(ProfileManager.ProfileSwitchContext) { manager.switchActiveProfile(ashishId) }
 
         val reloaded = ProfileManager.create(context)
-        val deckPath = reloaded.activeProfileContext.sharedPrefs().getString(PREF_COLLECTION_PATH, null)!!
+        val deckPath = reloaded.activeProfileContext.profilePrefs().getString(PREF_COLLECTION_PATH, null)!!
 
         assertTrue("deckPath directory must exist after profile load", File(deckPath).isDirectory)
     }
@@ -380,14 +387,14 @@ class ProfileManagerTest {
         val firstLoad = ProfileManager.create(context)
         val userChosenPath =
             File(context.filesDir, "user_relocated").apply { mkdirs() }.absolutePath
-        firstLoad.activeProfileContext.sharedPrefs().edit(commit = true) {
+        firstLoad.activeProfileContext.profilePrefs().edit(commit = true) {
             putString(PREF_COLLECTION_PATH, userChosenPath)
         }
 
         // Simulate app restart - ProfileManager.create runs again.
         val reloaded = ProfileManager.create(context)
         val deckPath =
-            reloaded.activeProfileContext.sharedPrefs().getString(PREF_COLLECTION_PATH, null)
+            reloaded.activeProfileContext.profilePrefs().getString(PREF_COLLECTION_PATH, null)
 
         assertEquals(
             "User-relocated deckPath must not be overwritten on reload",

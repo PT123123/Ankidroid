@@ -11,8 +11,8 @@ import android.webkit.WebView
 import androidx.annotation.VisibleForTesting
 import androidx.core.content.ContextCompat
 import androidx.core.content.edit
+import androidx.preference.PreferenceManager
 import com.ichi2.anki.common.crashreporting.CrashReportService
-import com.ichi2.anki.common.preferences.sharedPrefs
 import com.ichi2.anki.common.storage.CollectionHelper.PREF_COLLECTION_PATH
 import com.ichi2.anki.common.time.TimeManager
 import com.ichi2.anki.common.time.getTimestamp
@@ -218,7 +218,11 @@ class ProfileManager private constructor(
         val profileId = wrapper.profileId
         if (profileId.isDefault()) return
 
-        val prefs = wrapper.sharedPrefs()
+        // Deliberately not Context.sharedPrefs(): that extension resolves against the
+        // application context, which carries this profile's namespace only once the process has
+        // restarted into it. The collection path belongs to the profile, so it is read and written
+        // through the wrapper itself.
+        val prefs = PreferenceManager.getDefaultSharedPreferences(wrapper)
         if (prefs.getString(PREF_COLLECTION_PATH, null) != null) return
 
         val profileCollectionDir =
