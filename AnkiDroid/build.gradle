@@ -124,6 +124,12 @@ android {
         targetSdk = libs.versions.targetSdk.get().toInteger()
         testApplicationId = "com.ichi2.anki.tests"
         vectorDrawables.useSupportLibrary = true
+        // Fork: 87 values-* directories otherwise go through merge / optimise / lint on every
+        // build and land in resources.arsc. Unlisted locales fall back to English, so a device
+        // set to e.g. Korean still runs the app, just untranslated. Drop this line to ship full
+        // translations again. Note resConfigs matches the *exact* tag: "zh" does not cover the
+        // app's values-zh-rCN / values-zh-rTW, so every variant has to be listed.
+        resConfigs "en", "zh", "zh-rCN", "zh-rTW", "ja"
         testInstrumentationRunner = 'com.ichi2.testutils.NewCollectionPathTestRunner'
 
         // GA4 Measurement Protocol api_secret. Sourced from `local.properties`

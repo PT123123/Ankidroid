@@ -81,14 +81,20 @@ Shape is upstream's; only the palette is forked.
 ## Build
 
 ```sh
-just build-release     # :AnkiDroid:assemblePlayRelease (R8 on, plus the universal APK)
-just install-release   # adb install -r the arm64 APK
+just build-release     # arm64 playRelease only (R8 on, signed with the debug key)
+just install-release   # adb install -r it
 ```
 
-Outputs land in `AnkiDroid/build/outputs/apk/play/release/`:
-`AnkiDroid-play-arm64-v8a-release.apk` and `AnkiDroid-play-universal-release.apk`. Note that
-upstream overrides `versionCode` per ABI split (`322500203` for arm64 = `3 * 1e8 + 22500203`);
-only the universal APK carries the plain `versionCode` from `defaultConfig`.
+Output: `AnkiDroid/build/outputs/apk/play/release/AnkiDroid-play-arm64-v8a-release.apk`. The
+recipes pass `-PabiFilter=arm64-v8a`, so the other three ABIs and the universal APK are not built
+(see [build speed](../development/fork-build-speed.md)). Add `-Duniversal-apk=true` back for a
+release that must install on any architecture. Note that upstream overrides `versionCode` per ABI
+split — the arm64 APK reports `322500203` (`3 * 1e8 + 22500203`), only a universal/unsplit APK
+carries the plain `versionCode` from `defaultConfig`.
+
+`defaultConfig` also pins `resConfigs "en", "zh", "zh-rCN", "zh-rTW", "ja"`: the APK ships 5
+locale configs instead of upstream's 87, so other languages fall back to English. This is a
+distribution decision, not only a build-time one — remove the line to ship every translation.
 
 ## Deliberately unchanged
 
