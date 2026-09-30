@@ -38,6 +38,9 @@ class ActivityStartupMetaTest : RobolectricTest() {
                 .filter { !it.startsWith("org.acra") }
                 .filter { !it.startsWith("leakcanary.internal") }
                 .filter { it != "com.canhub.cropper.CropImageActivity" }
+                // contributed by zxing-android-embedded; reached through the LAN sync pairing flow,
+                // it is not an AnkiDroid screen and has no standalone intent to launch it with
+                .filter { it != "com.journeyapps.barcodescanner.CaptureActivity" }
                 .toTypedArray()
         MatcherAssert.assertThat(testedActivityClassNames, Matchers.containsInAnyOrder(*manifestActivityNames))
     }
