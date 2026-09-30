@@ -42,7 +42,11 @@ Sync is therefore still reachable three ways: 我的设置 ▸ Sync, the pull-do
 **What the sync icon used to carry is gone**: the pending-changes badge and the one-way /
 not-logged-in `!` badge (`updateSyncIconFromState`, `SyncActionProvider`'s tooltip and media-sync
 progress bar). `SyncActionProvider` and `BadgeDrawableBuilder` are now unreferenced but were kept
-to avoid a needless upstream-merge conflict.
+to avoid a needless upstream-merge conflict; their two menu labels
+(`sync_menu_title_one_way_sync`, `sync_menu_title_no_account`) carry
+`tools:ignore="UnusedResources"` for the same reason — `lintVital` treats `UnusedResources` as
+fatal, so a release APK would not assemble otherwise. `checks_action` ("Check", the submenu header
+the `DeckTool` enum replaced) was deleted outright: nothing in the fork or upstream asks for it.
 
 ## Notes for later
 

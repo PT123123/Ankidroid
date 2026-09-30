@@ -8,7 +8,7 @@
   ~ SPDX-FileCopyrightText: Copyright (c) 2010 Norbert Nagold <norbert.nagold@gmail.com>
   -->
 
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
 
     <string name="youre_offline">You are offline</string>
     <string name="sync_error">Sync error</string>
@@ -45,6 +45,8 @@
     <string name="full_sync_confirmation">The requested change will require a full upload of the database when you next synchronize your collection. If you have reviews or other changes waiting on another device that haven’t been synchronized here yet, they will be lost. Continue?</string>
 
     <!-- Deck Picker Sync Icon -->
-    <string name="sync_menu_title_one_way_sync">Sync (one-way)</string>
-    <string name="sync_menu_title_no_account">Sync (log in)</string>
+    <!-- fork: the deck picker has no sync icon any more, so these lost their last caller. They
+         stay with the SyncActionProvider they belong to, which is likewise kept unreferenced. -->
+    <string name="sync_menu_title_one_way_sync" tools:ignore="UnusedResources">Sync (one-way)</string>
+    <string name="sync_menu_title_no_account" tools:ignore="UnusedResources">Sync (log in)</string>
 </resources>

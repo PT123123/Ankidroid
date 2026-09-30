@@ -9,7 +9,8 @@
   separate from Anki's own settings.
 -->
 <resources>
-    <string name="my_settings_title" maxLength="41">My settings</string>
+    <!-- maxLength 28, not 41: the lint rule counts the navigation drawer menu item it titles. -->
+    <string name="my_settings_title" maxLength="28">My settings</string>
     <string name="my_settings_features" maxLength="41">Added features</string>
     <string name="my_settings_tools" maxLength="41">Tools</string>
     <string name="my_settings_tools_summary" maxLength="200">These actions run in the deck list screen</string>

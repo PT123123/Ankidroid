@@ -134,7 +134,6 @@
     <string name="preview_progress_bar_text" comment="What card we are on out of how many in card previewer progress bar">%1$d of %2$d</string>
     <string name="rename" comment="Confirm that the renaming action should be processed." maxLength="28">Rename</string>
 
-    <string name="checks_action" maxLength="28">Check</string>
     <string name="unknown_type_field_warning">Type answer: unknown field %s</string>
     <string name="delete_deck" comment="Message on a progress bar starting a deck is being deleted.">Deleting deck…</string>
 
