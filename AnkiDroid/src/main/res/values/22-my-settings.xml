@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  ~ SPDX-License-Identifier: GPL-3.0-or-later
+  ~ SPDX-FileCopyrightText: 2026 PT123123 <31439216+PT123123@users.noreply.github.com>
+  -->
+<!--
+  Strings of the fork's "My settings" screen, which keeps the additions made on top of upstream
+  (theme color, profiles, LAN sync) and the actions which used to be in the deck picker toolbar
+  separate from Anki's own settings.
+-->
+<resources>
+    <string name="my_settings_title" maxLength="41">My settings</string>
+    <string name="my_settings_features" maxLength="41">Added features</string>
+    <string name="my_settings_tools" maxLength="41">Tools</string>
+    <string name="my_settings_tools_summary" maxLength="200">These actions run in the deck list screen</string>
+</resources>

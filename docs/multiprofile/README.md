@@ -11,7 +11,7 @@
 Multi-profile / multi-account is **enabled by default** in anki-plus:
 
 - `Prefs.switchProfileEnabled` (`Prefs.kt`) defaults to `true`, so the "Switch Profile" entry is
-  visible in Settings (`HeaderFragment`) and profile routing is active without touching developer options.
+  visible in the fork's **我的设置** (`MySettingsFragment`, see [my-settings](../my-settings/README.md)) and profile routing is active without touching developer options.
 - Every `AnkiActivity` base context is routed through `ProfileManager.profileContextFor()` in
   `AnkiActivity.attachBaseContext`, so per-profile storage (namespaced prefs, profile root dirs)
   applies app-wide.

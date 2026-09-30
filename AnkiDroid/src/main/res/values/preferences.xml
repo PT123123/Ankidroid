@@ -38,6 +38,10 @@
     <string name="pref_enable_switch_profile_key">enableSwitchProfile</string>
     <!-- LAN sync (fork feature) -->
     <string name="pref_lansync_screen_key">lanSyncScreen</string>
+    <!-- "My settings" screen (fork feature) -->
+    <string name="pref_my_settings_screen_key">mySettingsScreen</string>
+    <string name="pref_my_settings_features_category_key">mySettingsFeatures</string>
+    <string name="pref_my_settings_tools_category_key">mySettingsTools</string>
     <!-- Appearance -->
     <string name="pref_appearance_screen_key">appearance_preference_group</string>
     <string name="app_theme_key">appTheme</string>

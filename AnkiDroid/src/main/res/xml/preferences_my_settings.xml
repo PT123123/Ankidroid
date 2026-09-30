@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  ~ SPDX-License-Identifier: GPL-3.0-or-later
+  ~ SPDX-FileCopyrightText: 2026 PT123123 <31439216+PT123123@users.noreply.github.com>
+  -->
+<!--
+  The fork's own settings page. It holds what AnkiDroid upstream does not have (theme color,
+  profiles, LAN sync) plus the actions which used to be in the deck picker toolbar; upstream's
+  settings keep their stock content.
+-->
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:key="@string/pref_my_settings_screen_key"
+    android:title="@string/my_settings_title">
+
+    <PreferenceCategory
+        android:key="@string/pref_my_settings_features_category_key"
+        android:title="@string/my_settings_features">
+
+        <ListPreference
+            android:defaultValue="@string/theme_color_emerald_value"
+            android:entries="@array/theme_color_labels"
+            android:entryValues="@array/theme_color_values"
+            android:icon="@drawable/ic_palette"
+            android:key="@string/theme_color_key"
+            android:title="@string/theme_color"
+            app:useSimpleSummaryProvider="true" />
+
+        <com.ichi2.preferences.HeaderPreference
+            android:fragment="com.ichi2.anki.preferences.profiles.SwitchProfilesFragment"
+            android:icon="@drawable/ic_switch_profile"
+            android:key="@string/pref_switch_profile_screen_key"
+            android:title="@string/switch_profile" />
+
+        <com.ichi2.preferences.HeaderPreference
+            android:fragment="com.ichi2.anki.lansync.LanSyncFragment"
+            android:icon="@drawable/ic_sync"
+            android:key="@string/pref_lansync_screen_key"
+            android:summary="@string/lansync_summary"
+            android:title="@string/lansync_title" />
+    </PreferenceCategory>
+
+    <PreferenceCategory
+        android:key="@string/pref_my_settings_tools_category_key"
+        android:summary="@string/my_settings_tools_summary"
+        android:title="@string/my_settings_tools">
+        <!-- Filled by MySettingsFragment from DeckTool.entries -->
+    </PreferenceCategory>
+</PreferenceScreen>

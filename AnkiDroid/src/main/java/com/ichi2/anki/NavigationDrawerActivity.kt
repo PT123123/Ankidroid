@@ -49,6 +49,8 @@ import com.ichi2.anki.common.destinations.navigate
 import com.ichi2.anki.common.destinations.toIntent
 import com.ichi2.anki.common.preferences.sharedPrefs
 import com.ichi2.anki.common.utils.android.HandlerUtils
+import com.ichi2.anki.preferences.MySettingsFragment
+import com.ichi2.anki.preferences.PreferencesActivity
 import com.ichi2.anki.workarounds.FullDraggableContainerFix
 import timber.log.Timber
 import com.ichi2.anki.common.android.R as CommonR
@@ -397,6 +399,11 @@ abstract class NavigationDrawerActivity(
                         Timber.i("Navigating to settings")
                         openSettings()
                     }
+
+                    R.id.nav_my_settings -> {
+                        Timber.i("Navigating to the fork settings")
+                        openMySettings()
+                    }
                 }
             }
         closeDrawer()
@@ -420,6 +427,13 @@ abstract class NavigationDrawerActivity(
      */
     protected fun openSettings() {
         preferencesLauncher.navigate(PreferencesDestination.Root)
+    }
+
+    /**
+     * Opens the fork's own Settings screen (theme color, profiles, LAN sync, deck tools).
+     */
+    protected fun openMySettings() {
+        startActivity(PreferencesActivity.getIntent(this, MySettingsFragment::class))
     }
 
     /**

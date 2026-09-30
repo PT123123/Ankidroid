@@ -55,7 +55,6 @@ class HeaderFragment : SettingsFragment() {
 
         requirePreference<HeaderPreference>(R.string.pref_review_reminders_screen_key).isVisible = Prefs.newReviewRemindersEnabled
         requirePreference<HeaderPreference>(R.string.pref_notifications_screen_key).isVisible = !Prefs.newReviewRemindersEnabled
-        requirePreference<HeaderPreference>(R.string.pref_switch_profile_screen_key).isVisible = Prefs.switchProfileEnabled
 
         configureSearchBar(
             requireActivity() as AppCompatActivity,
@@ -112,6 +111,8 @@ class HeaderFragment : SettingsFragment() {
                 }
 
                 index(R.xml.preferences_appearance)
+                index(R.xml.preferences_my_settings)
+                    .addBreadcrumb(activity.getString(R.string.my_settings_title))
                 if (!Prefs.isNewStudyScreenEnabled) {
                     index(R.xml.preferences_custom_buttons)
                         .addBreadcrumb(TR.preferencesAppearance())

@@ -53,6 +53,14 @@ class PreferencesAnalyticsTest : RobolectricTest() {
             R.string.pref_backup_limits_screen_key, // backupLimitsScreen
             R.string.about_screen_key, // aboutScreen
             R.string.pref_switch_profile_screen_key, // switchProfileScreen
+            // fork (Anki Plus): the "My settings" screen and its categories have no value
+            R.string.pref_my_settings_screen_key, // mySettingsScreen
+            R.string.pref_my_settings_features_category_key, // mySettingsFeatures
+            R.string.pref_my_settings_tools_category_key, // mySettingsTools
+            R.string.pref_lansync_screen_key, // lanSyncScreen
+            // fork: which accent the user picked says nothing about usage, and the
+            // value is a color name
+            R.string.theme_color_key, // themeColor
             // Categories: don't have a value
             R.string.study_screen_category_key, // studyScreenAppearance
             R.string.pref_appearance_screen_key, // appearance_preference_group

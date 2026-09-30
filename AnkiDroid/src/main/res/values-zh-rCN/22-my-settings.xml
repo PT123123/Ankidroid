@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  ~ SPDX-License-Identifier: GPL-3.0-or-later
+  ~ SPDX-FileCopyrightText: 2026 PT123123 <31439216+PT123123@users.noreply.github.com>
+  -->
+<resources>
+    <string name="my_settings_title" maxLength="28">我的设置</string>
+    <string name="my_settings_features" maxLength="41">我添加的功能</string>
+    <string name="my_settings_tools" maxLength="28">常用工具</string>
+    <string name="my_settings_tools_summary" maxLength="200">这些操作会在牌组界面执行</string>
+</resources>

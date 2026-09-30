@@ -48,7 +48,6 @@ import androidx.core.content.pm.ShortcutManagerCompat
 import androidx.core.graphics.drawable.IconCompat
 import androidx.core.util.component1
 import androidx.core.util.component2
-import androidx.core.view.MenuItemCompat
 import androidx.core.view.OnReceiveContentListener
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat.Type.displayCutout
@@ -63,15 +62,11 @@ import androidx.fragment.app.FragmentManager
 import androidx.fragment.app.commit
 import androidx.fragment.app.commitNow
 import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.flowWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
-import androidx.work.WorkInfo
-import androidx.work.WorkManager
 import anki.collection.OpChanges
 import anki.sync.SyncStatusResponse
-import com.google.android.material.progressindicator.LinearProgressIndicator
 import com.google.android.material.snackbar.BaseTransientBottomBar
 import com.google.android.material.snackbar.Snackbar
 import com.ichi2.anki.BottomNavController.NavigationItem
@@ -125,7 +120,6 @@ import com.ichi2.anki.deckpicker.DeckPickerViewModel.StartupResponse
 import com.ichi2.anki.deckpicker.EmptyCardsResult
 import com.ichi2.anki.deckpicker.OptionsMenuState
 import com.ichi2.anki.deckpicker.ShortcutData
-import com.ichi2.anki.deckpicker.SyncIconState
 import com.ichi2.anki.dialogs.AsyncDialogFragment
 import com.ichi2.anki.dialogs.BackupPromptDialog
 import com.ichi2.anki.dialogs.CreateDeckDialog
@@ -195,10 +189,8 @@ import com.ichi2.anki.widgets.DeckAdapter
 import com.ichi2.anki.widgets.DeckHierarchyLinesDecoration
 import com.ichi2.anki.worker.SyncMediaWorker
 import com.ichi2.anki.worker.SyncWorker
-import com.ichi2.anki.worker.UniqueWorkNames
 import com.ichi2.themes.Themes
 import com.ichi2.ui.AccessibleSearchView
-import com.ichi2.ui.BadgeDrawableBuilder
 import com.ichi2.utils.ClipboardUtil.IMPORT_MIME_TYPES
 import com.ichi2.utils.ImportUtils
 import com.ichi2.utils.NetworkUtils
@@ -215,7 +207,6 @@ import com.ichi2.utils.showDialogIfWebViewOutdated
 import com.ichi2.utils.title
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -243,9 +234,9 @@ import com.ichi2.anki.common.android.R as CommonR
  *   * Filtering decks (if more than 10) [toolbarSearchView]
  * * Controlling syncs
  *   * A user may [pull down][pullToSyncWrapper] on the 'tree view' to sync
- *   * A [button][updateSyncIconFromState] which relies on [SyncIconState] to display whether a sync is needed
  *   * Blocks the UI and displays sync progress when syncing
  * * Displaying 'General' AnkiDroid options: backups, import, 'check media' etc...
+ *   * These actions now live in the "My settings" screen: [com.ichi2.anki.preferences.MySettingsFragment] via [DeckTool]
  *   * General handler for error/global dialogs (search for 'as DeckPicker')
  *   * Such as import: [ImportViewModel]
  * * A Floating Action Button [floatingActionMenu] allowing the user to quickly add notes/cards.
@@ -312,7 +303,11 @@ open class DeckPicker :
         addCallback(activeSnackbarCallback)
     }
 
-    private var syncMediaProgressJob: Job? = null
+    /**
+     * Maintenance action requested by another screen (see [DeckTool]); performed once the
+     * collection is usable. Cleared when it runs.
+     */
+    private var pendingDeckTool: DeckTool? = null
 
     // flag keeping track of when the app has been paused
     var activityPaused = false
@@ -511,6 +506,7 @@ open class DeckPicker :
             Timber.d("launched from introduction activity login: syncing")
             syncOnResume = true
         }
+        intent.deckToolExtra()?.let { pendingDeckTool = it }
 
         setViewBinding(binding)
         if (!fragmented) {
@@ -1194,14 +1190,9 @@ open class DeckPicker :
         }
         toolbarSearchView?.maxWidth = Integer.MAX_VALUE
 
-        menu.findItem(R.id.action_export_collection)?.title = TR.actionsExport()
-        menu.findItem(R.id.action_import)?.title = TR.actionsImport()
-        menu.findItem(R.id.action_check_database)?.title = TR.sentenceCase.checkDatabase
-        menu.findItem(R.id.action_check_media)?.title = TR.sentenceCase.checkMediaAction
-        menu.findItem(R.id.action_empty_cards)?.title = TR.sentenceCase.emptyCards
         menu.findItem(R.id.action_deck_rename)?.title = TR.sentenceCase.renameDeck
         menu.findItem(R.id.action_deck_delete)?.title = TR.sentenceCase.deleteDeck
-        setupMediaSyncMenuItem(menu)
+
         // redraw menu synchronously to avoid flicker
         updateMenuFromState(menu)
         updateSearchVisibilityFromState(menu)
@@ -1217,33 +1208,6 @@ open class DeckPicker :
                 updateMenuFromState(menu)
             }
         return super.onCreateOptionsMenu(menu)
-    }
-
-    fun setupMediaSyncMenuItem(menu: Menu) {
-        // shouldn't be necessary, but `invalidateOptionsMenu()` is called way more than necessary
-        syncMediaProgressJob?.cancel()
-
-        val syncItem = menu.findItem(R.id.action_sync)
-        val progressIndicator =
-            syncItem.actionView
-                ?.findViewById<LinearProgressIndicator>(R.id.progress_indicator)
-
-        val workManager = WorkManager.getInstance(this)
-        val flow = workManager.getWorkInfosForUniqueWorkFlow(UniqueWorkNames.SYNC_MEDIA)
-
-        syncMediaProgressJob =
-            lifecycleScope.launch {
-                flow.flowWithLifecycle(lifecycle).collectLatest {
-                    val workInfo = it.lastOrNull()
-                    if (workInfo?.state == WorkInfo.State.RUNNING && progressIndicator?.isVisible == false) {
-                        Timber.i("DeckPicker: Showing media sync progress indicator")
-                        progressIndicator.isVisible = true
-                    } else if (progressIndicator?.isVisible == true) {
-                        Timber.i("DeckPicker: Hiding media sync progress indicator")
-                        progressIndicator.isVisible = false
-                    }
-                }
-            }
     }
 
     private fun setupSearchIcon(menuItem: MenuItem) {
@@ -1291,7 +1255,6 @@ open class DeckPicker :
     fun updateMenuFromState(menu: Menu) {
         viewModel.optionsMenuState?.run {
             updateUndoLabelFromState(menu.findItem(R.id.action_undo), undoLabel, undoAvailable)
-            updateSyncIconFromState(menu.findItem(R.id.action_sync), this)
         }
         updateDeckRelatedMenuItems(menu)
     }
@@ -1329,38 +1292,6 @@ open class DeckPicker :
         }
     }
 
-    private fun updateSyncIconFromState(
-        menuItem: MenuItem,
-        state: OptionsMenuState,
-    ) {
-        val provider =
-            MenuItemCompat.getActionProvider(menuItem) as? SyncActionProvider
-                ?: return
-        val tooltipText =
-            when (state.syncIcon) {
-                SyncIconState.Normal, SyncIconState.PendingChanges -> R.string.button_sync
-                SyncIconState.OneWay -> R.string.sync_menu_title_one_way_sync
-                SyncIconState.NotLoggedIn -> R.string.sync_menu_title_no_account
-            }
-        provider.setTooltipText(getString(tooltipText))
-        when (state.syncIcon) {
-            SyncIconState.Normal -> {
-                BadgeDrawableBuilder.removeBadge(provider)
-            }
-            SyncIconState.PendingChanges -> {
-                BadgeDrawableBuilder(this)
-                    .withColorAttr(R.attr.badgeWarningColor)
-                    .replaceBadge(provider)
-            }
-            SyncIconState.OneWay, SyncIconState.NotLoggedIn -> {
-                BadgeDrawableBuilder(this)
-                    .withText('!')
-                    .withColorAttr(R.attr.badgeErrorColor)
-                    .replaceBadge(provider)
-            }
-        }
-    }
-
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         if (drawerToggle.onOptionsItemSelected(item)) {
             return true
@@ -1373,52 +1304,6 @@ open class DeckPicker :
             }
             R.id.deck_picker_action_filter -> {
                 Timber.i("DeckPicker:: Search button pressed")
-                return true
-            }
-            R.id.action_sync -> {
-                Timber.i("DeckPicker:: Sync button pressed")
-                toolbarSearchItem?.collapseActionView()
-                val actionProvider = MenuItemCompat.getActionProvider(item) as? SyncActionProvider
-                if (actionProvider?.isProgressShown == true) {
-                    launchCatchingTask {
-                        monitorMediaSync(this@DeckPicker)
-                    }
-                } else {
-                    sync()
-                }
-                return true
-            }
-            R.id.action_import -> {
-                Timber.i("DeckPicker:: Import button pressed")
-                showImportDialog()
-                return true
-            }
-            R.id.action_check_database -> {
-                Timber.i("DeckPicker:: Check database button pressed")
-                showDatabaseErrorDialog(DatabaseErrorDialogType.DIALOG_CONFIRM_DATABASE_CHECK)
-                return true
-            }
-            R.id.action_check_media -> {
-                Timber.i("DeckPicker:: Check media button pressed")
-                showMediaCheckDialog()
-                return true
-            }
-            R.id.action_empty_cards -> {
-                Timber.i("DeckPicker:: Empty cards button pressed")
-                EmptyCardsDialogFragment().show(
-                    supportFragmentManager,
-                    EmptyCardsDialogFragment.TAG,
-                )
-                return true
-            }
-            R.id.action_model_browser_open -> {
-                Timber.i("DeckPicker:: Model browser button pressed")
-                viewModel.openManageNoteTypes()
-                return true
-            }
-            R.id.action_restore_backup -> {
-                Timber.i("DeckPicker:: Restore from backup button pressed")
-                showDatabaseErrorDialog(DatabaseErrorDialogType.DIALOG_CONFIRM_RESTORE_BACKUP)
                 return true
             }
             R.id.action_deck_rename -> {
@@ -1436,17 +1321,30 @@ open class DeckPicker :
                 }
                 return true
             }
-            R.id.action_export_collection -> {
-                Timber.i("DeckPicker:: Export menu item selected")
-                ExportDialogFragment.newInstance().show(supportFragmentManager, "exportDialog")
-                return true
-            }
-            R.id.action_create_backup -> {
-                Timber.i("DeckPicker::Create backup")
-                createBackup()
-                return true
-            }
             else -> return super.onOptionsItemSelected(item)
+        }
+    }
+
+    /**
+     * Runs one of the maintenance actions which used to live in the toolbar overflow menu.
+     * They are now entries of the "My settings" screen, which returns here through
+     * [EXTRA_DECK_TOOL].
+     */
+    fun runDeckTool(tool: DeckTool) {
+        Timber.i("DeckPicker:: running deck tool %s", tool)
+        when (tool) {
+            DeckTool.SYNC -> sync()
+            DeckTool.CHECK_DATABASE ->
+                showDatabaseErrorDialog(DatabaseErrorDialogType.DIALOG_CONFIRM_DATABASE_CHECK)
+            DeckTool.CHECK_MEDIA -> showMediaCheckDialog()
+            DeckTool.EMPTY_CARDS ->
+                EmptyCardsDialogFragment().show(supportFragmentManager, EmptyCardsDialogFragment.TAG)
+            DeckTool.CREATE_BACKUP -> createBackup()
+            DeckTool.RESTORE_BACKUP ->
+                showDatabaseErrorDialog(DatabaseErrorDialogType.DIALOG_CONFIRM_RESTORE_BACKUP)
+            DeckTool.NOTE_TYPES -> viewModel.openManageNoteTypes()
+            DeckTool.IMPORT -> showImportDialog()
+            DeckTool.EXPORT -> ExportDialogFragment.newInstance().show(supportFragmentManager, "exportDialog")
         }
     }
 
@@ -1502,6 +1400,11 @@ open class DeckPicker :
 
     fun refreshState() {
         // Due to the App Introduction, this may be called before permission has been granted.
+        pendingDeckTool?.let { tool ->
+            pendingDeckTool = null
+            runDeckTool(tool)
+            return
+        }
         if (syncOnResume && hasCollectionStoragePermissions()) {
             syncOnResume = false
             Timber.i("Performing Sync on Resume")
@@ -2419,6 +2322,11 @@ open class DeckPicker :
         const val INTENT_SYNC_FROM_LOGIN = "syncFromLogin"
 
         /**
+         * Key of the [DeckTool] name which "My settings" asks the deck picker to run.
+         */
+        const val EXTRA_DECK_TOOL = "deckTool"
+
+        /**
          * Available options performed by other activities (request codes for onActivityResult())
          */
         @VisibleForTesting
@@ -2446,6 +2354,18 @@ open class DeckPicker :
                 putExtra(INTENT_SYNC_FROM_LOGIN, true)
             }
         }
+
+        /**
+         * Builds an intent which opens the deck picker and runs [tool] once the collection is up.
+         * Used by the "My settings" screen, where the former toolbar overflow actions live now.
+         */
+        fun getIntentForTool(
+            context: Context,
+            tool: DeckTool,
+        ) = getIntent(context).apply {
+            addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
+            putExtra(EXTRA_DECK_TOOL, tool.name)
+        }
     }
 
     override fun onNewIntent(intent: Intent) {
@@ -2455,6 +2375,15 @@ open class DeckPicker :
             Timber.i("Sync requested from Login")
             this.syncOnResume = true
         }
+        intent.deckToolExtra()?.let { pendingDeckTool = it }
+    }
+
+    /** The tool passed through [EXTRA_DECK_TOOL], or null when absent or unknown. */
+    private fun Intent.deckToolExtra(): DeckTool? {
+        val name = getStringExtra(EXTRA_DECK_TOOL) ?: return null
+        return DeckTool.entries
+            .firstOrNull { it.name == name }
+            .also { if (it == null) Timber.w("DeckPicker: unknown deck tool %s", name) }
     }
 
     override fun opExecuted(

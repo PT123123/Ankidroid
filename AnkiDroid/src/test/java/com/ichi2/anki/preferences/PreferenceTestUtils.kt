@@ -90,7 +90,12 @@ object PreferenceTestUtils {
 
     /** @return [List] of all the distinct preferences fragments **/
     fun getAllPreferencesFragments(context: Context): List<Fragment> {
-        val fragments = getFragmentsFromXmlRecursively(context, R.xml.preference_headers) + HeaderFragment()
+        // MySettingsFragment is reached from the navigation drawer, so it is not a header of
+        // preference_headers.xml and has to be listed explicitly.
+        val fragments =
+            getFragmentsFromXmlRecursively(context, R.xml.preference_headers) +
+                HeaderFragment() +
+                MySettingsFragment()
         return fragments.distinctBy { it::class } // and remove any repeated fragments
     }
 

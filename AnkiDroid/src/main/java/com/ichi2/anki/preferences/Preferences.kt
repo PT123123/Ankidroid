@@ -312,6 +312,7 @@ fun getFragmentFromXmlRes(
         R.xml.preferences_custom_sync_server -> CustomSyncServerSettingsFragment()
         R.xml.preferences_notifications -> NotificationsSettingsFragment()
         R.xml.preferences_appearance -> AppearanceSettingsFragment()
+        R.xml.preferences_my_settings -> MySettingsFragment()
         R.xml.preferences_controls -> ControlsSettingsFragment()
         R.xml.preferences_reviewer_controls -> ControlsSettingsFragment()
         R.xml.preferences_previewer_controls -> ControlsSettingsFragment()
