@@ -81,7 +81,9 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.ichi2.anki"
+        // Fork identity: the namespace (Java/Kotlin package) stays com.ichi2.anki, only the
+        // application id differs, so this build coexists with upstream AnkiDroid on one device.
+        applicationId = "com.pt123123.ankiplus"
         buildConfigField "Boolean", "CI", (System.getenv("CI") == "true").toString()
         buildConfigField "String", "ACRA_URL", '"https://ankidroid.org/acra/report"'
         buildConfigField "String", "BACKEND_VERSION", "\"${libs.versions.ankiBackend.get()}\""
@@ -90,7 +92,7 @@ android {
         buildConfigField "long", "BUILD_TIME", buildTimeMillis.get()
         // whether UI elements linking to external donation pages are shown ('play' hides them)
         buildConfigField "Boolean", "SHOW_DONATE_LINKS", "true"
-        resValue "string", "app_name", "AnkiDroid"
+        resValue "string", "app_name", "Anki Plus"
 
         // The version number is of the form:
         // <major>.<minor>.<maintenance>[dev|alpha<build>|beta<build>|]
@@ -157,10 +159,13 @@ android {
                 keyAlias System.getenv("KEYALIAS")
                 keyPassword System.getenv("KEYPWD")
             } else {
-                storeFile file("${rootDir}/tools/fallback-release-keystore.jks")
-                storePassword "Test@123"
-                keyAlias "my-key"
-                keyPassword "Test@123"
+                // Fork default: the local Android debug key, so release APKs are installable
+                // side-by-side with upstream and re-signable without keystore bookkeeping.
+                storeType = "PKCS12"
+                storeFile file("${homePath}/.android/debug.keystore")
+                storePassword "android"
+                keyAlias "androiddebugkey"
+                keyPassword "android"
             }
         }
     }
@@ -213,8 +218,8 @@ android {
                 resValue "string", "app_name", project.property("customName")
             }
 
-            resValue 'color', 'anki_foreground_icon_color_0', "#FF29B6F6"
-            resValue 'color', 'anki_foreground_icon_color_1', "#FF0288D1"
+            resValue 'color', 'anki_foreground_icon_color_0', "#FF6EE7B7"
+            resValue 'color', 'anki_foreground_icon_color_1', "#FF0D9488"
         }
 
         create('benchmark') {

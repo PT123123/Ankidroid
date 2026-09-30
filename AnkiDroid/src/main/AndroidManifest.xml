@@ -51,6 +51,9 @@
                 android:description="@string/read_write_permission_description"
                 android:protectionLevel="dangerous"
                 />
+    <!-- Declared by the :api library for upstream's application id; the fork's own permission is
+         the ${applicationId} one above, so asking for the official app's would be meaningless. -->
+    <uses-permission android:name="com.ichi2.anki.permission.READ_WRITE_DATABASE" tools:node="remove" />
 
     <supports-screens
         android:anyDensity="true"

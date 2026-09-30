@@ -7,8 +7,19 @@
   <group android:translateX="47.28358"
       android:translateY="47.28358">
     <path
-        android:pathData="M0,0H192V192H0Z"
-        android:fillColor="#434748"/>
+        android:pathData="M0,0H192V192H0Z">
+      <aapt:attr name="android:fillColor">
+        <gradient
+            android:startY="0"
+            android:startX="96"
+            android:endY="192"
+            android:endX="96"
+            android:type="linear">
+          <item android:offset="0" android:color="#FF0F4938"/>
+          <item android:offset="1" android:color="#FF0A2442"/>
+        </gradient>
+      </aapt:attr>
+    </path>
     <path
         android:fillColor="#FF000000"
         android:pathData="M37.831,108.207l30.617,0l0,7.133l-30.617,0z"
