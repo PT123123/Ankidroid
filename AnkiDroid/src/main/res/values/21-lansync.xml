@@ -81,7 +81,6 @@
     <string name="lansync_direction_push" translatable="false">in</string>
     <string name="lansync_direction_pull" translatable="false">out</string>
     <string name="lansync_direction_probe" translatable="false">found</string>
-    <string name="lansync_result_ok" translatable="false">ok</string>
     <string name="lansync_result_error" translatable="false">failed</string>
     <string name="lansync_result_busy" translatable="false">busy</string>
 

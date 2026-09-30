@@ -825,14 +825,13 @@ private fun LogRow(entry: LanLogEntry) {
                 LanDirection.PROBE -> R.string.lansync_direction_probe
             },
         )
+    // Only a problem is worth naming: a successful leg shows direction, size and duration.
     val result =
-        stringResource(
-            when (entry.result) {
-                LanResult.OK -> R.string.lansync_result_ok
-                LanResult.ERROR -> R.string.lansync_result_error
-                LanResult.BUSY -> R.string.lansync_result_busy
-            },
-        )
+        when (entry.result) {
+            LanResult.OK -> null
+            LanResult.ERROR -> stringResource(R.string.lansync_result_error)
+            LanResult.BUSY -> stringResource(R.string.lansync_result_busy)
+        }
     val size = if (entry.bytes > 0L) Formatter.formatShortFileSize(context, entry.bytes) else null
     val summary =
         listOfNotNull(

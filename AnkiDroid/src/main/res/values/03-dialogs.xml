@@ -300,7 +300,6 @@ also changes the interval of the card"
 
     <!-- Switch profile -->
     <string name="rename_profile" comment="Title of the dialog to rename an existing profile">Rename profile</string>
-    <string name="profile_current_label" comment="Badge shown next to the profile currently in use">Current</string>
     <string name="profile_switch_confirm_title" comment="Title of the confirmation dialog when switching profiles. %1$s is the profile name">Switch to “%1$s”?</string>
     <string name="profile_switch_confirm_message" comment="Body of the confirmation dialog when switching profiles">AnkiDroid will restart with this profile’s decks, settings and AnkiWeb sign-in.</string>
     <string name="profile_delete_confirm_title" comment="Title of the confirmation dialog when deleting a profile. %1$s is the profile name">Delete “%1$s”?</string>

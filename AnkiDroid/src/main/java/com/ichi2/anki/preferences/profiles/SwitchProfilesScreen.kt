@@ -38,6 +38,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.ichi2.anki.CollectionManager
 import com.ichi2.anki.R
 import com.ichi2.anki.multiprofile.ProfileId
 import com.ichi2.anki.multiprofile.ProfileName
@@ -236,8 +237,9 @@ private fun ProfileRow(
                 overflow = TextOverflow.Ellipsis,
             )
             if (isActive) {
+                // Anki already ships a translated "Current"; a new string would be untranslated.
                 Text(
-                    text = stringResource(R.string.profile_current_label),
+                    text = CollectionManager.TR.changeNotetypeCurrent(),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.primary,
                 )
@@ -246,7 +248,7 @@ private fun ProfileRow(
         if (isActive) {
             Icon(
                 painterResource(R.drawable.ic_check_circle_24),
-                contentDescription = stringResource(R.string.profile_current_label),
+                contentDescription = CollectionManager.TR.changeNotetypeCurrent(),
                 tint = MaterialTheme.colorScheme.primary,
             )
         }
