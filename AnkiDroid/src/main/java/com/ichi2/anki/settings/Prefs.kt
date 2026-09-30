@@ -418,8 +418,10 @@ open class PrefsRepository(
     val devIsCardBrowserFragmented: Boolean
         get() = getBoolean(R.string.dev_card_browser_fragmented, false)
 
+    // Fork: the upstream developer option is the shipped navigation of Anki Plus, so the
+    // default is on and the toggle only serves as an escape hatch.
     val devBottomNavEnabled: Boolean
-        get() = getBoolean(R.string.dev_bottom_nav_key, false)
+        get() = getBoolean(R.string.dev_bottom_nav_key, true)
 
     @set:VisibleForTesting
     var devUsingCardBrowserSearchView: Boolean by booleanPref(R.string.dev_card_browser_search_view, false)

@@ -13,6 +13,7 @@ import com.ichi2.anki.android.view.locationInWindow
 import com.ichi2.anki.common.preferences.sharedPrefs
 import com.ichi2.testutils.BackupManagerTestUtilities
 import com.ichi2.testutils.dispatchInsets
+import com.ichi2.testutils.withBooleanPreference
 import com.ichi2.utils.dp
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers.equalTo
@@ -30,48 +31,54 @@ import org.robolectric.Robolectric
 class DeckPickerInsetsTest : RobolectricTest() {
     @Test
     fun `FAB is above the navigation bar`() =
-        withDeckPicker(deckCount = 2) { deckPicker ->
-            val navBarBottom = 48.dp.toPx(targetContext)
-            deckPicker.dispatchInsets(navBarBottom = 48.dp)
-            deckPicker.layoutForTest()
+        // Anki Plus shows the bottom navigation bar, which raises the FAB by its own height on
+        // top of the system inset; this test is about the system inset alone.
+        withBooleanPreference(R.string.dev_bottom_nav_key, false) {
+            withDeckPicker(deckCount = 2) { deckPicker ->
+                val navBarBottom = 48.dp.toPx(targetContext)
+                deckPicker.dispatchInsets(navBarBottom = 48.dp)
+                deckPicker.layoutForTest()
 
-            // the studied-today line refreshes after the insets have been applied (as on resume)
-            deckPicker.viewModel.flowOfStudiedTodayStats.value = "Studied 3 cards in 3 minutes today"
-            deckPicker.layoutForTest()
+                // the studied-today line refreshes after the insets have been applied (as on resume)
+                deckPicker.viewModel.flowOfStudiedTodayStats.value = "Studied 3 cards in 3 minutes today"
+                deckPicker.layoutForTest()
 
-            val summary = deckPicker.deckPickerBinding.reviewSummaryTextView
-            val summaryTextHeight = summary.height - summary.paddingBottom
-            val fabColumnPadding = 12.dp.toPx(targetContext)
-            val fabMargin = 16.dp.toPx(targetContext)
-            assertThat(
-                "the FAB is unchanged compared to its pre-edge-to-edge position",
-                deckPicker.fabDistanceToWindowBottom,
-                equalTo(navBarBottom + fabColumnPadding + fabMargin + summaryTextHeight / 2),
-            )
+                val summary = deckPicker.deckPickerBinding.reviewSummaryTextView
+                val summaryTextHeight = summary.height - summary.paddingBottom
+                val fabColumnPadding = 12.dp.toPx(targetContext)
+                val fabMargin = 16.dp.toPx(targetContext)
+                assertThat(
+                    "the FAB is unchanged compared to its pre-edge-to-edge position",
+                    deckPicker.fabDistanceToWindowBottom,
+                    equalTo(navBarBottom + fabColumnPadding + fabMargin + summaryTextHeight / 2),
+                )
+            }
         }
 
     @Test
     fun `the FAB follows the summary line's layout passes`() =
-        withDeckPicker(deckCount = 2) { deckPicker ->
+        withBooleanPreference(R.string.dev_bottom_nav_key, false) {
             // note: the summary layout can be updated without the text event firing
             // (e.g. screen width change)
-            val navBarBottom = 48.dp.toPx(targetContext)
-            deckPicker.dispatchInsets(navBarBottom = 48.dp)
-            deckPicker.viewModel.flowOfStudiedTodayStats.value = "Studied 3 cards in 3 minutes today"
-            deckPicker.layoutForTest()
+            withDeckPicker(deckCount = 2) { deckPicker ->
+                val navBarBottom = 48.dp.toPx(targetContext)
+                deckPicker.dispatchInsets(navBarBottom = 48.dp)
+                deckPicker.viewModel.flowOfStudiedTodayStats.value = "Studied 3 cards in 3 minutes today"
+                deckPicker.layoutForTest()
 
-            val summary = deckPicker.deckPickerBinding.reviewSummaryTextView
-            summary.text = "Studied 3 cards in 3 minutes today\n(0.05s/card)"
-            deckPicker.layoutForTest()
+                val summary = deckPicker.deckPickerBinding.reviewSummaryTextView
+                summary.text = "Studied 3 cards in 3 minutes today\n(0.05s/card)"
+                deckPicker.layoutForTest()
 
-            val summaryTextHeight = summary.height - summary.paddingBottom
-            val fabColumnPadding = 12.dp.toPx(targetContext)
-            val fabMargin = 16.dp.toPx(targetContext)
-            assertThat(
-                "the FAB rests half the re-wrapped summary line above its padded position",
-                deckPicker.fabDistanceToWindowBottom,
-                equalTo(navBarBottom + fabColumnPadding + fabMargin + summaryTextHeight / 2),
-            )
+                val summaryTextHeight = summary.height - summary.paddingBottom
+                val fabColumnPadding = 12.dp.toPx(targetContext)
+                val fabMargin = 16.dp.toPx(targetContext)
+                assertThat(
+                    "the FAB rests half the re-wrapped summary line above its padded position",
+                    deckPicker.fabDistanceToWindowBottom,
+                    equalTo(navBarBottom + fabColumnPadding + fabMargin + summaryTextHeight / 2),
+                )
+            }
         }
 
     @Test

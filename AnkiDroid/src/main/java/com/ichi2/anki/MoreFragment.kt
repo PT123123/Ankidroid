@@ -19,13 +19,15 @@ import com.ichi2.anki.dialogs.help.ARG_MENU_ITEMS
 import com.ichi2.anki.dialogs.help.HelpDialog
 import com.ichi2.anki.dialogs.help.childHelpMenuItems
 import com.ichi2.anki.dialogs.help.mainHelpMenuItems
+import com.ichi2.anki.preferences.MySettingsFragment
+import com.ichi2.anki.preferences.PreferencesActivity
 import com.ichi2.anki.utils.ext.showDialogFragment
 import com.ichi2.utils.IntentUtil
 import dev.androidbroadcast.vbpd.viewBinding
 
 /**
  * Full-screen "More" destination in the bottom navigation bar.
- * Shows Settings, Help items, and Support items in a sectioned list.
+ * Shows the fork's "My settings" screen, Settings, Help items, and Support items in a sectioned list.
  *
  * Help items open the existing [HelpDialog] focused on their subsection.
  * Support items directly open their respective URLs.
@@ -40,6 +42,10 @@ class MoreFragment : Fragment(R.layout.fragment_more) {
         super.onViewCreated(view, savedInstanceState)
 
         val marketIntent = AnkiDroidApp.getMarketIntent(requireContext())
+
+        binding.moreMySettings.setOnClickListener {
+            startActivity(PreferencesActivity.getIntent(requireContext(), MySettingsFragment::class))
+        }
 
         binding.moreSettings.setOnClickListener {
             navigate(PreferencesDestination.Root)
