@@ -84,7 +84,6 @@ import com.ichi2.anki.InitialActivity.StartupFailure.StorageUndecided
 import com.ichi2.anki.StudyOptionsFragment.Companion.registerStudyOptionsAddEditReminderHandler
 import com.ichi2.anki.StudyOptionsFragment.Companion.registerStudyOptionsStudyHandler
 import com.ichi2.anki.account.AccountActivity
-import com.ichi2.anki.analytics.AnkiDroidUsageAnalytics
 import com.ichi2.anki.android.back.exitViaDoubleTapBackCallback
 import com.ichi2.anki.android.input.ShortcutGroup
 import com.ichi2.anki.android.input.shortcut
@@ -125,7 +124,6 @@ import com.ichi2.anki.dialogs.BackupPromptDialog
 import com.ichi2.anki.dialogs.CreateDeckDialog
 import com.ichi2.anki.dialogs.DatabaseErrorDialog.CustomExceptionData
 import com.ichi2.anki.dialogs.DatabaseErrorDialog.DatabaseErrorDialogType
-import com.ichi2.anki.dialogs.DeckPickerAnalyticsOptInDialog
 import com.ichi2.anki.dialogs.DeckPickerBackupNoSpaceLeftDialog
 import com.ichi2.anki.dialogs.DeckPickerConfirmDeleteDeckDialog
 import com.ichi2.anki.dialogs.DeckPickerContextMenu
@@ -491,17 +489,11 @@ open class DeckPicker :
 
         binding = ActivityHomescreenBinding.inflate(layoutInflater)
 
-        // handle the first load: display the app introduction
-        // This screen is currently better equipped to handle errors than IntroductionActivity
+        // Open the deck picker directly on first launch; mark setup as complete so later imports
+        // are treated as coming from an initialized app.
         if (!hasShownAppIntro() && AnkiDroidApp.fatalError == null) {
-            Timber.i("Displaying app intro")
-            val appIntro = Intent(this, IntroductionActivity::class.java)
-            appIntro.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK)
-            startActivity(appIntro)
-            finish() // calls onDestroy() immediately
-            return
+            sharedPrefs().edit { putBoolean(IntroductionActivity.INTRODUCTION_SLIDES_SHOWN, true) }
         }
-        Timber.d("Not displaying app intro")
         if (intent.hasExtra(INTENT_SYNC_FROM_LOGIN)) {
             Timber.d("launched from introduction activity login: syncing")
             syncOnResume = true
@@ -1734,10 +1726,6 @@ open class DeckPicker :
             onFinishedStartup()
         } else if (skip < 2 && !InitialActivity.isLatestVersion(preferences)) {
             Timber.i("AnkiDroid is being updated and a collection already exists.")
-            // The user might appreciate us now, see if they will help us get better?
-            if (!preferences.contains(AnkiDroidUsageAnalytics.ANALYTICS_OPTIN_KEY)) {
-                displayAnalyticsOptInDialog()
-            }
 
             // For upgrades, we check if we are upgrading
             // to a version that contains additions to the database integrity check routine that we would
@@ -1791,11 +1779,6 @@ open class DeckPicker :
         duration: Int = Snackbar.LENGTH_LONG,
     ) {
         binding.rootLayout.post { showSnackbar(text, duration) }
-    }
-
-    @VisibleForTesting
-    protected open fun displayAnalyticsOptInDialog() {
-        showDialogFragment(DeckPickerAnalyticsOptInDialog.newInstance())
     }
 
     private fun undo() {

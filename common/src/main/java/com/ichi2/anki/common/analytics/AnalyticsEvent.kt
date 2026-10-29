@@ -31,7 +31,7 @@ sealed class AnalyticsEvent(
         val newValue: Int?,
     ) : AnalyticsEvent("Setting", "Changed setting", label = key, value = newValue)
 
-    /** ACRA handled a crash. [installId] matches this hit to the ACRA report. */
+    /** A crash was reported upstream. [installId] matches the hit to the crash report. */
     data class CrashReported(
         val installId: String,
     ) : AnalyticsEvent("ACRA Crash Handler", "Crash reported", label = installId)

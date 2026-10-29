@@ -4,7 +4,10 @@
 package com.ichi2.anki.common.analytics
 
 /**
- * Opt-in usage analytics, implemented in the app module by `AnkiDroidUsageAnalytics`.
+ * Opt-in usage analytics.
+ *
+ * Anki Plus registers no implementation, so every send stays on [Unregistered] and
+ * nothing leaves the device; see `docs/analytics/README.md`.
  *
  * Takes no Android types, so it can live in `:common`. Setup that needs a `Context`
  * stays on the implementation.

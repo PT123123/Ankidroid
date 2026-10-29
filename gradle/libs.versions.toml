@@ -11,7 +11,6 @@ minSdk = "24"
 apiMinSdk = "16"
 
 targetSdk = "36"  # affects which SDKs download in ../robolectricDownloader.gradle
-acra = '5.13.1'
 ktlint = '1.8.0'
 # AGP is included in Android Studio and changelogs are not well maintained/at a stable URL
 # Open https://developer.android.com/build/releases/gradle-plugin#patch-releases
@@ -85,8 +84,6 @@ coroutines = '1.11.0'
 desugar-jdk-libs-nio = "2.1.5"
 drawer = "1.0.3"
 espresso = '3.7.0'
-# https://github.com/criticalAY/google-analytics-kt
-googleAnalyticsKt = "1.2.1"
 hamcrest = "3.0"
 imageCropper = "4.7.0"
 jacoco = "0.8.14"
@@ -138,10 +135,6 @@ zxingCore = "3.5.3"
 zxingEmbedded = "4.3.0"
 
 [libraries]
-acra-limiter = { module = "ch.acra:acra-limiter", version.ref = "acra" }
-acra-toast = { module = "ch.acra:acra-toast", version.ref = "acra" }
-acra-dialog = { module = "ch.acra:acra-dialog", version.ref = "acra" }
-acra-http = { module = "ch.acra:acra-http", version.ref = "acra" }
 android-image-cropper = { module = "com.vanniktech:android-image-cropper", version.ref = "imageCropper" }
 androidx-constraintlayout = { module = "androidx.constraintlayout:constraintlayout", version.ref = "androidxConstraintlayout" }
 androidx-fragment-ktx = { module = "androidx.fragment:fragment-ktx", version.ref = "androidxFragmentKtx" }
@@ -180,7 +173,6 @@ androidx-sqlite-framework = { module = "androidx.sqlite:sqlite-framework", versi
 androidx-recyclerview = { module = "androidx.recyclerview:recyclerview", version.ref = "androidxRecyclerview" }
 auto-service = { module = "com.google.auto.service:auto-service", version.ref = "autoService" }
 auto-service-annotations = { module = "com.google.auto.service:auto-service-annotations", version.ref = "autoServiceAnnotations" }
-google-analytics-kt = { module = "io.github.criticalay:google-analytics-kt", version.ref = "googleAnalyticsKt" }
 jetbrains-annotations = { module = "org.jetbrains:annotations", version.ref = "jetbrainsAnnotations" }
 skydoves-colorpickerview = { module = "com.github.skydoves:colorpickerview", version.ref = "colorPickerView" }
 commons-io = { module = "commons-io:commons-io", version.ref = "commonsIo" }

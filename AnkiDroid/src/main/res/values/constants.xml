@@ -28,11 +28,6 @@
         <item>@string/disabled</item>
     </string-array>
 
-    <string-array name="error_reporting_choice_values">
-        <item>0</item>
-        <item>1</item>
-        <item>2</item>
-    </string-array>
     <string-array name="notification_minimum_cards_due_labels">
         <item>@string/never_notify</item>
         <item>@string/notify_when_pending</item>
@@ -65,11 +60,6 @@
         <item>3</item>
     </string-array>
 
-    <string-array name="error_reporting_choice_labels">
-        <item>@string/error_reporting_choice_always_report</item>
-        <item>@string/error_reporting_choice_never_report</item>
-        <item>@string/error_reporting_choice_ask_user</item>
-    </string-array>
     <string-array name="add_to_cur_labels">
         <item>@string/add_to_deck_use_current_deck</item>
         <item>@string/add_to_deck_decide_by_note_type</item>

@@ -456,14 +456,6 @@
             </intent-filter>
         </activity>
         <activity
-            android:name="com.ichi2.anki.analytics.AnkiDroidCrashReportDialog"
-            android:theme="@android:style/Theme.DeviceDefault.Dialog"
-            android:process=":acra"
-            android:launchMode="singleInstance"
-            android:excludeFromRecents="true"
-            android:finishOnTaskLaunch="true"
-            />
-        <activity
             android:name="com.ichi2.anki.SingleFragmentActivity"
             android:exported="false"
             android:configChanges="orientation|screenSize"

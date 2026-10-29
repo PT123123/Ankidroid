@@ -9,7 +9,6 @@ import androidx.annotation.VisibleForTesting
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.content.edit
 import androidx.core.os.LocaleListCompat
-import com.ichi2.anki.analytics.AnkiDroidUsageAnalytics
 import com.ichi2.anki.browser.BrowserColumnCollection
 import com.ichi2.anki.browser.CardBrowserColumn.ANSWER
 import com.ichi2.anki.browser.CardBrowserColumn.CARD
@@ -896,12 +895,17 @@ object PreferenceUpgradeService {
         }
 
         /**
-         * Removes the legacy "analytics_opt_in" key so all users are re-prompted
-         * to opt in under the new GA4-backed analytics implementation, which
-         * stores the opt-in under [AnkiDroidUsageAnalytics.ANALYTICS_OPTIN_KEY].
+         * Removes the legacy "analytics_opt_in" key.
+         *
+         * Anki Plus sends no usage analytics, so the current "analytics_opt_in_v2"
+         * key is purged with it rather than kept for a re-prompt.
          */
         internal class ResetAnalyticsOptIn2 : PreferenceUpgrade(29) {
-            override fun upgrade(preferences: SharedPreferences) = preferences.edit { remove("analytics_opt_in") }
+            override fun upgrade(preferences: SharedPreferences) =
+                preferences.edit {
+                    remove("analytics_opt_in")
+                    remove("analytics_opt_in_v2")
+                }
         }
     }
 }

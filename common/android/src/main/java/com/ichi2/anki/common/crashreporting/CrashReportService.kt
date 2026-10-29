@@ -12,7 +12,8 @@ import timber.log.Timber
 /**
  * Interface for crash/exception reporting.
  *
- * Implemented in the app module by the ACRA-backed crash reporter.
+ * Anki Plus registers the log-only `LoggingCrashReporter`, so reports stay on the
+ * device; see `docs/analytics/README.md`.
  *
  * TODO: Remove Context/Activity parameters from this interface and use the
  *  application context set during initialization instead. Context is only used

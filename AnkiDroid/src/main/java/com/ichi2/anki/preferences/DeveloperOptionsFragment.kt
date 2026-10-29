@@ -12,15 +12,12 @@ import com.ichi2.anki.AnkiDroidApp
 import com.ichi2.anki.BuildConfig
 import com.ichi2.anki.CollectionManager.withCol
 import com.ichi2.anki.R
-import com.ichi2.anki.analytics.AnkiDroidUsageAnalytics
-import com.ichi2.anki.common.crashreporting.CrashReportService
 import com.ichi2.anki.common.preferences.sharedPrefs
 import com.ichi2.anki.common.storage.CollectionHelper
 import com.ichi2.anki.common.utils.android.showThemedToast
 import com.ichi2.anki.dialogs.TtsVoicesDialogFragment
 import com.ichi2.anki.launchCatchingTask
 import com.ichi2.anki.settings.Prefs
-import com.ichi2.anki.snackbar.showSnackbar
 import com.ichi2.anki.utils.ext.defaultConfig
 import com.ichi2.anki.utils.ext.showDialogFragment
 import com.ichi2.anki.withProgress
@@ -45,24 +42,10 @@ class DeveloperOptionsFragment : SettingsFragment() {
 
     override fun initSubscreen() {
         setupEnableDeveloperOptions()
-        // Make it possible to test crash reporting
+        // Make it possible to test crash handling
         requirePreference<Preference>(R.string.pref_trigger_crash_key).setOnPreferenceClickListener {
-            // If we don't delete the limiter data, our test crash may not go through,
-            // but we are triggering it very much on purpose, we want to see the crash in ACRA
-            this.context?.let { c -> CrashReportService.deleteLimiterData(c) }
-
             Timber.w("Crash triggered on purpose from advanced preferences in debug mode")
             throw RuntimeException("This is a test crash")
-        }
-        // Make it possible to test analytics
-        requirePreference<Preference>(R.string.pref_analytics_debug_key).setOnPreferenceClickListener {
-            if (AnkiDroidUsageAnalytics.isEnabled) {
-                showSnackbar("Analytics set to dev mode")
-            } else {
-                showSnackbar("Done! Enable Analytics in 'General' settings to use.")
-            }
-            AnkiDroidUsageAnalytics.setDevMode(AnkiDroidApp.instance.applicationContext)
-            false
         }
         // Lock database
         requirePreference<Preference>(R.string.pref_lock_database_key).setOnPreferenceClickListener {

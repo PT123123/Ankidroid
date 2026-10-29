@@ -32,10 +32,7 @@ class ActivityStartupMetaTest : RobolectricTest() {
                 // activity aliases
                 .filter { it != "com.ichi2.anki.AnkiCardContextMenuAction" }
                 .filter { it != "com.ichi2.anki.CardBrowserDeepLink" }
-                // ACRA-specific
-                .filter { it != "com.ichi2.anki.analytics.AnkiDroidCrashReportDialog" }
                 .filter { !it.startsWith("androidx") }
-                .filter { !it.startsWith("org.acra") }
                 .filter { !it.startsWith("leakcanary.internal") }
                 .filter { it != "com.canhub.cropper.CropImageActivity" }
                 // contributed by zxing-android-embedded; reached through the LAN sync pairing flow,

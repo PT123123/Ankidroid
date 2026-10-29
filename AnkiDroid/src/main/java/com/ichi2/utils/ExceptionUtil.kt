@@ -52,7 +52,7 @@ object ExceptionUtil {
         return sw.toString()
     }
 
-    /** Executes a function, and logs the exception to ACRA and shows a toast if an issue occurs */
+    /** Executes a function, and reports the exception and shows a toast if an issue occurs */
     fun executeSafe(
         context: Context,
         origin: String,

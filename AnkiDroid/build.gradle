@@ -85,7 +85,6 @@ android {
         // application id differs, so this build coexists with upstream AnkiDroid on one device.
         applicationId = "com.pt123123.ankiplus"
         buildConfigField "Boolean", "CI", (System.getenv("CI") == "true").toString()
-        buildConfigField "String", "ACRA_URL", '"https://ankidroid.org/acra/report"'
         buildConfigField "String", "BACKEND_VERSION", "\"${libs.versions.ankiBackend.get()}\""
         buildConfigField "Boolean", "ENABLE_LEAK_CANARY", "false"
         buildConfigField "String", "GIT_COMMIT_HASH", "\"${gitCommitHash.get()}\""
@@ -131,30 +130,6 @@ android {
         // app's values-zh-rCN / values-zh-rTW, so every variant has to be listed.
         resConfigs "en", "zh", "zh-rCN", "zh-rTW", "ja"
         testInstrumentationRunner = 'com.ichi2.testutils.NewCollectionPathTestRunner'
-
-        // GA4 Measurement Protocol api_secret. Sourced from `local.properties`
-        // (ANALYTICS_API_KEY) or the ANALYTICS_API_KEY env var; falls back to
-        // a dummy value so contributor builds still compile.
-        //
-        // The dummy key is rejected by GA's ingest, so analytics requests from
-        // unsigned/local builds go nowhere this means `setDevMode()` (100%
-        // sampling) has no observable effect on a build without the real key.
-        //
-        // Google documents the api_secret as private, and the Measurement Protocol
-        // as intended for trusted/server-side use:
-        // https://developers.google.com/analytics/devguides/collection/protocol/ga4/sending-events#api_secret
-        // Shipping it in the APK means anyone can extract it and post junk events to
-        // the property, which would corrupt our reporting. We accept that: there is no
-        // server-side path for an offline-first app, the property holds no user data,
-        // and a polluted property can be rotated by issuing a new secret.
-        Properties properties = new Properties()
-        def localPropsFile = project.rootProject.file("local.properties")
-        if (localPropsFile.exists()) {
-            properties.load(localPropsFile.newDataInputStream())
-        }
-
-        def apiKey = properties.getProperty("ANALYTICS_API_KEY") ?: System.getenv("ANALYTICS_API_KEY") ?: "DUMMY_API_XXX"
-        buildConfigField "String", "ANALYTICS_API_KEY", "\"${apiKey}\""
     }
     signingConfigs {
         release {
@@ -181,8 +156,6 @@ android {
             debuggable true
             applicationIdSuffix ".debug"
             splits.abi.universalApk = true // Build universal APK for debug always
-            // Check Crash Reports page on developer wiki for info on ACRA testing
-            // buildConfigField "String", "ACRA_URL", '"https://918f7f55-f238-436c-b34f-c8b5f1331fe5-bluemix.cloudant.com/acra-ankidroid/_design/acra-storage/_update/report"'
             if (project.rootProject.file('local.properties').exists()) {
                 Properties localProperties = new Properties()
                 localProperties.load(project.rootProject.file('local.properties').newDataInputStream())
@@ -500,8 +473,6 @@ dependencies {
     "baselineProfile" project(":baselineprofile")
     implementation project(":widgets")
 
-    implementation(libs.google.analytics.kt)
-
     implementation libs.androidx.activity
     // TODO: hoist the Compose enablement (kotlin.compose plugin, buildFeatures.compose,
     // and the dependencies below) into a convention plugin under `buildSrc/` once the
@@ -557,12 +528,6 @@ dependencies {
         implementation libs.ankiBackend.backend
         testImplementation libs.ankiBackend.testing
     }
-
-    // May need a resolution strategy for support libs to our versions
-    implementation libs.acra.limiter
-    implementation libs.acra.toast
-    implementation libs.acra.dialog
-    implementation libs.acra.http
 
     implementation libs.commons.compress
     implementation libs.commons.collections4 // SetUniqueList

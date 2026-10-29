@@ -6,10 +6,8 @@ import android.content.Context
 import android.os.Build
 import com.ichi2.anki.BuildConfig
 import com.ichi2.anki.CollectionManager
-import com.ichi2.anki.common.crashreporting.CrashReportService
 import com.ichi2.utils.VersionUtils.pkgVersionName
 import com.ichi2.utils.getWebViewInfo
-import org.acra.util.Installation
 import timber.log.Timber
 import net.ankiweb.rsdroid.BuildConfig as BackendBuildConfig
 
@@ -30,16 +28,12 @@ object DebugInfoService {
             ProductFlavor = ${BuildConfig.FLAVOR}
             Device Info = ${Build.MANUFACTURER} | ${Build.BRAND} | ${Build.DEVICE} | ${Build.PRODUCT} | ${Build.MODEL} | ${Build.HARDWARE}
             WebView Info = [${webviewInfo.packageName} | ${webviewInfo.versionCode}]: ${webviewInfo.userAgent}
-            ACRA UUID = ${Installation.id(info)}
             FSRS = ${BackendBuildConfig.FSRS_VERSION} (Enabled: $isFSRSEnabled)
-            Crash Reports Enabled = ${isSendingCrashReports(info)}
             """.trimIndent()
             // A Markdown newline is two spaces followed by '\n', this avoids the need for
             // code fences
             .replace("\n", "  \n")
     }
-
-    private fun isSendingCrashReports(context: Context): Boolean = CrashReportService.isEnabled(context, false)
 }
 
 /**

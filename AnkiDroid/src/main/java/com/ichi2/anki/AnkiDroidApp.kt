@@ -23,7 +23,6 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ProcessLifecycleOwner
 import anki.collection.OpChanges
 import com.ichi2.anki.AnkiDroidApp.Companion.sharedPreferencesTestingOverride
-import com.ichi2.anki.analytics.initializeAnalytics
 import com.ichi2.anki.browser.SharedPreferencesLastDeckIdRepository
 import com.ichi2.anki.common.android.AdaptionUtil
 import com.ichi2.anki.common.android.Animations
@@ -33,6 +32,7 @@ import com.ichi2.anki.common.android.withAppLocale
 import com.ichi2.anki.common.annotations.LegacyNotifications
 import com.ichi2.anki.common.annotations.NeedsTest
 import com.ichi2.anki.common.coroutines.applicationScope
+import com.ichi2.anki.common.crashreporting.CrashReportService
 import com.ichi2.anki.common.crashreporting.CrashReportService.sendExceptionReport
 import com.ichi2.anki.common.permissions.hasLegacyStorageAccessPermission
 import com.ichi2.anki.common.preferences.sharedPrefs
@@ -136,7 +136,6 @@ open class AnkiDroidApp :
      * On application creation, i.e. when the application process starts.
      * This is called before any activities, services, or receivers are created.
      */
-    @KotlinCleanup("analytics can be moved to attachBaseContext()")
     override fun onCreate() {
         initAnkiBackend(debugTraceSqlCalls = false)
         super.onCreate()
@@ -146,7 +145,7 @@ open class AnkiDroidApp :
 
         ApplicationContextInitializer.setInstance(this)
 
-        initializeAcraCrashReporter()
+        CrashReportService.setReporter(LoggingCrashReporter)
         initializeNavigator()
         initializeWidgetRepository()
         WidgetNotificationScheduler.register { scheduleNotification() }
@@ -167,8 +166,6 @@ open class AnkiDroidApp :
         Timber.d("Startup - Application Start")
         Timber.i("Timber config: $logType")
 
-        // analytics after ACRA, they both install UncaughtExceptionHandlers but Analytics chains while ACRA does not
-        initializeAnalytics()
         // Last in the UncaughtExceptionHandlers chain is our filter service
         ThrowableFilterService.initialize()
 
@@ -177,11 +174,6 @@ open class AnkiDroidApp :
             Timber.i(DebugInfoService.getDebugInfo(this@AnkiDroidApp))
         }
 
-        // Stop after analytics and logging are initialised.
-        if (isAcraSenderProcess()) {
-            Timber.d("Skipping AnkiDroidApp.onCreate from ACRA sender process")
-            return
-        }
         if (AdaptionUtil.isUserATestClient) {
             showThemedToast(this.applicationContext, getString(R.string.user_is_a_robot), false)
         }
@@ -241,7 +233,7 @@ open class AnkiDroidApp :
     /**
      * Sets [isInitialized] to `true` ([instance] != null)
      *
-     * [onCreate] can be called multiple times due to ACRA using a separate sender process
+     * [onCreate] can be called multiple times when Android recreates the process
      *
      * @return false if `instance.resources` is unusable
      */
@@ -572,7 +564,7 @@ open class AnkiDroidApp :
         fun sharedPrefsOrNull(): SharedPreferences? =
             sharedPreferencesTestingOverride ?: if (isInitialized) instance.sharedPrefs() else null
 
-        /** HACK: Whether an exception report has been thrown - TODO: Rewrite an ACRA Listener to do this  */
+        /** HACK: Whether an exception was routed to the crash reporter (see [LoggingCrashReporter]) */
         @VisibleForTesting
         var sentExceptionReportHack = false
 

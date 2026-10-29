@@ -59,9 +59,6 @@ data class HelpItem(
             @StringRes val urlResourceId: Int,
         ) : Action()
 
-        @Parcelize
-        data object SendReport : Action()
-
         /**
          * Action to allow the user to rate the application. Note that this item's availability will
          * depend on the system having an app to do the action.

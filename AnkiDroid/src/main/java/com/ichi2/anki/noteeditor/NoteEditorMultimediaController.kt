@@ -145,7 +145,7 @@ internal class NoteEditorMultimediaController(
             val canonicalDestFile = destFile.canonicalFile
 
             if (!canonicalDestFile.path.startsWith(canonicalCacheDir.path)) {
-                // Do not log the name: it is attacker-controlled and warn logs are reported to ACRA.
+                // Do not log the name: it is attacker-controlled and warn logs land in the crash log.
                 Timber.w("Rejected path due to directory traversal risk")
                 return null
             }

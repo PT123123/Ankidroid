@@ -3,7 +3,6 @@
 package com.ichi2.utils
 
 import com.ichi2.testutils.common.assertThrows
-import org.acra.util.IOUtils.writeStringToFile
 import org.hamcrest.CoreMatchers.nullValue
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.core.IsEqual.equalTo
@@ -48,7 +47,7 @@ class FileUtilTest {
         grandChildDir.mkdirs()
         grandChild2Dir.mkdirs()
         files.forEachIndexed { i, file ->
-            writeStringToFile(file, "File " + (i + 1) + " called " + file.name)
+            file.writeText("File " + (i + 1) + " called " + file.name)
             this.testDirectorySize += file.length()
         }
         return grandParentDir

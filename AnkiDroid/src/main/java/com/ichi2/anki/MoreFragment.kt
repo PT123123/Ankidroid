@@ -7,7 +7,6 @@ import android.os.Bundle
 import android.view.View
 import androidx.annotation.StringRes
 import androidx.core.net.toUri
-import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import com.ichi2.anki.common.analytics.Analytics
 import com.ichi2.anki.common.analytics.AnalyticsEvent.LinkClicked
@@ -22,15 +21,13 @@ import com.ichi2.anki.dialogs.help.mainHelpMenuItems
 import com.ichi2.anki.preferences.MySettingsFragment
 import com.ichi2.anki.preferences.PreferencesActivity
 import com.ichi2.anki.utils.ext.showDialogFragment
-import com.ichi2.utils.IntentUtil
 import dev.androidbroadcast.vbpd.viewBinding
 
 /**
  * Full-screen "More" destination in the bottom navigation bar.
- * Shows the fork's "My settings" screen, Settings, Help items, and Support items in a sectioned list.
+ * Shows the fork's "My settings" screen, Settings, and help items in a sectioned list.
  *
  * Help items open the existing [HelpDialog] focused on their subsection.
- * Support items directly open their respective URLs.
  */
 class MoreFragment : Fragment(R.layout.fragment_more) {
     private val binding by viewBinding(FragmentMoreBinding::bind)
@@ -40,8 +37,6 @@ class MoreFragment : Fragment(R.layout.fragment_more) {
         savedInstanceState: Bundle?,
     ) {
         super.onViewCreated(view, savedInstanceState)
-
-        val marketIntent = AnkiDroidApp.getMarketIntent(requireContext())
 
         binding.moreMySettings.setOnClickListener {
             startActivity(PreferencesActivity.getIntent(requireContext(), MySettingsFragment::class))
@@ -53,8 +48,8 @@ class MoreFragment : Fragment(R.layout.fragment_more) {
 
         // Help section: each opens HelpDialog with the relevant sub-items
         binding.moreHelpManual.setOnClickListener {
-            Analytics.send(LinkClicked(LinkAction.OPENED_USING_ANKIDROID))
-            openHelpSection(R.string.help_title_using_ankidroid)
+            Analytics.send(LinkClicked(LinkAction.OPENED_ANKI_MANUAL))
+            openUrl(getString(R.string.link_anki_manual))
         }
         binding.moreHelpGetHelp.setOnClickListener {
             Analytics.send(LinkClicked(LinkAction.OPENED_GET_HELP))
@@ -67,43 +62,6 @@ class MoreFragment : Fragment(R.layout.fragment_more) {
         binding.moreHelpPrivacy.setOnClickListener {
             Analytics.send(LinkClicked(LinkAction.OPENED_PRIVACY))
             openHelpSection(R.string.help_title_privacy)
-        }
-
-        // Support section: direct URL actions
-        binding.moreSupportDonate.setOnClickListener {
-            Analytics.send(LinkClicked(LinkAction.OPENED_DONATE))
-            openUrl(getString(R.string.link_opencollective_donate))
-        }
-        binding.moreSupportTranslate.setOnClickListener {
-            Analytics.send(LinkClicked(LinkAction.OPENED_TRANSLATE))
-            openUrl(getString(R.string.link_translation))
-        }
-        binding.moreSupportDevelop.setOnClickListener {
-            Analytics.send(LinkClicked(LinkAction.OPENED_DEVELOP))
-            openUrl(getString(R.string.link_ankidroid_development_guide))
-        }
-        binding.moreSupportRate.setOnClickListener {
-            Analytics.send(LinkClicked(LinkAction.OPENED_RATE))
-            if (IntentUtil.canOpenIntent(requireContext(), marketIntent)) {
-                startActivity(marketIntent)
-            }
-        }
-        binding.moreSupportOther.setOnClickListener {
-            Analytics.send(LinkClicked(LinkAction.OPENED_OTHER))
-            openUrl(getString(R.string.link_contribution))
-        }
-        binding.moreSupportFeedback.setOnClickListener {
-            Analytics.send(LinkClicked(LinkAction.OPENED_SEND_FEEDBACK))
-            openUrl(AnkiDroidApp.feedbackUrl)
-        }
-
-        // Hide rate if Play Store not available
-        if (!IntentUtil.canOpenIntent(requireContext(), marketIntent)) {
-            binding.moreSupportRate.visibility = View.GONE
-        }
-
-        if (!BuildConfig.SHOW_DONATE_LINKS) {
-            binding.moreSupportDonate.isVisible = false
         }
     }
 

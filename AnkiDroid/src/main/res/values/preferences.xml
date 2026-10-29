@@ -5,8 +5,6 @@
     <string name="pref_general_screen_key">generalScreen</string>
     <string name="deck_for_new_cards_key">useCurrent</string>
     <string name="pref_language_key">language</string>
-    <string name="analytics_opt_in_key">analytics_opt_in_v2</string>
-    <string name="error_reporting_mode_key">reportErrorMode</string>
     <!-- Reviewing -->
     <string name="pref_reviewing_screen_key">reviewingScreen</string>
     <string name="day_offset_preference">dayOffset</string>
@@ -234,7 +232,6 @@
     <!-- Developer options -->
     <string name="pref_developer_options_screen_key">devOptionsKey</string>
     <string name="pref_trigger_crash_key">trigger_crash_preference</string>
-    <string name="pref_analytics_debug_key">analytics_debug_preference</string>
     <string name="pref_set_database_path_debug_key">debug_set_database_path</string>
     <string name="pref_lock_database_key">debug_lock_database</string>
     <string name="pref_corrupt_fsrs_params">debug_corrupt_fsrs_params</string>

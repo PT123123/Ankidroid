@@ -13,7 +13,7 @@ import java.util.regex.Pattern
  *
  * Requirements:
  * 1) ignore verbose and debug log levels
- * 2) use the fixed AnkiDroidApp.TAG log tag (ACRA filters logcat for it when reporting errors)
+ * 2) use the fixed AnkiDroidApp.TAG log tag so crash lines stay greppable in logcat
  * 3) dynamically discover the class name and prepend it to the message for warn and error
  */
 @SuppressLint("LogNotTimber")

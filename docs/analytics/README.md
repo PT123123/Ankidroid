@@ -1,141 +1,60 @@
-# Analytics
+# No outbound reporting in Anki Plus
 
-AnkiDroid sends opt-in anonymous usage data to Google Analytics 4 (GA4). The
-transport is [google-analytics-kt][lib] — see its README for the library's
-setup, builder API, and the full list of hit types. This document covers
-only the AnkiDroid-side wiring and the questions reviewers tend to have.
+Upstream AnkiDroid ships two reporting paths. Anki Plus removes both, because a fork
+that keeps them posts its own identity — the app name "Anki Plus" and the application
+id `com.pt123123.ankiplus` — into someone else's infrastructure:
 
-[lib]: https://github.com/criticalAY/google-analytics-kt
+| Upstream | Endpoint | Fork state |
+|---|---|---|
+| ACRA crash reports (plus the manual "Send troubleshooting report") | `PUT https://ankidroid.org/acra/report` | removed |
+| GA4 usage analytics, screen views, setting changes, exception hits | `G-XY625S5VVE` via the Measurement Protocol | removed |
 
----
+## What was taken out
 
-## What AnkiDroid actually sends
+**ACRA.** `AcraCrashReporter`, `AnkiDroidCrashReportDialog` and the `ch.acra:*`
+dependencies are gone, along with the `ACRA_URL` build field, the `:acra` sender
+process in the manifest, the *Settings → General → Error reporting mode* list and the
+*Help → Send troubleshooting report* entry.
 
-Of the six hit types the library supports, AnkiDroid uses three:
+`AnkiDroidApp` now registers `LoggingCrashReporter`, which writes the throwable to
+Timber and drops it. Every `CrashReportService.sendExceptionReport(...)` call site in
+the app is unchanged: the interface has a log-only implementation instead of an
+uploading one. Fatal crashes go to logcat and kill the process like any other Android
+app.
 
-| Used by AnkiDroid | Sent from |
-|---|---|
-| `screen_view` | `AnkiDroidUsageAnalytics.sendAnalyticsScreenView(...)` |
-| `event`       | `AnkiDroidUsageAnalytics.send(AnalyticsEvent)` |
-| `exception`   | `AnkiDroidUsageAnalytics.sendAnalyticsException(...)` (truncated to 150 chars) |
+**Google Analytics.** `AnkiDroidUsageAnalytics`, `AnalyticsConstants`,
+`AnalyticsExceptionHandler`, `AcraAnalyticsInteraction`, the opt-in dialog and the
+`io.github.criticalay:google-analytics-kt` dependency are gone, along with
+`ANALYTICS_API_KEY`, `ga_trackingId`, `ga_sampleFrequency` and the *Share feature
+usage* switch.
 
-The complete list of events, with their categories and actions, lives in
-[`AnalyticsEvent.kt`](../../common/src/main/java/com/ichi2/anki/common/analytics/AnalyticsEvent.kt).
-We never include card content, deck names, note fields, sync credentials, or
-file paths.
+The `Analytics` / `AnalyticsEvent` facade in `:common` stays, and its default
+implementation is `Unregistered`, whose sends are no-ops. Hundreds of call sites
+(`Analytics.send(...)`, `sendAnalyticsScreenView(...)`, `AnalyticsDialogFragment`)
+therefore keep compiling and now do nothing. Nothing can register an implementation
+because there is no transport left to register.
 
-Device details are no longer collected. The Universal Analytics implementation
-tagged every hit with OS version, brand, model, board and screen size; none of
-that is sent now. Crash reports still carry it via ACRA, which is where it is
-useful, and GA4 has no equivalent of UA's custom dimensions, so restoring it
-would mean modelling it as user properties rather than porting it across.
+## What is deliberately untouched
 
-`client_id` is a UUID generated and persisted once per install in a dedicated
-prefs file (`analyticsPrefs`); it is not tied to any Anki account and survives
-profile switches.
+- **Sync and media** (`ankiweb.net`) — the user's own account traffic, not reporting.
+- **LAN sync** — peers on the local network only.
+- **Help → Report a bug / manual** — opens a browser to a URL; the app uploads nothing.
+- **Timber logs** — local only, and the *debug info* block that About copies no longer
+  prints the old `ACRA UUID` / `Crash Reports Enabled` lines.
+- **Desktop** (`../anki-desktop`) is a separate tree: its *check for updates* ping to
+  `ankiweb.net/svc/desktop/check-for-update` (version, buildhash, install id) still
+  runs when *Preferences → Check for updates* is on. That is an official Anki service,
+  not the fork's reporting, so this change leaves it alone.
 
----
+## Verifying
 
-## Consent when does a hit actually leave the device?
+```
+./gradlew :AnkiDroid:testPlayDebugUnitTest --tests "com.ichi2.anki.NoOutboundReportingTest"
+```
 
-Default state: **opted out**. A hit leaves the device only if all of the
-following are true:
-
-1. The user has ticked the opt-in checkbox in the analytics dialog or
-   settings. Pref key: `analytics_opt_in_v2`, default `false`.
-2. `AnkiDroidUsageAnalytics.optIn` is true every `send…` function starts
-   with `if (!optIn) return`.
-3. The library's own `config.enabled` is true `GaImpl.send()` re-checks
-   this. We pass `enabled = optIn` and call `reinitialize()` when opt-in
-   flips, so this is belt-and-suspenders.
-4. The process won the sampling roll (see below).
-
-If any check fails the hit is dropped before any network I/O.
-
----
-
-## Performance
-
-Calls are fire-and-forget on `Dispatchers.IO` `sendAsync` returns
-immediately. There is no on-disk queue.
-
-AnkiDroid-specific knobs:
-
-- **Sampling**: configured via `R.integer.ga_sampleFrequency` (production: 10
-  → 10% of installs are in-sample for their process lifetime). `setDevMode()`
-  forces 100%.
-- **Batching**: left off. Each hit is its own POST. See the library's
-  [Limitations][lib-limits] for what batching would buy us.
-
-[lib-limits]: https://github.com/criticalAY/google-analytics-kt#limitations
-
----
-
-## Network failures
-
-The library wraps every HTTP call in `try/catch` on any exception (server
-down, no internet, captive portal, timeout) it returns
-`GaResponse(statusCode = -1)`, logs at ERROR, and the hit is gone. No retry,
-no backoff, no offline replay see the library [Limitations][lib-limits].
-Default timeouts are 10s connect / 30s read, blocking only the IO coroutine.
-
----
-
-## Can it crash AnkiDroid?
-
-**Send path: no.** Both `sendAsync`'s outer launch and the inner OkHttp call
-have `try/catch (Exception)`.
-
-**Init path: the only realistic risk.** `AnkiDroidUsageAnalytics.initialize`
-is called from `AnkiDroidApp.onCreate()` and runs
-`GoogleAnalytics.builder { ... }`, which constructs an `OkHttpClient`. The
-builder does not validate `measurementId`/`apiSecret` today empty strings
-just produce bad URL params, not exceptions. But to stay safe against future
-library changes, we should wrap `initialize` in
-`runCatching { ... }.onFailure { Timber.e(it) }` so a bad config can never
-prevent app start.
-
----
-
-## Debug logging seeing what would be sent
-
-The library uses [`io.github.oshai:kotlin-logging`][klog] (an slf4j facade)
-and already logs the full request body, response, sampling decision, and
-drop reasons. To see them in AnkiDroid debug builds, add an slf4j → Timber
-bridge in the debug flavor (e.g. the `slf4j-timber` artifact, or a small
-custom binding). No library change required, no-op in release.
-
-[klog]: https://github.com/oshai/kotlin-logging
-
----
-
-## Setting up your own GA4 property
-
-For getting a measurement ID + API secret from the GA4 admin panel, follow
-the library's [Prerequisites section][lib-prereqs]. Once you have them, plug
-them into AnkiDroid like so:
-
-| Value | Where it goes |
-|---|---|
-| Measurement ID (`G-XXXXXXXX`) | `AnkiDroid/src/main/res/values/analytic_constants.xml` → `ga_trackingId` |
-| API secret | `local.properties` → `ANALYTICS_API_KEY=...` (read at compile time into `BuildConfig.ANALYTICS_API_KEY`, see [`AnkiDroid/build.gradle`](../../AnkiDroid/build.gradle)) |
-
-Builds without an `ANALYTICS_API_KEY` fall back to `DUMMY_API_XXX`, which GA
-rejects at ingest contributor builds can't accidentally write to our
-production property.
-
-[lib-prereqs]: https://github.com/criticalAY/google-analytics-kt#prerequisites
-
-### Keeping dev traffic out of prod
-
-A signed dev build with the real `ANALYTICS_API_KEY` would otherwise hit our
-production GA4 property.
-
-Debug builds pass `debug = BuildConfig.DEBUG` to the library, which sends hits
-to GA's validation endpoint (`/debug/mp/collect`) instead. That endpoint checks
-the payload and returns any problems with it, but records nothing, so
-development traffic can't reach the property.
-
-A separate GA4 property for debug builds would be cleaner still, since it would
-let us see the events rather than only validate them. It needs a second
-Measurement Protocol secret, so it's left for later.
+`NoOutboundReportingTest` is the gate: it scans the build files, the default resources
+and the manifest for the removed endpoints and ids, probes the classpath for
+`org.acra.ACRA` and `com.criticalay.GoogleAnalytics`, and checks that `AnkiDroidApp`
+registers no uploading reporter. Each check has a control that proves it can fail, so
+re-adding either transport turns the suite red rather than silently shipping a build
+that phones home.

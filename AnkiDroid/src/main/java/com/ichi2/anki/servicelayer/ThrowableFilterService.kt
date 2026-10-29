@@ -109,7 +109,7 @@ object ThrowableFilterService {
     }
 
     private fun Throwable.containsPIINonRecursive(): Boolean {
-        // BackendSyncServerMessage may contain PII and we do not want this leaked to ACRA.
+        // BackendSyncServerMessage may contain PII and we do not want this leaked to crash reports.
         // Related: https://github.com/ankidroid/Anki-Android/issues/17392
         // and also https://github.com/ankitects/anki/commit/ba1f5f4
         return this is BackendSyncServerMessageException

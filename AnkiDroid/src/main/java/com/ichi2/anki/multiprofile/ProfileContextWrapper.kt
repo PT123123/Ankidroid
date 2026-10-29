@@ -76,7 +76,7 @@ class ProfileContextWrapper private constructor(
     }
 
     /**
-     * Used for things like ACRA, textures, etc.
+     * Used for things like textures and offline caches, etc.
      */
     override fun getDir(
         name: String,

@@ -13,7 +13,6 @@ import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.commit
 import com.ichi2.anki.AnkiDroidApp
-import com.ichi2.anki.BuildConfig
 import com.ichi2.anki.R
 import com.ichi2.anki.analytics.AnalyticsDialogFragment
 import com.ichi2.anki.ankiActivity
@@ -26,7 +25,6 @@ import com.ichi2.anki.databinding.ItemHelpEntryBinding
 import com.ichi2.anki.dialogs.help.HelpItem.Action.OpenUrl
 import com.ichi2.anki.dialogs.help.HelpItem.Action.OpenUrlResource
 import com.ichi2.anki.dialogs.help.HelpItem.Action.Rate
-import com.ichi2.anki.dialogs.help.HelpItem.Action.SendReport
 import com.ichi2.anki.utils.ext.setCompoundDrawablesRelativeWithIntrinsicBoundsKt
 import com.ichi2.utils.createAndApply
 import com.ichi2.utils.customView
@@ -34,9 +32,7 @@ import com.ichi2.utils.dp
 import com.ichi2.utils.title
 import dev.androidbroadcast.vbpd.viewBinding
 
-/**
- * [DialogFragment] responsible for showing the help/support menus.
- */
+/** [DialogFragment] responsible for showing the help menu. */
 class HelpDialog : AnalyticsDialogFragment() {
     @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
     lateinit var actionsDispatcher: HelpItemActionsDispatcher
@@ -85,7 +81,6 @@ class HelpDialog : AnalyticsDialogFragment() {
             is OpenUrl -> actionsDispatcher.onOpenUrl(selectedItem.action.url)
             is OpenUrlResource -> actionsDispatcher.onOpenUrlResource(selectedItem.action.urlResourceId)
             Rate -> actionsDispatcher.onRate()
-            SendReport -> actionsDispatcher.onSendReport()
             null -> {
                 // there's no action so check if the selected item has children to show
                 val children = childHelpMenuItems.filter { it.parentId == selectedItem.id }
@@ -131,24 +126,6 @@ class HelpDialog : AnalyticsDialogFragment() {
                     Bundle().apply {
                         putInt(ARG_MENU_TITLE, R.string.help_title_privacy)
                         putParcelableArray(ARG_MENU_ITEMS, privacyItems.toTypedArray())
-                    }
-            }
-        }
-
-        /**
-         * @param canRateApp a boolean that indicates if the system has an app to open to rate AnkiDroid
-         */
-        fun newSupportInstance(canRateApp: Boolean): HelpDialog {
-            Analytics.send(LinkClicked(LinkAction.OPENED_SUPPORT_ANKIDROID))
-            val actualMenuItems =
-                supportMenuItems
-                    .filterNot { it.action is Rate && !canRateApp }
-                    .filterNot { it.analyticsId == LinkAction.OPENED_DONATE && !BuildConfig.SHOW_DONATE_LINKS }
-            return HelpDialog().apply {
-                arguments =
-                    Bundle().apply {
-                        putInt(ARG_MENU_TITLE, R.string.help_title_support_ankidroid)
-                        putParcelableArray(ARG_MENU_ITEMS, actualMenuItems.toTypedArray())
                     }
             }
         }
@@ -211,10 +188,11 @@ class HelpPageFragment : Fragment(R.layout.fragment_help_page) {
 internal val mainHelpMenuItems =
     arrayOf(
         HelpItem(
-            titleResId = R.string.help_title_using_ankidroid,
+            titleResId = R.string.help_item_anki_manual,
             iconResId = R.drawable.ic_manual_black_24dp,
-            analyticsId = LinkAction.OPENED_USING_ANKIDROID,
+            analyticsId = LinkAction.OPENED_ANKI_MANUAL,
             id = 1,
+            action = OpenUrlResource(R.string.link_anki_manual),
         ),
         HelpItem(
             titleResId = R.string.help_title_get_help,
@@ -236,82 +214,10 @@ internal val mainHelpMenuItems =
         ),
     )
 
-/** The menu items that are shown in the support menu. */
-@VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
-internal val supportMenuItems =
-    arrayOf(
-        HelpItem(
-            titleResId = R.string.help_item_support_opencollective_donate,
-            iconResId = R.drawable.ic_round_favorite_24,
-            analyticsId = LinkAction.OPENED_DONATE,
-            id = 5,
-            action = OpenUrlResource(R.string.link_opencollective_donate),
-        ),
-        HelpItem(
-            titleResId = R.string.multimedia_editor_trans_translate,
-            iconResId = R.drawable.ic_language_black_24dp,
-            analyticsId = LinkAction.OPENED_TRANSLATE,
-            id = 6,
-            action = OpenUrlResource(R.string.link_translation),
-        ),
-        HelpItem(
-            titleResId = R.string.help_item_support_develop_ankidroid,
-            iconResId = R.drawable.ic_build_black_24,
-            analyticsId = LinkAction.OPENED_DEVELOP,
-            id = 7,
-            action = OpenUrlResource(R.string.link_ankidroid_development_guide),
-        ),
-        HelpItem(
-            titleResId = R.string.help_item_support_rate_ankidroid,
-            iconResId = R.drawable.ic_star_black_24,
-            analyticsId = LinkAction.OPENED_RATE,
-            id = 8,
-            action = Rate,
-        ),
-        HelpItem(
-            titleResId = R.string.help_item_support_other_ankidroid,
-            iconResId = R.drawable.ic_help_black_24dp,
-            analyticsId = LinkAction.OPENED_OTHER,
-            id = 9,
-            action = OpenUrlResource(R.string.link_contribution),
-        ),
-        HelpItem(
-            titleResId = R.string.send_feedback,
-            iconResId = R.drawable.ic_email_black_24dp,
-            analyticsId = LinkAction.OPENED_SEND_FEEDBACK,
-            id = 10,
-            action = OpenUrl(AnkiDroidApp.feedbackUrl),
-        ),
-    )
-
 /** This array contains all the children of the top level menu items from the help menu. */
 @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
 internal val childHelpMenuItems =
     arrayOf(
-        HelpItem(
-            titleResId = R.string.help_item_ankidroid_manual,
-            iconResId = R.drawable.ic_manual_black_24dp,
-            analyticsId = LinkAction.OPENED_ANKIDROID_MANUAL,
-            id = 100,
-            parentId = 1,
-            action = OpenUrl(AnkiDroidApp.manualUrl),
-        ),
-        HelpItem(
-            titleResId = R.string.help_item_anki_manual,
-            iconResId = R.drawable.ic_manual_black_24dp,
-            analyticsId = LinkAction.OPENED_ANKI_MANUAL,
-            id = 101,
-            parentId = 1,
-            action = OpenUrlResource(R.string.link_anki_manual),
-        ),
-        HelpItem(
-            titleResId = R.string.help_item_ankidroid_faq,
-            iconResId = R.drawable.ic_help_black_24dp,
-            analyticsId = LinkAction.OPENED_ANKIDROID_FAQ,
-            id = 102,
-            parentId = 1,
-            action = OpenUrlResource(R.string.link_ankidroid_faq),
-        ),
         HelpItem(
             titleResId = R.string.help_item_mailing_list,
             iconResId = R.drawable.ic_email_black_24dp,
@@ -327,14 +233,6 @@ internal val childHelpMenuItems =
             id = 201,
             parentId = 2,
             action = OpenUrl(AnkiDroidApp.feedbackUrl),
-        ),
-        HelpItem(
-            titleResId = R.string.help_title_send_exception,
-            iconResId = R.drawable.ic_round_assignment_24,
-            analyticsId = LinkAction.EXCEPTION_REPORT,
-            id = 202,
-            parentId = 2,
-            action = SendReport,
         ),
         HelpItem(
             titleResId = R.string.help_item_anki_forums,
@@ -383,14 +281,6 @@ internal val childHelpMenuItems =
             id = 305,
             parentId = 3,
             action = OpenUrlResource(R.string.link_twitter),
-        ),
-        HelpItem(
-            titleResId = R.string.help_item_ankidroid_privacy_policy,
-            iconResId = R.drawable.ic_baseline_policy_24,
-            analyticsId = LinkAction.OPENED_ANKIDROID_PRIVACY_POLICY,
-            id = 400,
-            parentId = 4,
-            action = OpenUrlResource(R.string.link_ankidroid_privacy_policy),
         ),
         HelpItem(
             titleResId = R.string.help_item_ankiweb_privacy_policy,

@@ -284,7 +284,6 @@ class SharedDecksDownloadFragment : Fragment(R.layout.fragment_shared_decks_down
                  */
                 fun verifyDeckIsImportable(): Boolean {
                     if (fileName == null) {
-                        // Send ACRA report
                         CrashReportService.sendExceptionReport(
                             "File name is null",
                             "SharedDecksDownloadFragment::verifyDeckIsImportable",

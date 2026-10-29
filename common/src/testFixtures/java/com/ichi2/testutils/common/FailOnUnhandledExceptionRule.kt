@@ -10,11 +10,11 @@ import org.slf4j.LoggerFactory
 private val logger = LoggerFactory.getLogger(FailOnUnhandledExceptionRule::class.java)
 
 /**
- * (#16253) Under unit tests, ACRA may infinitely loop when trying to handle an unhandled exception
+ * (#16253) Upstream, the ACRA uploader could infinitely loop on an unhandled exception under unit tests
  *
  * The default test behavior is to suppress an exception
  *
- * This rule replaces both AnkiDroidUsageAnalytics and ACRA, ensuring a failure is reported
+ * This rule takes over from the reporting exception handlers, ensuring a failure is reported
  *
  * When applying this rule, it SHOULD be applied after Application.onCreate, otherwise the exception
  * handlers will override it

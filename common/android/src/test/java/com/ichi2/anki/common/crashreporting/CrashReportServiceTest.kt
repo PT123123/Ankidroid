@@ -57,7 +57,7 @@ class CrashReportServiceTest {
 
         CrashReportService.sendExceptionReport(exception, origin = "CrashReportServiceTest")
 
-        // WARN is collected into ACRA reports (LOGCAT report field): no PII
+        // the ERROR line is what a crash report carries: keep PII out of it
         val error = logs.single { it.priority == Log.ERROR }
         assertNull(error.throwable, "ERROR should not contain the throwable: its message may contain PII")
         assertFalse(error.message.contains(exception.message!!), "ERROR should not contain the exception message")

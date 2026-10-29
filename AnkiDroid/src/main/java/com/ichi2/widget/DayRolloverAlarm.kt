@@ -113,7 +113,7 @@ class DayRolloverAlarm : AnkiBroadcastReceiver() {
 }
 
 /**
- * Launches [block] on [Dispatchers.IO], reporting exceptions to ACRA.
+ * Launches [block] on [Dispatchers.IO], reporting exceptions to [CrashReportService].
  *
  * @param origin origin in the crash report
  */
