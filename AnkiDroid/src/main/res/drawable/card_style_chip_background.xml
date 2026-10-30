@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The chip in the corner of the card which switches the card style.
+     It sits on the card, so it takes the card's own surface colour and rim. -->
+<ripple xmlns:android="http://schemas.android.com/apk/res/android"
+    android:color="?attr/answerButtonTonalRippleColor">
+    <item>
+        <shape android:shape="oval">
+            <solid android:color="?attr/colorSurfaceContainerHighest" />
+            <stroke
+                android:width="@dimen/card_surface_stroke_width"
+                android:color="?attr/cardSurfaceStrokeColor" />
+        </shape>
+    </item>
+</ripple>

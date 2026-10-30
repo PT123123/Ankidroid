@@ -40,7 +40,22 @@
          used by the "Show answer" bar so both rows line up -->
     <dimen name="answer_button_outer_margin">11dp</dimen>
     <dimen name="answer_button_vertical_gap">6dp</dimen>
-    <dimen name="answer_button_corner_radius">16dp</dimen>
-    <dimen name="reviewer_answer_button_textSize">14sp</dimen>
+    <dimen name="answer_button_corner_radius">20dp</dimen>
+    <dimen name="answer_button_height">56dp</dimen>
+    <dimen name="answer_button_outline_width">1.5dp</dimen>
+    <dimen name="reviewer_answer_button_textSize">15sp</dimen>
+    <dimen name="reviewer_answer_button_time_textSize">12sp</dimen>
     <dimen name="reviewer_mark_flag">16dp</dimen>
+
+    <!-- The card surface: how far the card sits from the screen edge, and how much room
+         its content gets inside the rounded corners. -->
+    <dimen name="card_surface_margin_horizontal">12dp</dimen>
+    <dimen name="card_surface_margin_vertical">8dp</dimen>
+    <dimen name="card_surface_corner_radius">24dp</dimen>
+    <dimen name="card_surface_padding">16dp</dimen>
+    <dimen name="card_paper_padding">20dp</dimen>
+    <dimen name="card_minimal_padding">8dp</dimen>
+    <dimen name="card_style_chip_size">32dp</dimen>
+    <dimen name="card_style_chip_margin">8dp</dimen>
+    <dimen name="card_surface_stroke_width">1dp</dimen>
 </resources>

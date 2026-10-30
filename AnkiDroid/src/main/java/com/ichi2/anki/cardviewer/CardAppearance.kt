@@ -15,6 +15,13 @@ class CardAppearance(
     private val cardZoom: Int,
     private val imageZoom: Int,
     private val centerVertically: Boolean,
+    /**
+     * The card style in use. It is read for every card, so that the quick switch in the card
+     * takes effect on the next card without re-creating the viewer.
+     */
+    private val cardStyleProvider: () -> CardStyle,
+    /** The colour the paper style paints its sheet with, resolved from the theme. */
+    private val paperColour: String,
 ) {
     /** Below could be in a better abstraction.  */
     fun appendCssStyle(style: StringBuilder) {
@@ -49,6 +56,10 @@ class CardAppearance(
                 cardClass.append(" ankidroid_plain_mode")
             }
         }
+        val bodyClass = cardStyleProvider().bodyClass
+        if (bodyClass.isNotEmpty()) {
+            cardClass.append(" ").append(bodyClass)
+        }
         return cardClass.toString()
     }
 
@@ -57,6 +68,8 @@ class CardAppearance(
             val style = StringBuilder()
             customFonts.updateCssStyle(style)
             appendCssStyle(style)
+            // the rules of every card style, so that switching styles is a class swap
+            style.append(CardStyle.stylesheet(paperColour))
             return style.toString()
         }
 
@@ -68,11 +81,13 @@ class CardAppearance(
         fun create(
             customFonts: ReviewerCustomFonts,
             preferences: SharedPreferences,
+            cardStyleProvider: () -> CardStyle,
+            paperColour: String,
         ): CardAppearance {
             val cardZoom = preferences.getInt("cardZoom", 100)
             val imageZoom = preferences.getInt("imageZoom", 100)
             val centerVertically = preferences.getBoolean("centerVertically", false)
-            return CardAppearance(customFonts, cardZoom, imageZoom, centerVertically)
+            return CardAppearance(customFonts, cardZoom, imageZoom, centerVertically, cardStyleProvider, paperColour)
         }
 
         fun fixBoldStyle(content: String): String {

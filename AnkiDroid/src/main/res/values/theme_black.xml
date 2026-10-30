@@ -5,6 +5,9 @@
     <color name="theme_black_primary_light">#151515</color>
     <color name="theme_black_primary_text">#fff</color> <!-- Alternative: #808080 -->
     <color name="theme_black_row_current">#1a1a1a</color>
+    <!-- The answer bar of the black theme: a hair off true black, so the bar reads as a
+         surface without lighting up the OLED pixels. -->
+    <color name="theme_black_answer_area">#0D0D0D</color>
 
     <style name="Base.Theme.Dark.Black" parent="Theme_Dark">
         <!-- Android colors -->
@@ -45,13 +48,16 @@
         <item name="zeroCountColor">#202020</item>
         <!-- Study Screen colors -->
         <item name="showAnswerButtonBackground">#0c1215</item>
-        <item name="showAnswerColor">@color/theme_black_primary</item>
+        <item name="showAnswerColor">@color/theme_black_answer_area</item>
+        <item name="answerAreaDark">true</item>
         <item name="topBarColor">@color/theme_black_primary</item>
         <item name="maxTimerColor">@color/material_red_300</item>
-        <item name="againButtonTextColor">@color/material_red_400</item>
-        <item name="hardButtonTextColor">@color/white</item>
-        <item name="goodButtonTextColor">@color/material_green_400</item>
-        <item name="easyButtonTextColor">@color/material_blue_700</item>
+        <!-- Black keeps the night theme's inverted buttons but sinks them back down: a dark
+             tinted fill with a light label, so the bar stays OLED black. -->
+        <item name="againButtonTextColor">@color/material_red_200</item>
+        <item name="hardButtonTextColor">@color/material_blue_grey_100</item>
+        <item name="goodButtonTextColor">@color/material_light_green_200</item>
+        <item name="easyButtonTextColor">@color/material_light_blue_200</item>
 
         <item name="alternativeBackgroundColor">#0C0C0C</item>
         <item name="againTextColor">@color/material_red_200</item>
@@ -64,10 +70,26 @@
         <item name="easyBackgroundColor">#0c1317</item>
         <!-- Study Screen button drawables -->
         <!-- The fill stays true black here; the tinted labels below carry the ease identity -->
-        <item name="againButtonBackground">@color/theme_black_primary</item>
-        <item name="hardButtonBackground">@color/theme_black_primary</item>
-        <item name="goodButtonBackground">@color/theme_black_primary</item>
-        <item name="easyButtonBackground">@color/theme_black_primary</item>
+        <item name="againButtonBackground">#2A1214</item>
+        <item name="hardButtonBackground">#1E2427</item>
+        <item name="goodButtonBackground">#12240F</item>
+        <item name="easyButtonBackground">#0C1A24</item>
+        <item name="againButtonAccent">@color/material_red_200</item>
+        <item name="hardButtonAccent">@color/material_blue_grey_100</item>
+        <item name="goodButtonAccent">@color/material_light_green_200</item>
+        <item name="easyButtonAccent">@color/material_light_blue_200</item>
+        <!-- The tonal answer button: a tint of the ease's hue with the hue as the label -->
+        <item name="againButtonTonal">#3A1A1A</item>
+        <item name="hardButtonTonal">#1F272B</item>
+        <item name="goodButtonTonal">#1A2C1A</item>
+        <item name="easyButtonTonal">#123047</item>
+        <!-- the tonal button sits on a dark container, so its ripple is light -->
+        <item name="answerButtonTonalRippleColor">#26FFFFFF</item>
+        <item name="cardSurfaceColor">@android:color/black</item>
+        <!-- Card surface: the rounded sheet the card content sits on -->
+        <item name="cardSurfaceStrokeColor">#26FFFFFF</item>
+        <item name="cardPaperColor">#1C1915</item>
+        <item name="cardPaperStrokeColor">#33FFFFFF</item>
         <item name="againButtonRef">@drawable/footer_button_rounded</item>
         <item name="hardButtonRef">@drawable/footer_button_rounded</item>
         <item name="goodButtonRef">@drawable/footer_button_rounded</item>
@@ -78,7 +100,7 @@
         <item name="goodButtonRippleRef">@drawable/footer_button_rounded_ripple</item>
         <item name="easyButtonRippleRef">@drawable/footer_button_rounded_ripple</item>
         <!-- Card Browser Colors -->
-        <item name="cardBrowserDivider">@color/white</item>
+        <item name="cardBrowserDivider">#26FFFFFF</item>
         <!-- Browser colors -->
         <item name="suspendedColor">#A8A634</item>
         <item name="selectedColor">#a86634</item>

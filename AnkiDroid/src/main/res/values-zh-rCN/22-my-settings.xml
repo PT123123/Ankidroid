@@ -10,4 +10,22 @@
     <string name="my_settings_tools_summary" maxLength="200">这些操作会在牌组界面执行</string>
     <string name="my_settings_card_css" maxLength="41">跟随主题重绘卡片</string>
     <string name="my_settings_card_css_summary">没改过的笔记类型会强制 Arial 字体、黑字白底，盖掉你选的主题。开启后只去掉这三项，字号和居中保持原样，卡片改用主题的字体与配色。关掉就和桌面端渲染一致。</string>
+
+    <!-- 卡片风格 -->
+    <string name="card_style" maxLength="41">卡片风格</string>
+    <string name="card_style_summary" maxLength="200">卡片面、排版和答题按钮的画法</string>
+    <string name="card_style_classic">经典</string>
+    <string name="card_style_modern">现代</string>
+    <string name="card_style_paper">纸感</string>
+    <string name="card_style_minimal">极简</string>
+    <string name="card_style_classic_value">classic</string>
+    <string name="card_style_modern_value">modern</string>
+    <string name="card_style_paper_value">paper</string>
+    <string name="card_style_minimal_value">minimal</string>
+    <string name="card_style_classic_summary" maxLength="200">不加卡片外框和内边距，卡片铺满屏幕，跟桌面端一致</string>
+    <string name="card_style_modern_summary" maxLength="200">圆角卡片面加细描边和阴影，用主题字体，题面与答案之间有分隔线</string>
+    <string name="card_style_paper_summary" maxLength="200">米色纸面，衬线字体，留白更宽</string>
+    <string name="card_style_minimal_summary" maxLength="200">没有外框，排版紧凑，答题按钮只留描边</string>
+    <string name="card_style_chip_description" maxLength="200">卡片风格：%s，点按切换</string>
+    <string name="card_style_chip_description_default" maxLength="200">卡片风格，点按切换</string>
 </resources>

@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  ~ SPDX-License-Identifier: GPL-3.0-or-later
+  ~ SPDX-FileCopyrightText: 2026 PT123123 <31439216+PT123123@users.noreply.github.com>
+  -->
+<!--
+  The card style picker, opened from the chip in the corner of the card. One row per style:
+  the name as a radio button, what the style looks like below it.
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:paddingTop="16dp"
+    android:paddingBottom="16dp">
+
+    <com.ichi2.ui.FixedTextView
+        android:id="@+id/card_style_dialog_title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingStart="24dp"
+        android:paddingEnd="24dp"
+        android:paddingBottom="8dp"
+        android:text="@string/card_style"
+        android:textAppearance="?attr/textAppearanceTitleMedium" />
+
+    <LinearLayout
+        android:id="@+id/card_style_options"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical" />
+</LinearLayout>

@@ -32,6 +32,15 @@
             android:summary="@string/my_settings_card_css_summary"
             android:title="@string/my_settings_card_css" />
 
+        <ListPreference
+            android:defaultValue="@string/card_style_modern_value"
+            android:entries="@array/card_style_labels"
+            android:entryValues="@array/card_style_values"
+            android:icon="@drawable/ic_card_style"
+            android:key="@string/card_style_key"
+            android:title="@string/card_style"
+            app:useSimpleSummaryProvider="true" />
+
         <com.ichi2.preferences.HeaderPreference
             android:fragment="com.ichi2.anki.preferences.profiles.SwitchProfilesFragment"
             android:icon="@drawable/ic_switch_profile"

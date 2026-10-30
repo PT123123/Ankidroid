@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  The pill a card count sits in, in the deck list.
+  The fill is white and the tint is set at runtime from the count's own colour, so one file
+  serves the new, the learning and the review count.
+-->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <corners android:radius="9dp" />
+    <solid android:color="#FFFFFFFF" />
+</shape>

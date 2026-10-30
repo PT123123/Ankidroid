@@ -53,6 +53,23 @@
         <item name="hardButtonTextColor">@color/black</item>
         <item name="goodButtonTextColor">@color/black</item>
         <item name="easyButtonTextColor">@color/black</item>
+        <!-- E-Ink stays monochrome: the outline variant takes the same black. -->
+        <item name="againButtonAccent">@color/black</item>
+        <item name="hardButtonAccent">@color/black</item>
+        <item name="goodButtonAccent">@color/black</item>
+        <item name="easyButtonAccent">@color/black</item>
+        <!-- E-Ink has no hues: the tonal button is the white block the filled one is -->
+        <item name="againButtonTonal">@color/white</item>
+        <item name="hardButtonTonal">@color/white</item>
+        <item name="goodButtonTonal">@color/white</item>
+        <item name="easyButtonTonal">@color/white</item>
+        <!-- the tonal button sits on a white container, so its ripple is dark -->
+        <item name="answerButtonTonalRippleColor">#26000000</item>
+        <!-- Card surface: the rounded sheet the card content sits on -->
+        <item name="cardSurfaceColor">@color/white</item>
+        <item name="cardSurfaceStrokeColor">@color/black</item>
+        <item name="cardPaperColor">@color/white</item>
+        <item name="cardPaperStrokeColor">@color/black</item>
 
         <item name="againTextColor">@color/black</item>
         <item name="hardTextColor">@color/black</item>
@@ -77,6 +94,7 @@
 
         <item name="showAnswerButtonBackground">@color/black</item>
         <item name="showAnswerColor">@color/black</item>
+        <item name="answerAreaDark">true</item>
 
         <item name="alternativeBackgroundColor">@color/white</item>
         <item name="cardBrowserDivider">@color/black</item>

@@ -16,4 +16,38 @@
     <string name="my_settings_tools_summary" maxLength="200">These actions run in the deck list screen</string>
     <string name="my_settings_card_css" maxLength="41">Restyle card defaults</string>
     <string name="my_settings_card_css_summary">A note type you never edited forces Arial, black text and a white background over whatever theme is set. This drops those three only, so the card takes the theme font and colours while keeping Anki\'s size and centring. Switch off to render it exactly like the desktop.</string>
+
+    <!-- Card style: how the card surface and the answer buttons are drawn. -->
+    <string name="card_style" maxLength="41">Card style</string>
+    <string name="card_style_summary" maxLength="200">How the card surface, its type and the answer buttons are drawn</string>
+    <string name="card_style_classic">Classic</string>
+    <string name="card_style_modern">Modern</string>
+    <string name="card_style_paper">Paper</string>
+    <string name="card_style_minimal">Minimal</string>
+    <string name="card_style_classic_value">classic</string>
+    <string name="card_style_modern_value">modern</string>
+    <string name="card_style_paper_value">paper</string>
+    <string name="card_style_minimal_value">minimal</string>
+    <string name="card_style_classic_summary" maxLength="200">No card frame and no padding: the card fills the screen, the way the desktop renders it</string>
+    <string name="card_style_modern_summary" maxLength="200">A rounded sheet with a thin rim and a shadow, the theme\'s type, and a divider between question and answer</string>
+    <string name="card_style_paper_summary" maxLength="200">A warm paper sheet with a serif type and wide margins</string>
+    <string name="card_style_minimal_summary" maxLength="200">No frame, tight type and outlined answer buttons</string>
+    <string name="card_style_chip_description" maxLength="200">Card style: %s. Tap to change.</string>
+    <string name="card_style_chip_description_default" maxLength="200">Card style. Tap to change.</string>
+
+    <string-array name="card_style_labels">
+        <item>@string/card_style_classic</item>
+        <item>@string/card_style_modern</item>
+        <item>@string/card_style_paper</item>
+        <item>@string/card_style_minimal</item>
+    </string-array>
+    <string-array name="card_style_values">
+        <item>@string/card_style_classic_value</item>
+        <item>@string/card_style_modern_value</item>
+        <item>@string/card_style_paper_value</item>
+        <item>@string/card_style_minimal_value</item>
+    </string-array>
+
+    <!-- The preference key. Not shown to the user. -->
+    <string name="card_style_key" translatable="false">cardStylePreset</string>
 </resources>

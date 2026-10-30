@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Base surface of a tonal answer button.
+     The fill comes from the per-button theme overlay (see @style/AgainButton),
+     so one file serves again/hard/good/easy and every theme. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <corners android:radius="@dimen/answer_button_corner_radius" />
+    <solid android:color="?attr/answerButtonTonal" />
+    <stroke
+        android:width="?attr/widgetStrokeWidth"
+        android:color="?attr/widgetStrokeColor" />
+</shape>

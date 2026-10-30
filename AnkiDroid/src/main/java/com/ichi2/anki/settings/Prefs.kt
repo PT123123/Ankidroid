@@ -17,6 +17,7 @@ import com.ichi2.anki.common.preferences.AnimationPreferences
 import com.ichi2.anki.common.preferences.sharedPrefs
 import com.ichi2.anki.common.utils.isRunningAsUnitTest
 import com.ichi2.anki.settings.enums.AppTheme
+import com.ichi2.anki.settings.enums.CardStylePreset
 import com.ichi2.anki.settings.enums.DayTheme
 import com.ichi2.anki.settings.enums.FrameStyle
 import com.ichi2.anki.settings.enums.HideSystemBars
@@ -372,6 +373,14 @@ open class PrefsRepository(
     var dayTheme: DayTheme by enumPref(R.string.day_theme_key, DayTheme.LIGHT)
     var nightTheme: NightTheme by enumPref(R.string.night_theme_key, NightTheme.BLACK)
     var themeColor: ThemeColor by enumPref(R.string.theme_color_key, ThemeColor.EMERALD)
+
+    /**
+     * How the card and the answer buttons are drawn on the study screen.
+     *
+     * The card carries a chip which switches between the styles without leaving the card, so
+     * this is only the style the app starts with.
+     */
+    var cardStylePreset: CardStylePreset by enumPref(R.string.card_style_key, CardStylePreset.DEFAULT)
 
     //endregion
 

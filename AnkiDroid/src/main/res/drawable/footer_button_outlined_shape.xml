@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Outline variant of an answer button: no fill, the ease's hue on the stroke and the
+     label. The stroke colour comes from the per-button theme overlay (see @style/AgainButton),
+     so one file serves again/hard/good/easy and every theme. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <corners android:radius="@dimen/answer_button_corner_radius" />
+    <solid android:color="@android:color/transparent" />
+    <stroke
+        android:width="@dimen/answer_button_outline_width"
+        android:color="?attr/answerButtonAccent" />
+</shape>

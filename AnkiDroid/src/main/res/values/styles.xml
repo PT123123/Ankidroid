@@ -76,12 +76,14 @@
         <item name="android:ellipsize">marquee</item>
         <item name="android:gravity">bottom|center_horizontal</item>
         <item name="android:singleLine">true</item>
-        <item name="android:textSize">12sp</item>
+        <item name="android:textSize">@dimen/reviewer_answer_button_time_textSize</item>
     </style>
 
     <style name="FooterButtonEaseTextBase" parent="FooterButtonNextTime">
-        <item name="android:textSize">14sp</item>
+        <item name="android:textSize">@dimen/reviewer_answer_button_textSize</item>
         <item name="android:typeface">sans</item>
+        <!-- the ease is the primary label and sits on the upper line -->
+        <item name="android:gravity">center_horizontal</item>
     </style>
     <style name="FooterButtonEaseText" parent="FooterButtonEaseTextBase" >
         <item name="android:fontFamily">@string/font_fontFamily_medium</item>
@@ -90,15 +92,23 @@
     <!-- Styles for each of the 4 answer buttons -->
     <style name="AgainButton">
         <item name="answerButtonBackground">?attr/againButtonBackground</item>
+        <item name="answerButtonAccent">?attr/againButtonAccent</item>
+        <item name="answerButtonTonal">?attr/againButtonTonal</item>
     </style>
     <style name="HardButton">
         <item name="answerButtonBackground">?attr/hardButtonBackground</item>
+        <item name="answerButtonAccent">?attr/hardButtonAccent</item>
+        <item name="answerButtonTonal">?attr/hardButtonTonal</item>
     </style>
     <style name="GoodButton">
         <item name="answerButtonBackground">?attr/goodButtonBackground</item>
+        <item name="answerButtonAccent">?attr/goodButtonAccent</item>
+        <item name="answerButtonTonal">?attr/goodButtonTonal</item>
     </style>
     <style name="EasyButton">
         <item name="answerButtonBackground">?attr/easyButtonBackground</item>
+        <item name="answerButtonAccent">?attr/easyButtonAccent</item>
+        <item name="answerButtonTonal">?attr/easyButtonTonal</item>
     </style>
     <!-- Ease text -->
     <style name="AgainButtonEaseStyle" parent="FooterButtonEaseText">

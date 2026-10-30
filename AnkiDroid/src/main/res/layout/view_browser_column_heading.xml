@@ -6,7 +6,8 @@
     android:minHeight="?minTouchTargetSize"
     android:layout_weight="1"
     android:textFontWeight="700"
-    android:paddingStart="8dp"
+    android:paddingStart="12dp"
+    android:paddingEnd="12dp"
     android:textAppearance="@style/TextAppearance.AppCompat.Widget.TextView.SpinnerItem"
     android:gravity="center_vertical"
 />

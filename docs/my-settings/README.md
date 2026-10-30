@@ -18,10 +18,18 @@ is why 我的设置 also sits at the top of the *More* tab; on a tablet the draw
 
 **我的设置 (`MySettingsFragment`, `res/xml/preferences_my_settings.xml`)** now holds:
 
-- *Added features*: Theme color, Restyle card defaults, Switch profile, LAN sync (the last two are
-  `HeaderPreference`s pointing at their existing fragments, so those screens did not move).
+- *Added features*: Theme color, Restyle card defaults, Card style, Switch profile, LAN sync (the
+  last two are `HeaderPreference`s pointing at their existing fragments, so those screens did not
+  move).
   *Restyle card defaults* is the escape hatch for the stock `.card` CSS rewrite — see
   [ui-polish §6](../ui-polish/README.md).
+  *Card style* picks how the card surface, its type and the answer buttons are drawn
+  (classic / modern / paper / minimal) — see [ui-polish §7](../ui-polish/README.md). The same
+  choice is reachable from the chip in the card's corner while studying, so the two entries are two
+  doors to one setting: `Prefs.cardStylePreset` and the `ListPreference` read the same store, and
+  the list's values are the `R.string.card_style_*_value` strings that `CardStylePreset` stores.
+  The card chip writes the preference and re-styles the card that is on screen; this page writes
+  the preference, and the style applies to the next card.
 - *Tools*: one entry per `DeckTool`, built in code from the enum rather than from XML.
 
 ## How the tools still run
@@ -57,6 +65,11 @@ the `DeckTool` enum replaced) was deleted outright: nothing in the fork or upstr
   [themecolor](../themecolor/README.md).
 - The preference **keys did not change** (`themeColor`, `switchProfileScreen`, `lanSyncScreen`),
   so existing installs keep their values. Only the XML file holding them changed.
+- *Card style* adds a new key, `cardStylePreset` (`R.string/card_style_key`). An install that
+  upgrades has no value for it, so it reads `CardStylePreset.DEFAULT` (modern). Because
+  `CardStylePreset` is a `PrefEnum`, the stored value is the `*_value` **string**, not the enum
+  name: renaming an enum keeps the setting, renaming a `*_value` string loses it (the read falls
+  back to the default).
 - Settings search still finds Theme color: `HeaderFragment.configureSearchBar` indexes
   `R.xml.preferences_my_settings` and `getFragmentFromXmlRes` maps it back to `MySettingsFragment`.
   The tool entries are runtime `Preference`s without keys, so they are intentionally not searchable.

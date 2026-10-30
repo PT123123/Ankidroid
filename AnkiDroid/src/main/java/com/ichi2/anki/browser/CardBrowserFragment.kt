@@ -359,7 +359,6 @@ class CardBrowserFragment :
         cardsAdapter.stateRestorationPolicy = RecyclerView.Adapter.StateRestorationPolicy.PREVENT_WHEN_EMPTY
         val layoutManager = LinearLayoutManager(requireContext())
         cardsListView.layoutManager = layoutManager
-        cardsListView.addItemDecoration(DividerItemDecoration(requireContext(), layoutManager.orientation))
 
         browserColumnHeadings = view.findViewById(R.id.browser_column_headings)
         toggleRowSelections =

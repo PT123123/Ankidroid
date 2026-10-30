@@ -23,6 +23,7 @@ import android.os.Message
 import android.os.Parcelable
 import android.text.SpannableString
 import android.text.style.UnderlineSpan
+import android.util.TypedValue
 import android.view.KeyEvent
 import android.view.Menu
 import android.view.MenuItem
@@ -72,6 +73,7 @@ import com.ichi2.anki.CollectionManager.TR
 import com.ichi2.anki.CollectionManager.withCol
 import com.ichi2.anki.Whiteboard.Companion.createInstance
 import com.ichi2.anki.Whiteboard.OnPaintColorChangeListener
+import com.ichi2.anki.cardviewer.CardStyle
 import com.ichi2.anki.cardviewer.Gesture
 import com.ichi2.anki.cardviewer.ViewerCommand
 import com.ichi2.anki.common.annotations.NeedsTest
@@ -401,8 +403,14 @@ open class Reviewer :
                 },
             navigationBarStyle =
                 if (answerButtonsAtBottom) {
-                    // The answer area is `showAnswerColor` (dark) in every theme.
-                    SystemBarStyle.dark(Color.TRANSPARENT)
+                    // The answer area is a surface of its own, so the icon colour has to follow
+                    // that surface rather than the day/night guess: the plain theme paints a
+                    // light bar in the light theme, and E-Ink a black one in the day.
+                    if (answerAreaIsDark()) {
+                        SystemBarStyle.dark(Color.TRANSPARENT)
+                    } else {
+                        SystemBarStyle.light(EDGE_TO_EDGE_LIGHT_SCRIM, EDGE_TO_EDGE_DARK_SCRIM)
+                    }
                 } else if (immersive) {
                     // use a translucent scrim if there are no answer buttons
                     // auto() draws nothing over gesture navigation, so use dark/light.
@@ -552,6 +560,21 @@ open class Reviewer :
         extendAnswerButtonsIntoInsets(answerArea)
 
         syncControlsWithSystemBars()
+    }
+
+    /**
+     * Whether the answer area is painted dark.
+     *
+     * The theme decides it, because the answer area's colour does not follow the day/night
+     * setting: the plain theme paints a light bar and E-Ink a black one.
+     */
+    private fun answerAreaIsDark(): Boolean {
+        val typedValue = TypedValue()
+        return if (theme.resolveAttribute(R.attr.answerAreaDark, typedValue, true)) {
+            typedValue.data != 0
+        } else {
+            false
+        }
     }
 
     /**
@@ -1425,17 +1448,8 @@ open class Reviewer :
         // Set correct label and background resource for each button
         // Note that it's necessary to set the resource dynamically as the ease2 / ease3 buttons
         // (which libanki expects ease to be 2 and 3) can either be hard, good, or easy - depending on num buttons shown
-        val background = getBackgroundColors(this)
-        val textColor = getTextColors(this)
-        easeButton1!!.setVisibility(View.VISIBLE)
-        easeButton1!!.setColor(background[0])
-        easeButton4!!.setColor(background[3])
-        // Ease 2 is "hard"
-        easeButton2!!.setup(background[1], textColor[1], R.string.ease_button_hard)
+        applyAnswerButtonFamily()
         easeButton2!!.requestFocus()
-        // Ease 3 is good
-        easeButton3!!.setup(background[2], textColor[2], R.string.ease_button_good)
-        easeButton4!!.setVisibility(View.VISIBLE)
         easeButton3!!.requestFocus()
 
         // Show next review time
@@ -1448,6 +1462,33 @@ open class Reviewer :
                 easeButton3!!.nextTime = labels[2]
                 easeButton4!!.nextTime = labels[3]
             }
+        }
+    }
+
+    /**
+     * Draws the four ease buttons in the family the current card style asks for.
+     *
+     * The labels are set here as well: the buttons are reused between cards, and the ease a card
+     * expects is not always the same one.
+     */
+    private fun applyAnswerButtonFamily() {
+        val family = CardStyle.of(Prefs.cardStylePreset).buttonFamily
+        val background = getBackgroundColors(this, family)
+        val textColor = getTextColors(this, family)
+        easeButton1!!.setVisibility(View.VISIBLE)
+        easeButton1!!.setColor(background[0])
+        easeButton4!!.setColor(background[3])
+        // Ease 2 is "hard"
+        easeButton2!!.setup(background[1], textColor[1], R.string.ease_button_hard)
+        // Ease 3 is good
+        easeButton3!!.setup(background[2], textColor[2], R.string.ease_button_good)
+        easeButton4!!.setVisibility(View.VISIBLE)
+    }
+
+    override fun onCardStyleChanged(style: CardStyle) {
+        // the answer may be on screen, so the buttons follow the new style right away
+        if (easeButtonsLayout?.visibility == View.VISIBLE) {
+            applyAnswerButtonFamily()
         }
     }
 

@@ -44,12 +44,12 @@
             android:layout_height="wrap_content"
             android:minHeight="48dp"
             android:background="@color/transparent"
+            android:fontFamily="@string/font_fontFamily_medium"
             android:gravity="start|center_vertical"
             android:maxLines="2"
             android:ellipsize="end"
             android:textColor="?android:textColorPrimary"
-            android:textSize="20sp"
-            android:textStyle="bold"
+            android:textSize="18sp"
             tools:text="Deck name" />
     </LinearLayout>
 
@@ -70,10 +70,13 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
-            android:background="@color/transparent"
+            android:background="@drawable/deck_count_pill"
             android:gravity="center"
-            android:paddingEnd="5dip"
-            android:textSize="14sp"
+            android:minWidth="26dp"
+            android:paddingStart="6dp"
+            android:paddingEnd="6dp"
+            android:layout_marginEnd="4dp"
+            android:textSize="13sp"
             tools:text="10" />
 
         <com.ichi2.ui.FixedTextView
@@ -82,10 +85,13 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
-            android:background="@color/transparent"
+            android:background="@drawable/deck_count_pill"
             android:gravity="center"
-            android:paddingEnd="5dip"
-            android:textSize="14sp"
+            android:minWidth="26dp"
+            android:paddingStart="6dp"
+            android:paddingEnd="6dp"
+            android:layout_marginEnd="4dp"
+            android:textSize="13sp"
             tools:text="42" />
 
         <com.ichi2.ui.FixedTextView
@@ -94,10 +100,13 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
-            android:layout_marginEnd="6dip"
-            android:background="@color/transparent"
+            android:background="@drawable/deck_count_pill"
             android:gravity="center"
-            android:textSize="14sp"
+            android:minWidth="26dp"
+            android:paddingStart="6dp"
+            android:paddingEnd="6dp"
+            android:layout_marginEnd="6dp"
+            android:textSize="13sp"
             tools:text="13" />
     </LinearLayout>
 </RelativeLayout>

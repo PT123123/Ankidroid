@@ -3,7 +3,9 @@
 > **⚠ Fork-specific.** Visual pass on top of the [theme color](../themecolor/README.md) system:
 > window transition animations, modern corner radii, soft elevation and translucent "glass" surfaces.
 > Sections 1-4 are theme-layer only. Section 5 touches the reviewer footer (layouts + the drawables
-> those layouts resolve), and section 6 changes the HTML handed to the card WebView.
+> those layouts resolve), section 6 changes the HTML handed to the card WebView, section 7 makes
+> the card face and the answer buttons switchable, and section 8 brings the deck list and the card
+> browser onto the same ramp.
 
 ## What changed
 
@@ -152,10 +154,101 @@ The rewrite changes what the phone shows for stock note types versus desktop, so
 我的设置 ▸ *Restyle card defaults* (`pref_stock_card_css_key`, on by default). Off = the stock
 string reaches the WebView untouched.
 
-## Keeping §5 and §6 honest
+### 7. Card styles (the card face and the answer buttons)
+
+The study screen's answer half — the sheet the card sits on, its type, the gap around it, the rule
+between question and answer, and the four ease buttons — is now one switchable thing with four
+presets. The reference family is Material 3 (its shape ramp, its tonal elevation, its three button
+families), not a bespoke skin: the presets differ in how much chrome they put around the content,
+not in decoration.
+
+| Preset | Card surface | Type | Ease buttons |
+|---|---|---|---|
+| **Classic** | none — the card fills the screen, as the desktop renders it | the note type's own | filled (saturated, light label) |
+| **Modern** | a rounded sheet, 24dp corners, 1dp rim, 2dp shadow, 12dp gap | theme font, 12dp padding | tonal (tinted container, hue label) |
+| **Paper** | a warm sheet, 8dp corners, 1dp rim, 1dp shadow, 20dp padding | serif headings | tonal |
+| **Minimal** | none — no frame, no shadow | tight, 4dp padding | outlined (no fill, hue outline) |
+
+The four are stored as `CardStylePreset` (`settings/enums/CardStylePreset.kt`), which is the value
+in `R.string.card_style_*_value`; `Prefs.cardStylePreset` and the *Card style* list preference in
+[我的设置](../my-settings/README.md) read the same store, so the chip in the card and the settings
+page never disagree.
+
+**Two halves, and each half has its own owner.**
+
+- The *native* half — rim, corner radius, shadow, the gap between the screen edge and the sheet —
+  is `CardStyle.applyTo()`, which puts a `GradientDrawable` on the WebView's background, sets
+  `clipToOutline` (so the page is clipped to the rounded corners), puts the rim on `foreground`
+  (drawn *above* the page, since a page cannot draw its own rim), sets `elevation` and the margins.
+- The *page* half — padding, the serif headings, the rule between question and answer — is a class
+  on the card's `<body>`: `ankiplus_modern`, `ankiplus_paper`, `ankiplus_minimal`.
+
+The rules of **all four** styles are in one stylesheet (`CardStyle.stylesheet()`), injected by
+`CardAppearance.style` into every card. That is what makes switching cheap: the styles are already
+in the page, so a switch is one class swap and the answer that is on screen stays on screen.
+`AbstractFlashcardViewer.applyPageStyle()` does that swap with `evaluateJavascript` —
+`classList.remove('ankiplus_modern','ankiplus_paper','ankiplus_minimal')` then `classList.add(...)`
+— instead of re-rendering the card, which would have thrown the answer away.
+
+The rules are deliberately weak (a class selector, no `!important`) so the note type's own CSS,
+which is injected *after* this block, still wins the ties.
+
+**The page paints over the sheet.** The WebView's page has its own background, so the native
+`GradientDrawable` is only seen where the card's background is transparent; what the eye reads as
+the sheet's colour is the page's. That is why the paper preset carries its colour in the page
+(`body.ankiplus_paper { background-color: … }`, resolved from `?attr/cardPaperColor`), and why the
+non-sheet presets keep the viewer's historic near-transparent `Color.argb(1, 0, 0, 0)` background
+rather than a white one — a white background behind an unstyled card would flash white on every
+card change.
+
+**The quick switch.** A 32dp chip in the card's top-end corner opens a bottom sheet with the four
+presets, each with a one-line description of what it changes. It lives in `flashcard_overlay`, a
+fourth `<merge>` child of `include_reviewer_flashcard.xml` declared *after* `whiteboard`, so it is
+above `touch_layer`. The overlay itself is not clickable: a tap that misses the chip falls through
+to the touch layer and flips the card, as it always did.
+
+**The buttons follow the style immediately.** `Reviewer.applyAnswerButtonFamily()` re-colours the
+four ease buttons from `AnswerButtonFamily` (FILLED / TONAL / OUTLINED). It is guarded on
+`easeButtonsLayout?.visibility == View.VISIBLE`, so switching style while the *question* is on
+screen does not make the answer buttons appear.
+
+The colours come from four theme attrs — `cardSurfaceColor`, `cardSurfaceStrokeColor`,
+`cardPaperColor`, `cardPaperStrokeColor` — so e-ink (white sheet, black rim) and the night themes
+(dark sheet, translucent rim) get their own values without a code change.
+
+### 8. The same language on the other screens
+
+The deck list and the card browser were the two screens the card style sits next to, so they were
+brought onto the same ramp.
+
+- **Deck list** (`item_deck.xml`, `DeckAdapter.bindCount()`): the three counts became *pills* — a
+  rounded 9dp container with the count tinted at 15% alpha over the count's own colour, the zero
+  counts fading to the secondary text colour with no pill at all, so a deck with nothing due reads
+  as empty instead of as three "0"s. The deck name dropped from 20sp bold to 18sp medium: the name
+  was shouting over the counts, which are the numbers the user scans for.
+- **Card browser** (`CardBrowserFragment.kt`, `view_browser_column_cell.xml`): the rows carried
+  **two** divider decorations — the fork's themed one and an upstream `DividerItemDecoration` added
+  a few lines later — so every row boundary was drawn twice. The upstream one is gone. The
+  remaining hairline was `@color/white` in the night themes, a hard white line between rows; it is
+  now a translucent `#26FFFFFF`, matching the rim the night themes use elsewhere. The cells' text
+  was inset 4dp, which is tight for a list; it is 12dp, and the column headings were moved to the
+  same 12dp so the header still lines up with the text under it.
+
+  Note that `android:divider` / `android:dividerHeight` on the `RecyclerView` in
+  `fragment_card_browser.xml` do nothing — those are `ListView` attributes, and `RecyclerView`
+  ignores them silently. The decoration is the only thing that draws the line.
+
+## Keeping §5, §6 and §7 honest
 
 - `StockCardCssTest` pins the remap: current and legacy stock blocks rewritten, customised and
   grouped selectors untouched, the switch off leaving the HTML alone, and — as the control against
   these fixtures drifting — one case which renders a note through the backend bundled here.
 - Any new ease-button drawable state must come back through `?attr/*ButtonRef`, not through a
   per-ease drawable — the runtime overwrite in `EaseButton.setup()` is the reason.
+- A new card style needs **two** things, or the switch will show a half-applied style: a body
+  class (so the page half applies) **and** the class in `CardStyle.bodyClasses` (so the swap can
+  take the old one off). The stylesheet is written for all four styles at once, so a style added
+  later must add its rules to `CardStyle.stylesheet()` as well.
+- The body class is read for **every card** (`AndroidCardRenderContext` → `CardAppearance`), not
+  only when the viewer is created. That is what lets the chip change the style of the card already
+  on screen and of the next one alike.

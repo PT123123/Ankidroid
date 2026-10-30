@@ -47,8 +47,10 @@ import android.webkit.WebView
 import android.webkit.WebView.HitTestResult
 import android.webkit.WebViewClient
 import android.widget.FrameLayout
+import android.widget.ImageButton
 import android.widget.LinearLayout
 import android.widget.RelativeLayout
+import android.widget.TextView
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.result.ActivityResult
 import androidx.activity.result.ActivityResultCallback
@@ -68,6 +70,8 @@ import androidx.lifecycle.Lifecycle.State.RESUMED
 import anki.collection.OpChanges
 import anki.scheduler.CardAnswer.Rating
 import com.drakeet.drawer.FullDraggableContainer
+import com.google.android.material.bottomsheet.BottomSheetDialog
+import com.google.android.material.radiobutton.MaterialRadioButton
 import com.google.android.material.snackbar.Snackbar
 import com.ichi2.anki.AbstractFlashcardViewer.Signal.Companion.toSignal
 import com.ichi2.anki.CollectionManager.TR
@@ -78,6 +82,7 @@ import com.ichi2.anki.backend.stripHTMLAndSpecialFields
 import com.ichi2.anki.cardviewer.AndroidCardRenderContext
 import com.ichi2.anki.cardviewer.AndroidCardRenderContext.Companion.createInstance
 import com.ichi2.anki.cardviewer.CardMediaPlayer
+import com.ichi2.anki.cardviewer.CardStyle
 import com.ichi2.anki.cardviewer.Gesture
 import com.ichi2.anki.cardviewer.GestureProcessor
 import com.ichi2.anki.cardviewer.JavascriptEvaluator
@@ -236,9 +241,11 @@ abstract class AbstractFlashcardViewer :
 
     private var cardFrame: FrameLayout? = null
     private var touchLayer: FrameLayout? = null
+    private var cardStyleOverlay: FrameLayout? = null
+    private var cardStyleButton: ImageButton? = null
     protected var answerField: FixedEditText? = null
     protected var flipCardLayout: FrameLayout? = null
-    private var easeButtonsLayout: LinearLayout? = null
+    protected var easeButtonsLayout: LinearLayout? = null
 
     internal var easeButton1: EaseButton? = null
     internal var easeButton2: EaseButton? = null
@@ -885,6 +892,13 @@ abstract class AbstractFlashcardViewer :
             findViewById<FrameLayout>(R.id.touch_layer).apply { setOnTouchListener(gestureListener) }
         cardFrame!!.removeAllViews()
 
+        cardStyle = CardStyle.of(Prefs.cardStylePreset)
+        cardStyleOverlay = findViewById(R.id.flashcard_overlay)
+        cardStyleButton =
+            findViewById<ImageButton>(R.id.card_style_button).apply {
+                setOnClickListener { showCardStylePicker() }
+            }
+
         // Initialize swipe
         gestureDetector = GestureDetector(this, gestureDetectorImpl)
         easeButtonsLayout = findViewById(R.id.ease_buttons)
@@ -990,11 +1004,13 @@ abstract class AbstractFlashcardViewer :
             whiteboardContainer.layoutParams as RelativeLayout.LayoutParams
         val flashcardContainerParams = cardFrame!!.layoutParams as RelativeLayout.LayoutParams
         val touchLayerContainerParams = touchLayer!!.layoutParams as RelativeLayout.LayoutParams
+        val cardStyleOverlayParams = cardStyleOverlay!!.layoutParams as RelativeLayout.LayoutParams
         when (answerButtonsPosition) {
             "top" -> {
                 whiteboardContainerParams.addRule(RelativeLayout.BELOW, R.id.bottom_area_layout)
                 flashcardContainerParams.addRule(RelativeLayout.BELOW, R.id.bottom_area_layout)
                 touchLayerContainerParams.addRule(RelativeLayout.BELOW, R.id.bottom_area_layout)
+                cardStyleOverlayParams.addRule(RelativeLayout.BELOW, R.id.bottom_area_layout)
                 answerAreaParams.addRule(RelativeLayout.BELOW, R.id.mic_tool_bar_layer)
                 answerArea.removeView(answerField)
                 answerArea.addView(answerField, 1)
@@ -1009,6 +1025,8 @@ abstract class AbstractFlashcardViewer :
                 flashcardContainerParams.addRule(RelativeLayout.BELOW, R.id.mic_tool_bar_layer)
                 touchLayerContainerParams.addRule(RelativeLayout.ABOVE, R.id.bottom_area_layout)
                 touchLayerContainerParams.addRule(RelativeLayout.BELOW, R.id.mic_tool_bar_layer)
+                cardStyleOverlayParams.addRule(RelativeLayout.ABOVE, R.id.bottom_area_layout)
+                cardStyleOverlayParams.addRule(RelativeLayout.BELOW, R.id.mic_tool_bar_layer)
                 answerAreaParams.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM)
             }
 
@@ -1027,7 +1045,100 @@ abstract class AbstractFlashcardViewer :
         whiteboardContainer.layoutParams = whiteboardContainerParams
         cardFrame!!.layoutParams = flashcardContainerParams
         touchLayer!!.layoutParams = touchLayerContainerParams
+        cardStyleOverlay!!.layoutParams = cardStyleOverlayParams
+        updateCardStyleChip()
     }
+
+    /**
+     * The card style in use. It is read when the layout is set up, so that the quick switch in
+     * the card can change it without re-creating the viewer.
+     */
+    private var cardStyle: CardStyle = CardStyle.CLASSIC
+
+    /**
+     * Switches the card style.
+     *
+     * The native half of the style is put on the card, the page is told about the new style by
+     * swapping a class on its body, so the answer on screen stays on screen.
+     */
+    fun setCardStyle(style: CardStyle) {
+        if (style == cardStyle) return
+        cardStyle = style
+        Prefs.cardStylePreset = style.preset
+        applyCardStyle()
+        applyPageStyle()
+        onCardStyleChanged(style)
+    }
+
+    /** Puts the native half of the style on the card: the sheet, its rim and its gap. */
+    private fun applyCardStyle() {
+        val webView = webView ?: return
+        cardStyle.applyTo(webView, this)
+        updateCardStyleChip()
+    }
+
+    /**
+     * Tells the page about the new style.
+     *
+     * Every style's rules are already in the page's stylesheet, so this only has to move the
+     * style's class from one body to the other.
+     */
+    private fun applyPageStyle() {
+        val webView = webView ?: return
+        val remove = CardStyle.bodyClasses.joinToString(",") { "'$it'" }
+        val add = if (cardStyle.bodyClass.isEmpty()) "" else "b.classList.add('${cardStyle.bodyClass}');"
+        webView.evaluateJavascript(
+            "(function(){var b=document.body;if(!b)return;b.classList.remove($remove);$add})();",
+            null,
+        )
+    }
+
+    /** Moves the chip so that it sits on the sheet, and names the style it switches to. */
+    private fun updateCardStyleChip() {
+        val button = cardStyleButton ?: return
+        button.contentDescription =
+            getString(R.string.card_style_chip_description, getString(cardStyle.titleRes))
+        val density = resources.displayMetrics.density
+        val inset = resources.getDimensionPixelSize(R.dimen.card_style_chip_margin)
+        val top = (cardStyle.marginVerticalDp * density).toInt() + inset
+        val side = (cardStyle.marginHorizontalDp * density).toInt() + inset
+        (button.layoutParams as? FrameLayout.LayoutParams)?.let {
+            it.topMargin = top
+            it.bottomMargin = 0
+            it.leftMargin = side
+            it.rightMargin = side
+            it.marginEnd = side
+            button.layoutParams = it
+        }
+    }
+
+    /** Opens the picker which switches the card style. */
+    private fun showCardStylePicker() {
+        val dialog = BottomSheetDialog(this)
+        val content = layoutInflater.inflate(R.layout.dialog_card_style, null)
+        val options = content.findViewById<LinearLayout>(R.id.card_style_options)
+        val radios = mutableListOf<MaterialRadioButton>()
+        CardStyle.entries.forEach { style ->
+            val row = layoutInflater.inflate(R.layout.item_card_style, options, false)
+            val radio = row.findViewById<MaterialRadioButton>(R.id.card_style_radio)
+            radio.text = getString(style.titleRes)
+            radio.isChecked = style == cardStyle
+            row.findViewById<TextView>(R.id.card_style_item_summary).text = getString(style.summaryRes)
+            radio.setOnClickListener {
+                radios.forEach { it.isChecked = false }
+                radio.isChecked = true
+                dialog.dismiss()
+                setCardStyle(style)
+            }
+            radios += radio
+            options.addView(row)
+        }
+        dialog.setContentView(content)
+        dialog.show()
+    }
+
+    /** Called when the card style changed, so that the rest of the screen can follow. */
+    protected open fun onCardStyleChanged(style: CardStyle) {}
 
     protected open fun createWebView(): WebView {
         val resourceHandler = ViewerResourceHandler(this)
@@ -1271,6 +1382,7 @@ abstract class AbstractFlashcardViewer :
             webView = createWebView()
             cardFrame!!.addView(webView)
             gestureDetectorImpl.onWebViewCreated(webView!!)
+            applyCardStyle()
         }
         if (webView!!.visibility != View.VISIBLE) {
             webView!!.visibility = View.VISIBLE

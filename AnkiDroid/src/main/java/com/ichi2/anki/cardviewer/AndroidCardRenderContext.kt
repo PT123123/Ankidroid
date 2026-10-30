@@ -3,8 +3,11 @@
 package com.ichi2.anki.cardviewer
 
 import android.content.Context
+import android.graphics.Color
 import androidx.annotation.CheckResult
 import anki.config.ConfigKey
+import com.google.android.material.color.MaterialColors
+import com.ichi2.anki.R
 import com.ichi2.anki.common.preferences.sharedPrefs
 import com.ichi2.anki.libanki.Card
 import com.ichi2.anki.libanki.CardOrdinal
@@ -13,6 +16,7 @@ import com.ichi2.anki.libanki.TemplateManager.TemplateRenderContext.TemplateRend
 import com.ichi2.anki.libanki.template.MathJax
 import com.ichi2.anki.multimedia.expandSounds
 import com.ichi2.anki.reviewer.ReviewerCustomFonts
+import com.ichi2.anki.settings.PrefsRepository
 import timber.log.Timber
 
 /**
@@ -120,7 +124,15 @@ class AndroidCardRenderContext(
             typeAnswer: TypeAnswer,
         ): AndroidCardRenderContext {
             val preferences = context.sharedPrefs()
-            val cardAppearance = CardAppearance.create(ReviewerCustomFonts(), preferences)
+            val prefs = PrefsRepository(context)
+            val cardAppearance =
+                CardAppearance.create(
+                    ReviewerCustomFonts(),
+                    preferences,
+                    // read for every card: the quick switch in the card changes the style
+                    { CardStyle.of(prefs.cardStylePreset) },
+                    paperColour(context),
+                )
             val cardHtmlTemplate = CardTemplate.load(context)
             val showAudioPlayButtons = !col.config.getBool(ConfigKey.Bool.HIDE_AUDIO_PLAY_BUTTONS)
             return AndroidCardRenderContext(
@@ -129,6 +141,12 @@ class AndroidCardRenderContext(
                 cardHtmlTemplate,
                 showAudioPlayButtons,
             )
+        }
+
+        /** The colour the paper style paints its sheet with, as the stylesheet wants it. */
+        private fun paperColour(context: Context): String {
+            val colour = MaterialColors.getColor(context, R.attr.cardPaperColor, Color.WHITE)
+            return String.format("#%06X", 0xFFFFFF and colour)
         }
     }
 }

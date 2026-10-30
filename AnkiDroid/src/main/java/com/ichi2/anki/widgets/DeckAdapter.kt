@@ -4,13 +4,17 @@
 package com.ichi2.anki.widgets
 
 import android.content.Context
+import android.content.res.ColorStateList
+import android.graphics.Color
 import android.graphics.drawable.Drawable
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageButton
+import android.widget.TextView
 import androidx.core.content.res.getDrawableOrThrow
 import androidx.core.content.withStyledAttributes
+import androidx.core.graphics.ColorUtils
 import androidx.core.view.isGone
 import androidx.core.view.isInvisible
 import androidx.core.view.isVisible
@@ -167,12 +171,9 @@ class DeckAdapter(
         binding.deckName.setTextColor(if (node.filtered) deckNameDynColor else deckNameDefaultColor)
 
         // Set the card counts and their colors
-        binding.deckNew.text = node.newCount.toString()
-        binding.deckNew.setTextColor(if (node.newCount == 0) zeroCountColor else newCountColor)
-        binding.deckLearn.text = node.lrnCount.toString()
-        binding.deckLearn.setTextColor(if (node.lrnCount == 0) zeroCountColor else learnCountColor)
-        binding.deckReview.text = node.revCount.toString()
-        binding.deckReview.setTextColor(if (node.revCount == 0) zeroCountColor else reviewCountColor)
+        bindCount(binding.deckNew, node.newCount, newCountColor)
+        bindCount(binding.deckLearn, node.lrnCount, learnCountColor)
+        bindCount(binding.deckReview, node.revCount, reviewCountColor)
 
         holder.binding.deckLayout.setOnClickListener { onDeckSelected(node.did) }
         holder.binding.deckLayout.setOnLongClickListener {
@@ -192,6 +193,31 @@ class DeckAdapter(
                 false
             }
         }
+    }
+
+    /**
+     * Puts a card count in its pill.
+     *
+     * The number keeps the count's own hue; the pill carries the same hue at a fraction of the
+     * strength, so the three counts read as one row of badges. A count of zero has no pill at
+     * all, so an idle deck does not show three empty badges.
+     */
+    private fun bindCount(
+        view: TextView,
+        count: Int,
+        countColor: Int,
+    ) {
+        view.text = count.toString()
+        val active = count != 0
+        view.setTextColor(if (active) countColor else zeroCountColor)
+        view.backgroundTintList =
+            ColorStateList.valueOf(
+                if (active) {
+                    ColorUtils.setAlphaComponent(countColor, COUNT_PILL_ALPHA)
+                } else {
+                    Color.TRANSPARENT
+                },
+            )
     }
 
     private fun setDeckExpander(
@@ -226,6 +252,9 @@ class DeckAdapter(
     companion object {
         // Make the selected deck roughly half transparent if there is a background
         private const val SELECTED_DECK_ALPHA_AGAINST_BACKGROUND = 0.45
+
+        /** How strongly the count's own hue tints its pill. */
+        private const val COUNT_PILL_ALPHA = 32
     }
 
     init {

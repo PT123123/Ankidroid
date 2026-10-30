@@ -5,6 +5,7 @@ package com.ichi2.anki.reviewer
 import android.content.Context
 import com.ichi2.anki.AnkiActivity
 import com.ichi2.anki.R
+import com.ichi2.anki.cardviewer.AnswerButtonFamily
 import com.ichi2.anki.cardviewer.ViewerCommand
 import com.ichi2.anki.common.android.animationEnabled
 import com.ichi2.anki.common.utils.android.getColorsFromAttrs
@@ -68,35 +69,81 @@ enum class AnswerButtons {
         }
 
     companion object {
-        fun getBackgroundColors(ctx: AnkiActivity): IntArray {
-            val backgroundIds: IntArray =
-                if (ctx.animationEnabled()) {
-                    intArrayOf(
-                        R.attr.againButtonRippleRef,
-                        R.attr.hardButtonRippleRef,
-                        R.attr.goodButtonRippleRef,
-                        R.attr.easyButtonRippleRef,
+        /**
+         * The drawable of each answer button, in the order again/hard/good/easy.
+         *
+         * The drawable carries the button's own theme overlay, so one file serves all four
+         * buttons and every theme.
+         */
+        fun getBackgroundColors(
+            ctx: AnkiActivity,
+            family: AnswerButtonFamily,
+        ): IntArray {
+            val ripple = ctx.animationEnabled()
+            return when (family) {
+                AnswerButtonFamily.FILLED ->
+                    getResFromAttr(
+                        ctx,
+                        if (ripple) {
+                            intArrayOf(
+                                R.attr.againButtonRippleRef,
+                                R.attr.hardButtonRippleRef,
+                                R.attr.goodButtonRippleRef,
+                                R.attr.easyButtonRippleRef,
+                            )
+                        } else {
+                            intArrayOf(
+                                R.attr.againButtonRef,
+                                R.attr.hardButtonRef,
+                                R.attr.goodButtonRef,
+                                R.attr.easyButtonRef,
+                            )
+                        },
                     )
-                } else {
-                    intArrayOf(
-                        R.attr.againButtonRef,
-                        R.attr.hardButtonRef,
-                        R.attr.goodButtonRef,
-                        R.attr.easyButtonRef,
-                    )
-                }
-            return getResFromAttr(ctx, backgroundIds)
+
+                AnswerButtonFamily.TONAL ->
+                    IntArray(4) {
+                        if (ripple) R.drawable.footer_button_tonal_ripple else R.drawable.footer_button_tonal
+                    }
+
+                AnswerButtonFamily.OUTLINED ->
+                    IntArray(4) {
+                        if (ripple) R.drawable.footer_button_outlined_ripple else R.drawable.footer_button_outlined
+                    }
+            }
         }
 
-        fun getTextColors(ctx: Context): IntArray =
+        /**
+         * The label colour of each answer button, in the order again/hard/good/easy.
+         *
+         * A filled button carries a light label on a saturated fill; the tonal and the outlined
+         * button carry the ease's own hue instead, which is what their container is made of.
+         */
+        fun getTextColors(
+            ctx: Context,
+            family: AnswerButtonFamily,
+        ): IntArray =
             getColorsFromAttrs(
                 ctx,
-                intArrayOf(
-                    R.attr.againButtonTextColor,
-                    R.attr.hardButtonTextColor,
-                    R.attr.goodButtonTextColor,
-                    R.attr.easyButtonTextColor,
-                ),
+                when (family) {
+                    AnswerButtonFamily.FILLED ->
+                        intArrayOf(
+                            R.attr.againButtonTextColor,
+                            R.attr.hardButtonTextColor,
+                            R.attr.goodButtonTextColor,
+                            R.attr.easyButtonTextColor,
+                        )
+
+                    AnswerButtonFamily.TONAL,
+                    AnswerButtonFamily.OUTLINED,
+                    ->
+                        intArrayOf(
+                            R.attr.againButtonAccent,
+                            R.attr.hardButtonAccent,
+                            R.attr.goodButtonAccent,
+                            R.attr.easyButtonAccent,
+                        )
+                },
             )
     }
 }

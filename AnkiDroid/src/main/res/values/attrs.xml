@@ -152,6 +152,28 @@
     <attr name="hardButtonTextColor" format="color"/>
     <attr name="goodButtonTextColor" format="color"/>
     <attr name="easyButtonTextColor" format="color"/>
+    <!-- The hue of an ease, used when the button is drawn as an outline: the stroke and the
+         label take it, so it has to read on the answer bar's surface. -->
+    <attr name="answerButtonAccent" format="color"/>
+    <attr name="againButtonAccent" format="color"/>
+    <attr name="hardButtonAccent" format="color"/>
+    <attr name="goodButtonAccent" format="color"/>
+    <attr name="easyButtonAccent" format="color"/>
+    <!-- The container of a tonal answer button: a tint of the ease's hue -->
+    <attr name="answerButtonTonal" format="color"/>
+    <attr name="againButtonTonal" format="color"/>
+    <attr name="hardButtonTonal" format="color"/>
+    <attr name="goodButtonTonal" format="color"/>
+    <attr name="easyButtonTonal" format="color"/>
+    <!-- The ripple of a tonal or outlined button: it sits on a light container, so it is dark -->
+    <attr name="answerButtonTonalRippleColor" format="color"/>
+    <!-- The card surface: the rounded sheet the card content sits on -->
+    <attr name="cardSurfaceColor" format="color"/>
+    <attr name="cardSurfaceStrokeColor" format="color"/>
+    <attr name="cardPaperColor" format="color"/>
+    <attr name="cardPaperStrokeColor" format="color"/>
+    <!-- Whether the answer area is dark, which decides the navigation bar's icon colour -->
+    <attr name="answerAreaDark" format="boolean"/>
 
     <attr name="againTextColor" format="color"/>
     <attr name="hardTextColor" format="color"/>
