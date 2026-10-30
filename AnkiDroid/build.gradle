@@ -182,7 +182,19 @@ android {
         }
         named('release') {
             testCoverageEnabled = testReleaseBuild
-            minifyEnabled System.getenv("MINIFY_ENABLED") ? System.getenv("MINIFY_ENABLED") != "false" : true
+            // Upstream's switch reads MINIFY_ENABLED through System.getenv, i.e. out of the *daemon's*
+            // own environment: whatever the daemon was started with stays in force for every later
+            // invocation, so an env var set on one `./gradlew` call is silently ignored by a warm
+            // daemon. Upstream proves this to itself - `tools/release.sh:168` runs `./gradlew --stop`
+            // on the line before it sets MINIFY_ENABLED. `-PskipMinify=true` is the per-invocation
+            // form this fork drives from the Justfile (a Gradle property is a configuration-cache
+            // input and is read fresh every time - the same mechanism -PskipReleaseLint uses). R8
+            // alone costs 3m 27s and puts 3703 MB inside the 4g daemon, so the daily path drops it;
+            // `just publish` never passes this property. `buildTypes.benchmark` does `initWith
+            // release` (below), so a baseline-profile job must not get this property either - an
+            // unminified benchmark profiles an unminified app. docs/development/fork-build-speed.md
+            def skipMinify = System.getenv("MINIFY_ENABLED") == "false" || project.findProperty("skipMinify") == "true"
+            minifyEnabled !skipMinify
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
             testProguardFile 'proguard-test-rules.pro'
             splits.abi.universalApk = universalApkEnabled // Build universal APK for release with `-Duniversal-apk=true`

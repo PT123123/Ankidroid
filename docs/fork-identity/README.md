@@ -81,7 +81,7 @@ Shape is upstream's; only the palette is forked.
 ## Build
 
 ```sh
-just build-release     # arm64 playRelease only (R8 on, signed with the debug key)
+just build-release     # arm64 playRelease only (fast, R8 off; signed with the debug key)
 just install-release   # adb install -r it
 ```
 

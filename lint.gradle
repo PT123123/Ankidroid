@@ -4,7 +4,12 @@
 android {
     lint {
         abortOnError = true
-        checkReleaseBuilds = true
+        // checkReleaseBuilds is what wires lintVitalAnalyzePlayRelease (~5m49s measured alone,
+        // more than R8) into `assemblePlayRelease`. `-PskipReleaseLint=true` drops it, which is how
+        // `just build-release` and `just minify-release` avoid sharing one 4g heap with R8; `just
+        // lint-release` runs the gate as its own invocation and `just publish` depends on `just
+        // release-check` (minify then lint), so a publish still gets UnusedResources.
+        checkReleaseBuilds = project.findProperty("skipReleaseLint") != "true"
         checkTestSources = true
         explainIssues = false
         lintConfig = file("${rootDir}/lint-release.xml")

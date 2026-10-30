@@ -78,7 +78,9 @@ subprojects {
                 it.environment("ANKI_TEST_MODE", "1")
 
                 it.maxHeapSize = "${unitTestForkMaxHeapGb}g"
-                it.minHeapSize = "1g"
+                // Keep the commit floor low: 11 forks pre-committing 1g each asked for 11g of
+                // address space before the first test ran, and a worker died in `mmap`.
+                it.minHeapSize = "256m"
 
                 it.useJUnitPlatform()
                 it.testLogging {
@@ -262,34 +264,67 @@ private fun gradleDaemonHeapBytes(): Long {
     return size * byteMultiplier
 }
 
-val gradleTestMaxParallelForks by extra(
+/** Heap bytes a single unit-test fork may grow to. */
+private val testForkHeapBytes = unitTestForkMaxHeapGb * 1024L * 1024 * 1024
+
+/**
+ * Non-heap bytes a test fork puts on top of `-Xmx`: metaspace, code cache, thread stacks.
+ */
+private val testForkOverheadBytes = 768L * 1024 * 1024
+
+/**
+ * RAM other build processes need while tests run: Kotlin daemon, dexing/R8 workers, the OS.
+ */
+private val nonTestForkReserveBytes = 6L * 1024 * 1024 * 1024
+
+/**
+ * Hard ceiling on local forks. Each asks for [testForkHeapBytes] plus overhead, and Windows
+ * refuses reservations once the commit limit is reached (measured here: 61 of 64 GB already
+ * committed before a build started). CI owns its RAM; a laptop shares it with an IDE.
+ */
+private val maxLocalTestForks = 4
+
+/**
+ * Local unit-test fork count, bounded by RAM as well as by cores.
+ *
+ * Uses capacity, not free RAM: Windows counts file cache as used and reclaims it on demand, so a
+ * free-RAM formula pinned an idle 32GB machine to one fork. 11 forks (`cores/2`) each committing
+ * 1g is what made the previous runs get their workers killed.
+ *
+ * `providers`/`ManagementFactory` are read at configuration time, so the configuration cache
+ * reuses the value until something else invalidates it. Override for a single run with
+ * `-PtestForks=N`.
+ */
+private fun testForkCount(): Int {
+    providers.gradleProperty("testForks").orNull?.trim()?.toIntOrNull()?.let { return max(1, it) }
     if (isMacOs) {
         // macOS reports hardware cores.
         // This is accurate for CI, Intel (halved due to SMT) and Apple Silicon
         val physicalCpus = sysctl("hw.physicalcpu")
-
-        if (ciBuild) {
-            // #21168: The `macos-14` CI runner has only 7GB RAM and OOMs (exit 134) so bound by RAM.
-            // Reserve the daemon's own heap (the OS shares its slack); split the rest into forks.
-            val forkHeapBytes = unitTestForkMaxHeapGb * 1024L * 1024 * 1024
-            val availableBytes = sysctl("hw.memsize") - gradleDaemonHeapBytes()
-            val memoryBoundForkProcesses = max(1L, availableBytes / forkHeapBytes)
-            minOf(physicalCpus, memoryBoundForkProcesses).toInt()
-        } else {
-            physicalCpus.toInt()
-        }
-    } else if (ciBuild) {
+        if (!ciBuild) return physicalCpus.toInt()
+        // #21168: The `macos-14` CI runner has only 7GB RAM and OOMs (exit 134) so bound by RAM.
+        // Reserve the daemon's own heap (the OS shares its slack); split the rest into forks.
+        val memoryBoundForkProcesses = max(1L, (sysctl("hw.memsize") - gradleDaemonHeapBytes()) / testForkHeapBytes)
+        return minOf(physicalCpus, memoryBoundForkProcesses).toInt()
+    }
+    if (ciBuild) {
         // GitHub Actions run on Standard_D4ads_v5 Azure Compute Units with 4 vCPUs
         // They appear to be 2:1 vCPU to CPU on Linux/Windows with two vCPU cores but with performance 1:1-similar
         // Sources to determine the correct Azure Compute Unit (and get CPU count) to tune this:
         // Which Azure compute unit in use? https://github.com/github/docs/blob/a25a33bb6cbf86a629d0a0c7bef624743991f97e/content/actions/using-github-hosted-runners/about-github-hosted-runners/about-github-hosted-runners.md?plain=1#L176
         // What is that compute unit? https://learn.microsoft.com/en-us/azure/virtual-machines/dasv5-dadsv5-series#dadsv5-series
         // How does it perform? https://learn.microsoft.com/en-gb/azure/virtual-machines/linux/compute-benchmark-scores#dadsv5 (vs previous Standard_DS2_v2 https://learn.microsoft.com/en-gb/azure/virtual-machines/linux/compute-benchmark-scores#dv2---general-compute)
-        4
-    } else {
-        // Use 50% of cores to account for SMT which doesn't help this workload
-        max(1, Runtime.getRuntime().availableProcessors() / 2)
+        return 4
     }
-)
+    val physicalBytes = (ManagementFactory.getOperatingSystemMXBean() as? com.sun.management.OperatingSystemMXBean)
+        ?.totalMemorySize
+        ?: return max(1, Runtime.getRuntime().availableProcessors() / 2)
+    val coreBound = max(1, Runtime.getRuntime().availableProcessors() / 2)
+    val perForkBytes = testForkHeapBytes + testForkOverheadBytes
+    val ramBound = max(1L, (physicalBytes - gradleDaemonHeapBytes() - nonTestForkReserveBytes) / perForkBytes)
+    return minOf(coreBound, ramBound.toInt(), maxLocalTestForks)
+}
+
+val gradleTestMaxParallelForks by extra(testForkCount())
 
 private fun String?.parseIntOrDefault(defaultValue: Int): Int = this?.toIntOrNull() ?: defaultValue
