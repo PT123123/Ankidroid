@@ -55,6 +55,9 @@
             android:layout_height="match_parent"
             android:visibility="gone"
             android:focusable="false"
+            android:layout_marginTop="@dimen/answer_button_vertical_gap"
+            android:paddingStart="@dimen/reviewer_side_margin"
+            android:paddingEnd="@dimen/reviewer_side_margin"
             android:orientation="horizontal">
 
             <LinearLayout
@@ -64,6 +67,8 @@
                 android:nextFocusRight="@id/flashcard_layout_ease2"
                 android:layout_width="0dip"
                 android:layout_height="?minTouchTargetSize"
+                android:layout_marginStart="@dimen/answer_button_margin_horizontal"
+                android:layout_marginEnd="@dimen/answer_button_margin_horizontal"
                 android:layout_weight="1"
                 android:orientation="vertical"
                 android:theme="@style/AgainButton"
@@ -88,6 +93,8 @@
                 android:nextFocusLeft="@id/flashcard_layout_ease1"
                 android:layout_width="0dip"
                 android:layout_height="?minTouchTargetSize"
+                android:layout_marginStart="@dimen/answer_button_margin_horizontal"
+                android:layout_marginEnd="@dimen/answer_button_margin_horizontal"
                 android:layout_weight="1"
                 android:orientation="vertical"
                 android:theme="@style/HardButton"
@@ -112,6 +119,8 @@
                 android:nextFocusLeft="@id/flashcard_layout_ease2"
                 android:layout_width="0dip"
                 android:layout_height="?minTouchTargetSize"
+                android:layout_marginStart="@dimen/answer_button_margin_horizontal"
+                android:layout_marginEnd="@dimen/answer_button_margin_horizontal"
                 android:layout_weight="1"
                 android:orientation="vertical"
                 android:theme="@style/GoodButton"
@@ -135,6 +144,8 @@
                 android:nextFocusLeft="@id/flashcard_layout_ease3"
                 android:layout_width="0dip"
                 android:layout_height="?minTouchTargetSize"
+                android:layout_marginStart="@dimen/answer_button_margin_horizontal"
+                android:layout_marginEnd="@dimen/answer_button_margin_horizontal"
                 android:layout_weight="1"
                 android:orientation="vertical"
                 android:theme="@style/EasyButton"
@@ -156,17 +167,19 @@
             android:id="@+id/flashcard_layout_flip"
             android:layout_width="match_parent"
             android:layout_height="?minTouchTargetSize"
+            android:layout_marginStart="@dimen/answer_button_outer_margin"
+            android:layout_marginEnd="@dimen/answer_button_outer_margin"
+            android:layout_marginTop="@dimen/answer_button_vertical_gap"
             android:orientation="vertical"
             android:focusable="true"
-            android:background="?attr/hardButtonRef"
-            tools:visibility="visible"
-            android:theme="@style/HardButton">
+            android:background="@drawable/footer_button_show_answer"
+            tools:visibility="visible">
 
             <com.ichi2.ui.FixedTextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
-                android:textColor="?attr/answerButtonTextColor"
+                android:textColor="@color/white"
                 android:text="@string/show_answer"
                 style="@style/FooterButton" />
         </FrameLayout>

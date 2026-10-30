@@ -145,8 +145,9 @@
     <attr name="hardButtonRippleRef" format="reference"/>
     <attr name="goodButtonRippleRef" format="reference"/>
     <attr name="easyButtonRippleRef" format="reference"/>
+    <!-- Ripple tint used by all study-screen footer buttons -->
+    <attr name="answerButtonRippleColor" format="color"/>
     <!-- Study Screen button text colors-->
-    <attr name="answerButtonTextColor" format="color"/>
     <attr name="againButtonTextColor" format="color"/>
     <attr name="hardButtonTextColor" format="color"/>
     <attr name="goodButtonTextColor" format="color"/>

@@ -40,6 +40,8 @@
     <string name="pref_my_settings_screen_key">mySettingsScreen</string>
     <string name="pref_my_settings_features_category_key">mySettingsFeatures</string>
     <string name="pref_my_settings_tools_category_key">mySettingsTools</string>
+    <!-- Stock note type CSS (fork feature) -->
+    <string name="pref_stock_card_css_key">stockCardCssRethemed</string>
     <!-- Appearance -->
     <string name="pref_appearance_screen_key">appearance_preference_group</string>
     <string name="app_theme_key">appTheme</string>

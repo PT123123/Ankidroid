@@ -48,7 +48,6 @@
         <item name="showAnswerColor">@color/theme_black_primary</item>
         <item name="topBarColor">@color/theme_black_primary</item>
         <item name="maxTimerColor">@color/material_red_300</item>
-        <item name="answerButtonTextColor">@color/theme_black_primary_text</item>
         <item name="againButtonTextColor">@color/material_red_400</item>
         <item name="hardButtonTextColor">@color/white</item>
         <item name="goodButtonTextColor">@color/material_green_400</item>
@@ -64,14 +63,20 @@
         <item name="goodBackgroundColor">#0e1310</item>
         <item name="easyBackgroundColor">#0c1317</item>
         <!-- Study Screen button drawables -->
-        <item name="againButtonRef">@drawable/footer_button_all_black</item>
-        <item name="hardButtonRef">@drawable/footer_button_all_black</item>
-        <item name="goodButtonRef">@drawable/footer_button_all_black</item>
-        <item name="easyButtonRef">@drawable/footer_button_all_black</item>
-        <item name="againButtonRippleRef">@drawable/footer_button_all_black_ripple</item>
-        <item name="hardButtonRippleRef">@drawable/footer_button_all_black_ripple</item>
-        <item name="goodButtonRippleRef">@drawable/footer_button_all_black_ripple</item>
-        <item name="easyButtonRippleRef">@drawable/footer_button_all_black_ripple</item>
+        <!-- The fill stays true black here; the tinted labels below carry the ease identity -->
+        <item name="againButtonBackground">@color/theme_black_primary</item>
+        <item name="hardButtonBackground">@color/theme_black_primary</item>
+        <item name="goodButtonBackground">@color/theme_black_primary</item>
+        <item name="easyButtonBackground">@color/theme_black_primary</item>
+        <item name="againButtonRef">@drawable/footer_button_rounded</item>
+        <item name="hardButtonRef">@drawable/footer_button_rounded</item>
+        <item name="goodButtonRef">@drawable/footer_button_rounded</item>
+        <item name="easyButtonRef">@drawable/footer_button_rounded</item>
+        <item name="answerButtonRippleColor">#33FFFFFF</item>
+        <item name="againButtonRippleRef">@drawable/footer_button_rounded_ripple</item>
+        <item name="hardButtonRippleRef">@drawable/footer_button_rounded_ripple</item>
+        <item name="goodButtonRippleRef">@drawable/footer_button_rounded_ripple</item>
+        <item name="easyButtonRippleRef">@drawable/footer_button_rounded_ripple</item>
         <!-- Card Browser Colors -->
         <item name="cardBrowserDivider">@color/white</item>
         <!-- Browser colors -->

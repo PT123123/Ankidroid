@@ -106,7 +106,6 @@ import com.ichi2.anki.common.preferences.sharedPrefs
 import com.ichi2.anki.common.ui.TransitionDirection
 import com.ichi2.anki.common.utils.HashUtil.hashSetInit
 import com.ichi2.anki.common.utils.android.HandlerUtils.newHandler
-import com.ichi2.anki.common.utils.android.getResFromAttr
 import com.ichi2.anki.common.utils.android.showThemedToast
 import com.ichi2.anki.compat.CompatHelper.Companion.resolveActivityCompat
 import com.ichi2.anki.compat.ResolveInfoFlagsCompat
@@ -958,7 +957,7 @@ abstract class AbstractFlashcardViewer :
             }
         }
         if (animationEnabled()) {
-            flipCardLayout?.setBackgroundResource(getResFromAttr(this, R.attr.hardButtonRippleRef))
+            flipCardLayout?.setBackgroundResource(R.drawable.footer_button_show_answer_ripple)
         }
         if (!buttonHeightSet && relativeButtonSize != 100) {
             val params = flipCardLayout!!.layoutParams

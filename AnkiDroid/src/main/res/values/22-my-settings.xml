@@ -14,4 +14,6 @@
     <string name="my_settings_features" maxLength="41">Added features</string>
     <string name="my_settings_tools" maxLength="41">Tools</string>
     <string name="my_settings_tools_summary" maxLength="200">These actions run in the deck list screen</string>
+    <string name="my_settings_card_css" maxLength="41">Restyle card defaults</string>
+    <string name="my_settings_card_css_summary">A note type you never edited forces Arial, black text and a white background over whatever theme is set. This drops those three only, so the card takes the theme font and colours while keeping Anki\'s size and centring. Switch off to render it exactly like the desktop.</string>
 </resources>

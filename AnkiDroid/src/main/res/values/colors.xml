@@ -21,7 +21,9 @@
     <color name="black">#000000</color>
     <color name="semi_transparent_black">#80000000</color>
 
-    <color name="answer_buttons_highlight_color">#66FFFFFF</color>
+    <!-- State tints for the rounded study-screen footer buttons -->
+    <color name="footer_button_pressed_overlay">#26000000</color>
+    <color name="footer_button_focused_overlay">#1FFFFFFF</color>
     <color name="whiteboard_eraser">#80808080</color>
 
     <!-- The Material Design color palette lives in :common:android (common/android/.../res/values/colors.xml) -->

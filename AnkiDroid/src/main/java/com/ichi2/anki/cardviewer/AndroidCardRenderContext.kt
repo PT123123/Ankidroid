@@ -37,6 +37,8 @@ class AndroidCardRenderContext(
     ): RenderedCard {
         // obtain the libAnki-rendered card
         var content: String = if (side == SingleCardSide.FRONT) card.question(col) else card.answer(col)
+        // hands the colours and font of an unrestyled `.card` back to the app theme
+        content = StockCardCss.retheme(content)
         // IRI-encodes media: `foo bar` -> `foo%20bar`
         content = col.media.escapeMediaFilenames(content)
         // produces either an <input> or <span>...</span> to denote typed input

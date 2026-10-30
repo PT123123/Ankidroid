@@ -438,6 +438,15 @@ open class PrefsRepository(
      */
     val switchProfileEnabled by booleanPref(R.string.pref_enable_switch_profile_key, true)
 
+    // ************************************** Card appearance ************************************* //
+
+    /**
+     * Whether a `.card` rule which still holds nothing but Anki's stock declarations loses the
+     * font/colour part of it so the app theme applies. Off renders stock note types exactly like
+     * desktop does.
+     */
+    var stockCardCssRethemed by booleanPref(R.string.pref_stock_card_css_key, true)
+
     // **************************************** UI Config *************************************** //
 
     /**

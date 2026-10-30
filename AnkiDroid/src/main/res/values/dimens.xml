@@ -36,6 +36,10 @@
 
     <dimen name="reviewer_side_margin">8dp</dimen>
     <dimen name="answer_button_margin_horizontal">3dp</dimen>
+    <!-- reviewer_side_margin + answer_button_margin_horizontal: the ease row's outer edge,
+         used by the "Show answer" bar so both rows line up -->
+    <dimen name="answer_button_outer_margin">11dp</dimen>
+    <dimen name="answer_button_vertical_gap">6dp</dimen>
     <dimen name="answer_button_corner_radius">16dp</dimen>
     <dimen name="reviewer_answer_button_textSize">14sp</dimen>
     <dimen name="reviewer_mark_flag">16dp</dimen>

@@ -40,16 +40,22 @@
         <item name="goodIconColor">@color/material_green_900</item>
         <item name="easyIconColor">@color/material_light_blue_900</item>
         <!-- Study Screen button drawables -->
-        <item name="showAnswerButtonBackground">@color/theme_plain_primary</item>
+        <!-- Plain keeps its monochrome buttons; 616161 is the grey that holds white labels at 4.5:1 -->
+        <item name="againButtonBackground">@color/theme_plain_primary_dark</item>
+        <item name="hardButtonBackground">@color/theme_plain_primary_dark</item>
+        <item name="goodButtonBackground">@color/theme_plain_primary_dark</item>
+        <item name="easyButtonBackground">@color/theme_plain_primary_dark</item>
+        <item name="showAnswerButtonBackground">@color/theme_plain_primary_dark</item>
         <item name="showAnswerColor">@color/theme_plain_primary</item>
-        <item name="againButtonRef">@drawable/footer_button_all_plain</item>
-        <item name="hardButtonRef">@drawable/footer_button_all_plain</item>
-        <item name="goodButtonRef">@drawable/footer_button_all_plain</item>
-        <item name="easyButtonRef">@drawable/footer_button_all_plain</item>
-        <item name="againButtonRippleRef">@drawable/footer_button_all_plain_ripple</item>
-        <item name="hardButtonRippleRef">@drawable/footer_button_all_plain_ripple</item>
-        <item name="goodButtonRippleRef">@drawable/footer_button_all_plain_ripple</item>
-        <item name="easyButtonRippleRef">@drawable/footer_button_all_plain_ripple</item>
+        <item name="againButtonRef">@drawable/footer_button_rounded</item>
+        <item name="hardButtonRef">@drawable/footer_button_rounded</item>
+        <item name="goodButtonRef">@drawable/footer_button_rounded</item>
+        <item name="easyButtonRef">@drawable/footer_button_rounded</item>
+        <item name="answerButtonRippleColor">#33FFFFFF</item>
+        <item name="againButtonRippleRef">@drawable/footer_button_rounded_ripple</item>
+        <item name="hardButtonRippleRef">@drawable/footer_button_rounded_ripple</item>
+        <item name="goodButtonRippleRef">@drawable/footer_button_rounded_ripple</item>
+        <item name="easyButtonRippleRef">@drawable/footer_button_rounded_ripple</item>
         <!-- Card Browser Colors -->
         <item name="cardBrowserDivider">#CCCCCC</item>
         <!-- Note editor colors -->

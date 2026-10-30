@@ -26,6 +26,12 @@
             android:title="@string/theme_color"
             app:useSimpleSummaryProvider="true" />
 
+        <SwitchPreferenceCompat
+            android:defaultValue="true"
+            android:key="@string/pref_stock_card_css_key"
+            android:summary="@string/my_settings_card_css_summary"
+            android:title="@string/my_settings_card_css" />
+
         <com.ichi2.preferences.HeaderPreference
             android:fragment="com.ichi2.anki.preferences.profiles.SwitchProfilesFragment"
             android:icon="@drawable/ic_switch_profile"
