@@ -19,9 +19,7 @@
             android:theme="@style/ActionBarStyle"
             app:layout_constraintTop_toTopOf="parent"
             app:navigationContentDescription="@string/abc_action_bar_up_description"
-            app:navigationIcon="?attr/homeAsUpIndicator"
-            app:layout_scrollFlags="scroll|enterAlways|snap"
-            app:menu="@menu/statistics">
+            app:navigationIcon="?attr/homeAsUpIndicator">
 
             <com.ichi2.ui.FixedTextView
                 android:id="@+id/deck_name"
@@ -38,8 +36,8 @@
         </com.google.android.material.appbar.MaterialToolbar>
     </com.google.android.material.appbar.AppBarLayout>
 
-    <com.ichi2.anki.workarounds.NestedScrollingSafeWebViewLayout
-        android:id="@+id/webview_layout"
+    <androidx.compose.ui.platform.ComposeView
+        android:id="@+id/compose_view"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         app:layout_behavior="@string/appbar_scrolling_view_behavior"/>

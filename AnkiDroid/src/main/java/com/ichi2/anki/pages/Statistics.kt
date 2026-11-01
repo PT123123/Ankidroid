@@ -1,36 +1,39 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// SPDX-FileCopyrightText: Copyright (c) 2022 Brayan Oliveira <brayandso.dev@gmail.com>
+// SPDX-FileCopyrightText: 2026 PT123123 <31439216+PT123123@users.noreply.github.com>
 
 package com.ichi2.anki.pages
 
 import android.os.Bundle
-import android.print.PrintAttributes
-import android.print.PrintJob
-import android.print.PrintManager
 import android.view.View
-import androidx.core.content.ContextCompat.getSystemService
-import com.ichi2.anki.CollectionManager
-import com.ichi2.anki.CollectionManager.withCol
+import androidx.compose.runtime.getValue
+import androidx.fragment.app.Fragment
+import androidx.fragment.app.viewModels
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.lifecycleScope
 import com.ichi2.anki.R
-import com.ichi2.anki.common.time.TimeManager
-import com.ichi2.anki.common.time.getTimestamp
 import com.ichi2.anki.databinding.PageStatisticsBinding
 import com.ichi2.anki.dialogs.registerDeckSelectedHandler
 import com.ichi2.anki.dialogs.startDeckSelection
-import com.ichi2.anki.launchCatchingTask
 import com.ichi2.anki.model.SelectableDeck
-import com.ichi2.anki.snackbar.showSnackbar
-import com.ichi2.anki.withProgress
+import com.ichi2.anki.pages.statistics.StatisticsScreen
+import com.ichi2.anki.pages.viewmodel.StatisticsViewModel
+import com.ichi2.compose.theme.AnkiDroidTheme
 import dev.androidbroadcast.vbpd.viewBinding
-import timber.log.Timber
+import kotlinx.coroutines.launch
 
-class Statistics : PageFragment(R.layout.page_statistics) {
-    override val pagePath: String = "graphs"
+/**
+ * The statistics screen, rendered natively in Compose.
+ *
+ * The page used to be the backend's SvelteKit "graphs" route in a WebView; the same typed
+ * [anki.stats.GraphsResponse] the page fetched over the local HTTP bridge is now read straight
+ * from the backend by [StatisticsViewModel] and drawn with Canvas composables.
+ *
+ * The toolbar keeps the deck selector: picking a deck re-runs the graphs query against
+ * `deck:"<name>"`, as the WebView page's search box used to.
+ */
+class Statistics : Fragment(R.layout.page_statistics) {
     private val binding by viewBinding(PageStatisticsBinding::bind)
-
-    /** The PrintJob launched by this Fragment */
-    // After killing the app, printManager.printJobs can still list active jobs
-    private var pendingPrintJob: PrintJob? = null
+    private val viewModel: StatisticsViewModel by viewModels()
 
     override fun onViewCreated(
         view: View,
@@ -46,83 +49,28 @@ class Statistics : PageFragment(R.layout.page_statistics) {
         binding.deckName.setOnClickListener {
             startDeckSelection(allowAll = false, allowFiltered = false, skipEmptyDefault = true)
         }
-
-        binding.toolbar.apply {
-            menu.findItem(R.id.action_export_stats).title = CollectionManager.TR.statisticsSavePdf()
-            setOnMenuItemClickListener { item ->
-                if (item.itemId == R.id.action_export_stats) {
-                    exportWebViewContentAsPDF()
-                }
-                true
-            }
-        }
         registerDeckSelectedHandler(action = ::onDeckSelected)
-        requireActivity().launchCatchingTask {
-            withProgress {
-                val deckName =
-                    savedInstanceState?.getString(KEY_DECK_NAME, null) ?: withCol { decks.current().name }
-                changeDeck(deckName)
+
+        // the toolbar's deck selector text follows the loaded state
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewModel.state.collect { binding.deckName.text = it.deckName }
+        }
+
+        binding.composeView.setContent {
+            AnkiDroidTheme {
+                val state by viewModel.state.collectAsStateWithLifecycle()
+                StatisticsScreen(state = state, onRangeSelected = viewModel::setRange)
             }
         }
-    }
-
-    /** Prepares and initiates a printing task for the content(stats) displayed in the WebView.
-     * It uses the Android PrintManager service to create a print job, based on the content of the WebView.
-     * The resulting output is a PDF document. **/
-    private fun exportWebViewContentAsPDF() {
-        if (pendingPrintJob?.isActive == true) {
-            Timber.w("Duplicate print attempted - skipping")
-            showSnackbar(R.string.already_in_progress)
-            return
-        }
-        Timber.i("Saving Stats to PDF")
-        val printManager = getSystemService(requireContext(), PrintManager::class.java) ?: return
-        val currentDateTime = getTimestamp(TimeManager.time)
-        val jobName = "${getString(R.string.app_name)}-stats-$currentDateTime"
-        val printAdapter = webViewLayout.createPrintDocumentAdapter(jobName)
-        pendingPrintJob =
-            printManager.print(
-                jobName,
-                printAdapter,
-                PrintAttributes.Builder().build(),
-            )
     }
 
     private fun onDeckSelected(deck: SelectableDeck?) {
         if (deck == null) return
         require(deck is SelectableDeck.Deck)
-        changeDeck(deck.name)
-    }
-
-    override fun onSaveInstanceState(outState: Bundle) {
-        super.onSaveInstanceState(outState)
-        outState.putString(KEY_DECK_NAME, binding.deckName.text.toString())
-    }
-
-    /**
-     * Updates the ui with the new selected deck. Doesn't change the backend.
-     *
-     * This method includes a workaround to change the deck in the webview by finding the text box
-     * and replacing the deck name with the selected deck name from the dialog and updating the
-     * stats. See issue #3394 in Anki repository.
-     **/
-    private fun changeDeck(selectedDeckName: String) {
-        binding.deckName.text = selectedDeckName
-        val javascriptCode =
-            """
-            var textBox = document.getElementById("statisticsSearchText");
-            textBox.value = "deck:\"$selectedDeckName\"";
-            textBox.dispatchEvent(new Event("input", { bubbles: true }));
-            textBox.dispatchEvent(new Event("change"));
-            """.trimIndent()
-        webViewLayout.evaluateJavascript(javascriptCode, null)
+        viewModel.setDeck(deck.name)
     }
 
     companion object {
         const val ARG_HIDE_BACK_BUTTON = "hideBackButton"
-        private const val KEY_DECK_NAME = "key_deck_name"
     }
 }
-
-private val PrintJob.isActive: Boolean
-    get() = !isCompleted && !isFailed && !isCancelled
