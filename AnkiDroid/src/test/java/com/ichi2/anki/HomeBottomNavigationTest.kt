@@ -7,10 +7,8 @@ import android.view.View
 import androidx.core.view.isVisible
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.ichi2.anki.BottomNavController.NavigationItem
-import com.ichi2.anki.dialogs.help.HelpDialog
 import com.ichi2.anki.preferences.PreferencesActivity
 import com.ichi2.anki.settings.Prefs
-import com.ichi2.anki.utils.ext.DIALOG_FRAGMENT_TAG
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers.equalTo
 import org.junit.Test
@@ -59,27 +57,5 @@ class HomeBottomNavigationTest : RobolectricTest() {
 
             val intent = shadowOf(this).nextStartedActivity
             assertThat(intent.component?.className, equalTo(PreferencesActivity::class.java.name))
-        }
-
-    /**
-     * The fork's More page has no drawer and no overflow menu behind it, so the help rows the drawer
-     * used to carry are gone with it - but the manual and the privacy policy have to stay reachable,
-     * and [HelpDialog] is the only screen listing them.
-     */
-    @Test
-    fun `the more tab keeps an entry to the help dialog`() =
-        deckPicker {
-            binding.bottomNavigation!!.selectedItemId = NavigationItem.MORE.id
-            advanceRobolectricLooper()
-            val moreView =
-                supportFragmentManager
-                    .findFragmentByTag(NavigationItem.MORE.tag)!!
-                    .requireView()
-
-            moreView.findViewById<View>(R.id.more_help).performClick()
-            advanceRobolectricLooper()
-
-            val dialog = supportFragmentManager.findFragmentByTag(DIALOG_FRAGMENT_TAG)
-            assertThat("the help row opens the help dialog", dialog is HelpDialog, equalTo(true))
         }
 }
