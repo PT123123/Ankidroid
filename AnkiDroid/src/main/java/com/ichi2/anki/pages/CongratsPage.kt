@@ -8,17 +8,19 @@ import android.content.Intent
 import android.os.Bundle
 import android.view.View
 import androidx.appcompat.app.AlertDialog
+import androidx.compose.runtime.getValue
+import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentActivity
 import androidx.fragment.app.setFragmentResultListener
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.flowWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import anki.collection.OpChanges
 import anki.scheduler.UnburyDeckRequest
-import com.google.android.material.appbar.MaterialToolbar
 import com.ichi2.anki.CollectionManager.TR
 import com.ichi2.anki.CollectionManager.withCol
 import com.ichi2.anki.DeckPicker
@@ -33,36 +35,47 @@ import com.ichi2.anki.common.time.SECONDS_PER_DAY
 import com.ichi2.anki.common.time.TIME_HOUR
 import com.ichi2.anki.common.time.TIME_MINUTE
 import com.ichi2.anki.common.utils.android.showThemedToast
+import com.ichi2.anki.databinding.PageCongratsBinding
 import com.ichi2.anki.dialogs.customstudy.CustomStudyDialog
 import com.ichi2.anki.dialogs.customstudy.CustomStudyDialog.CustomStudyAction
 import com.ichi2.anki.launchCatchingIO
 import com.ichi2.anki.launchCatchingTask
 import com.ichi2.anki.observability.ChangeManager
 import com.ichi2.anki.observability.undoableOp
+import com.ichi2.anki.pages.congrats.CongratsScreen
 import com.ichi2.anki.snackbar.showSnackbar
 import com.ichi2.anki.ui.internationalization.sentenceCase
+import com.ichi2.compose.theme.AnkiDroidTheme
 import com.ichi2.utils.listItems
 import com.ichi2.utils.negativeButton
 import com.ichi2.utils.show
+import dev.androidbroadcast.vbpd.viewBinding
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import timber.log.Timber
 import kotlin.math.round
 
+/**
+ * The "deck finished" screen, rendered natively in Compose. It used to be the backend's SvelteKit
+ * "congrats" route in a WebView; the message is now built from the same [anki.scheduler.CongratsInfoResponse]
+ * the page fetched, and the unbury / custom study actions the page wired through bridge commands
+ * are plain buttons.
+ */
 class CongratsPage :
-    PageFragment(),
+    Fragment(R.layout.page_congrats),
     ChangeManager.Subscriber {
-    override val pagePath: String = "congrats"
-
+    private val binding by viewBinding(PageCongratsBinding::bind)
     private val viewModel by viewModels<CongratsViewModel>()
 
     init {
         ChangeManager.subscribe(this)
     }
 
-    // TODO: move this to the ViewModel
     override fun opExecuted(
         changes: OpChanges,
         handler: Any?,
@@ -80,6 +93,8 @@ class CongratsPage :
         savedInstanceState: Bundle?,
     ) {
         super.onViewCreated(view, savedInstanceState)
+
+        binding.toolbar.setNavigationOnClickListener { requireActivity().finish() }
 
         viewModel.onError
             .flowWithLifecycle(lifecycle)
@@ -141,8 +156,8 @@ class CongratsPage :
                 viewModel.congratsRefreshState.collect { state ->
                     when (state) {
                         CongratsRefreshState.ReloadPage -> {
-                            Timber.d("congrats: reloading page after rebuild")
-                            webViewLayout.post { webViewLayout.reload() }
+                            Timber.d("congrats: recomposing after rebuild")
+                            viewModel.loadUiState()
                         }
                         CongratsRefreshState.DeckHasCardsToStudy -> openStudyOptionsAndFinish()
                     }
@@ -150,7 +165,7 @@ class CongratsPage :
             }
         }
 
-        with(view.findViewById<MaterialToolbar>(R.id.toolbar)) {
+        with(binding.toolbar) {
             inflateMenu(R.menu.congrats)
             menu.findItem(R.id.action_open_deck_options)?.title = TR.sentenceCase.deckOptions
             setOnMenuItemClickListener { item ->
@@ -168,13 +183,18 @@ class CongratsPage :
                 -> openStudyOptionsAndFinish()
             }
         }
-    }
 
-    override val bridgeCommands =
-        mapOf(
-            "unbury" to { viewModel.onUnbury() },
-            "customStudy" to { onStudyMore() },
-        )
+        binding.composeView.setContent {
+            AnkiDroidTheme {
+                val state by viewModel.uiState.collectAsStateWithLifecycle()
+                CongratsScreen(
+                    state = state,
+                    onUnbury = viewModel::onUnbury,
+                    onCustomStudy = ::onStudyMore,
+                )
+            }
+        }
+    }
 
     private fun openStudyOptionsAndFinish() {
         Timber.i("opening study options")
@@ -260,6 +280,45 @@ class CongratsViewModel :
     val unburyState = MutableSharedFlow<UnburyState>()
     val deckOptionsDestination = MutableSharedFlow<DeckOptionsDestination>()
 
+    /** What the Compose screen renders; null until first load completes. */
+    private val _uiState = MutableStateFlow<CongratsUiState?>(null)
+    val uiState: StateFlow<CongratsUiState?> = _uiState.asStateFlow()
+
+    fun loadUiState() {
+        launchCatchingIO {
+            val info = withCol { sched.congratulationsInfo() }
+            val lines = mutableListOf<String>()
+            if (info.secsUntilNextLearn < SECONDS_PER_DAY) {
+                val (unit, amount) =
+                    when {
+                        info.secsUntilNextLearn < TIME_MINUTE -> "seconds" to info.secsUntilNextLearn.toDouble()
+                        info.secsUntilNextLearn < TIME_HOUR -> "minutes" to info.secsUntilNextLearn / TIME_MINUTE
+                        else -> "hours" to info.secsUntilNextLearn / TIME_HOUR
+                    }
+                var line = TR.schedulingNextLearnDue(unit, round(amount).toInt())
+                if (info.learnRemaining > 0) {
+                    line += " " + TR.schedulingLearnRemaining(info.learnRemaining)
+                }
+                lines.add(line)
+            }
+            if (info.reviewRemaining) {
+                lines.add(TR.schedulingTodayReviewLimitReached())
+            }
+            if (info.newRemaining) {
+                lines.add(TR.schedulingTodayNewLimitReached())
+            }
+            _uiState.emit(
+                CongratsUiState(
+                    title = TR.schedulingCongratulationsFinished(),
+                    messageLines = lines,
+                    deckDescription = info.deckDescription?.takeIf { it.isNotBlank() },
+                    canUnbury = info.haveSchedBuried || info.haveUserBuried,
+                    canCustomStudy = !info.isFilteredDeck,
+                ),
+            )
+        }
+    }
+
     fun onUnbury() {
         launchCatchingIO {
             // https://github.com/ankitects/anki/blob/acaeee91fa853e4a7a78dcddbb832d009ec3529a/qt/aqt/overview.py#L154
@@ -317,7 +376,10 @@ class CongratsViewModel :
         // desktop's Overview re-checks sched._is_finished() on every refresh instead of
         // assuming the deck is still done - do the same before reloading the congrats page
         val stillFinished = isDeckFinished()
-        if (!missedRefresh && stillFinished) return
+        if (!missedRefresh && stillFinished) {
+            if (_uiState.value == null) loadUiState()
+            return
+        }
         missedRefresh = false
         congratsRefreshState.emit(
             if (stillFinished) CongratsRefreshState.ReloadPage else CongratsRefreshState.DeckHasCardsToStudy,
@@ -334,6 +396,15 @@ class CongratsViewModel :
 
     private suspend fun isDeckFinished(): Boolean = withCol { sched.counts().count() == 0 }
 }
+
+/** The state the Compose congrats screen renders. */
+data class CongratsUiState(
+    val title: String,
+    val messageLines: List<String>,
+    val deckDescription: String?,
+    val canUnbury: Boolean,
+    val canCustomStudy: Boolean,
+)
 
 sealed class UnburyState {
     data object OpenStudy : UnburyState()

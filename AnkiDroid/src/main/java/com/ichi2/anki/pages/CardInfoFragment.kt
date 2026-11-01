@@ -17,14 +17,25 @@ package com.ichi2.anki.pages
 
 import android.os.Bundle
 import android.view.View
-import com.google.android.material.appbar.MaterialToolbar
+import androidx.compose.runtime.getValue
+import androidx.fragment.app.Fragment
+import androidx.fragment.app.viewModels
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.ichi2.anki.R
+import com.ichi2.anki.databinding.PageCardInfoBinding
+import com.ichi2.anki.pages.cardinfo.CardInfoScreen
+import com.ichi2.anki.pages.cardinfo.CardInfoViewModel
+import com.ichi2.compose.theme.AnkiDroidTheme
+import dev.androidbroadcast.vbpd.viewBinding
 
-class CardInfoFragment : PageFragment() {
-    override val pagePath: String by lazy {
-        val cardId = requireArguments().getLong(KEY_CARD_ID)
-        "card-info/$cardId"
-    }
+/**
+ * The card info screen, rendered natively in Compose. It used to be the backend's SvelteKit
+ * "card-info" route in a WebView; the same [anki.stats.CardStatsResponse] is now fetched straight
+ * from the backend by [CardInfoViewModel].
+ */
+class CardInfoFragment : Fragment(R.layout.page_card_info) {
+    private val binding by viewBinding(PageCardInfoBinding::bind)
+    private val viewModel by viewModels<CardInfoViewModel>()
 
     override fun onViewCreated(
         view: View,
@@ -33,7 +44,17 @@ class CardInfoFragment : PageFragment() {
         super.onViewCreated(view, savedInstanceState)
         val title = requireArguments().getString(KEY_TITLE)
         if (title != null) {
-            view.findViewById<MaterialToolbar>(R.id.toolbar)?.setTitle(title)
+            binding.toolbar.setTitle(title)
+        }
+        binding.toolbar.setNavigationOnClickListener { requireActivity().finish() }
+
+        viewModel.load(requireArguments().getLong(KEY_CARD_ID))
+
+        binding.composeView.setContent {
+            AnkiDroidTheme {
+                val data by viewModel.data.collectAsStateWithLifecycle()
+                CardInfoScreen(data = data)
+            }
         }
     }
 
