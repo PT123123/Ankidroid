@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  The selected deck's glass: one step up the same surface ramp as the resting rows
+  (deck_row_background uses colorSurfaceContainer, this uses colorSurfaceContainerHigh), so the
+  highlight reads as a raised card of the theme's hue instead of an opaque grey slab.
+  With a user-set background image the adapter keeps the wallpaper-aware highlight instead.
+-->
+<ripple xmlns:android="http://schemas.android.com/apk/res/android"
+    android:color="?attr/colorControlHighlight">
+    <item>
+        <shape android:shape="rectangle">
+            <corners android:radius="@dimen/radius_small" />
+            <solid android:color="?attr/colorSurfaceContainerHigh" />
+        </shape>
+    </item>
+</ripple>

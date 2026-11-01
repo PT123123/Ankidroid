@@ -23,8 +23,7 @@
             android:layout_height="?attr/actionBarSize"
             android:theme="@style/ActionBarStyle"
             app:title="@string/bottom_nav_more"
-            app:titleTextColor="?attr/actionBarTextColor"
-            app:titleTextAppearance="?attr/textAppearanceTitleLarge" />
+            app:titleTextColor="?attr/actionBarTextColor" />
     </com.google.android.material.appbar.AppBarLayout>
 
     <ScrollView

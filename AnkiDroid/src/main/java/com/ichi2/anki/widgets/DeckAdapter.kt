@@ -155,7 +155,9 @@ class DeckAdapter(
         }
         // set a different background color for the current selected deck
         if (node.isSelected) {
-            holder.binding.deckLayout.setBackgroundResource(rowCurrentDrawable)
+            holder.binding.deckLayout.setBackgroundResource(
+                if (activityHasBackground) rowCurrentDrawable else R.drawable.deck_row_background_selected,
+            )
             if (activityHasBackground) {
                 val background =
                     holder.binding.deckLayout.background
