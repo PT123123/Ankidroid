@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  The resting surface of a deck row: the theme's translucent container colour over whatever the
+  window background is, so the list reads as glass cards instead of text on a flat slab.
+  The same corner step as the selected deck's highlight keeps the two shapes consistent.
+-->
+<ripple xmlns:android="http://schemas.android.com/apk/res/android"
+    android:color="?attr/colorControlHighlight">
+    <item>
+        <shape android:shape="rectangle">
+            <corners android:radius="@dimen/radius_small" />
+            <solid android:color="?attr/colorSurfaceContainer" />
+        </shape>
+    </item>
+</ripple>

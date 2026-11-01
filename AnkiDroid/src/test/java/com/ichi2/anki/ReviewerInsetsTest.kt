@@ -202,7 +202,7 @@ class ReviewerInsetsTest : RobolectricTest() {
 
             assertThat(
                 "the buttons rest above the navigation bar via painted padding: the " +
-                    "showAnswerColor strip runs to the screen edge, matching normal review",
+                    "study surface runs underneath, matching normal review",
                 reviewer.answerArea.paddingBottom,
                 equalTo(48.dp.toPx(targetContext)),
             )
@@ -254,7 +254,7 @@ class ReviewerInsetsTest : RobolectricTest() {
             assertThat(
                 "the buttons rest on the gesture area, as they did pre-edge-to-edge " +
                     "under SYSTEM_UI_FLAG_LAYOUT_STABLE - via painted padding, so the " +
-                    "answer area's color still reaches the screen edge",
+                    "study surface still reaches the screen edge",
                 reviewer.answerArea.paddingBottom,
                 equalTo(24.dp.toPx(targetContext)),
             )
@@ -505,8 +505,12 @@ class ReviewerInsetsTest : RobolectricTest() {
                 reviewer.answerArea.paddingLeft,
                 equalTo(24.dp.toPx(targetContext)),
             )
-            // tap inside the cutout strip, level with 'Show answer'
-            reviewer.answerArea.tap(x = 1f, y = 1f)
+            // tap inside the cutout strip, level with 'Show answer' — the button's row, not
+            // the 6dp design gap above it, which the band does not extend across
+            reviewer.answerArea.tap(
+                x = 1f,
+                y = reviewer.boundsInAnswerArea(R.id.flashcard_layout_flip).exactCenterY(),
+            )
             advanceRobolectricLooper()
             assertThat(
                 "a tap on the band beside 'Show answer' flips the card",
@@ -526,7 +530,10 @@ class ReviewerInsetsTest : RobolectricTest() {
                 reviewer.answerArea.paddingLeft,
                 equalTo(24.dp.toPx(targetContext)),
             )
-            reviewer.answerArea.tap(x = 1f, y = 1f)
+            reviewer.answerArea.tap(
+                x = 1f,
+                y = reviewer.boundsInAnswerArea(R.id.flashcard_layout_flip).exactCenterY(),
+            )
             advanceRobolectricLooper()
             assertThat(
                 "a tap on the band beside 'Show answer' flips the card",

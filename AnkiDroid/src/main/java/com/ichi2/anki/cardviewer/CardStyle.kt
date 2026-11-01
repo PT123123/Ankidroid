@@ -128,17 +128,54 @@ enum class CardStyle(
     val isSheet: Boolean get() = surfaceColorAttr != null
 
     /**
-     * Puts the native half of this style on [webView]: the sheet's rim and shadow, the rounded
-     * corners the page is clipped to, and the gap between the screen edge and the sheet.
+     * Puts the native half of this style on the study screen.
+     *
+     * When a [surface] is given, it is the sheet: it carries the chrome and the card, so that
+     * the two read as one object. The page is then transparent and the sheet's colour shows
+     * through it. Without a surface the web view carries the sheet itself, as it always did.
      */
     fun applyTo(
+        surface: View?,
         webView: View,
         context: Context,
     ) {
         val density = context.resources.displayMetrics.density
         val radius = cornerRadiusDp * density
         val strokeWidth = context.resources.getDimension(R.dimen.card_surface_stroke_width).toInt()
+        // the colour the page ends up with, so the sheet and the page cannot disagree
+        val fill = studySurfaceColour(context)
+        // only the bottom corners are rounded: the top of the sheet runs off the screen
+        val corners = floatArrayOf(0f, 0f, 0f, 0f, radius, radius, radius, radius)
 
+        if (surface != null) {
+            // The sheet carries the chrome and the card, so that the two are one object.
+            surface.background =
+                GradientDrawable().apply {
+                    shape = GradientDrawable.RECTANGLE
+                    setCornerRadii(corners)
+                    setColor(fill)
+                }
+            surface.foreground =
+                surfaceStrokeAttr?.let { attr ->
+                    GradientDrawable().apply {
+                        shape = GradientDrawable.RECTANGLE
+                        setCornerRadii(corners)
+                        setColor(Color.TRANSPARENT)
+                        setStroke(strokeWidth, surfaceColour(context, attr))
+                    }
+                }
+            surface.elevation = elevationDp * density
+
+            // The page is transparent, so the sheet's colour shows through it. The card is
+            // inside the sheet, so it needs neither rounded corners nor a rim of its own.
+            webView.setBackgroundColor(fill)
+            webView.foreground = null
+            webView.clipToOutline = false
+            webView.elevation = 0f
+            return
+        }
+
+        // No surface: the web view carries the sheet itself.
         if (isSheet) {
             // The page paints over this, so the fill is only seen where the card's own
             // background is transparent: it is the colour the sheet would have anyway.
@@ -146,7 +183,7 @@ enum class CardStyle(
                 GradientDrawable().apply {
                     shape = GradientDrawable.RECTANGLE
                     if (radius > 0f) cornerRadius = radius
-                    setColor(surfaceColour(context, surfaceColorAttr!!))
+                    setColor(fill)
                 }
         } else {
             // near-transparent, as the viewer has always used it, to avoid a white flash
@@ -176,6 +213,13 @@ enum class CardStyle(
     /** The colour the sheet is filled with, or `null` when the card is not drawn as a sheet. */
     @ColorInt
     fun surfaceColour(context: Context): Int? = surfaceColorAttr?.let { surfaceColour(context, it) }
+
+    /**
+     * The colour the study surface is painted with: the style's own sheet colour, or the card
+     * surface's for the styles that have no sheet of their own.
+     */
+    @ColorInt
+    fun studySurfaceColour(context: Context): Int = surfaceColour(context, surfaceColorAttr ?: R.attr.cardSurfaceColor)
 
     companion object {
         fun of(preset: CardStylePreset): CardStyle = entries.first { it.preset == preset }

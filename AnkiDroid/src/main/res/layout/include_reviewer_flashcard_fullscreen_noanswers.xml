@@ -21,4 +21,18 @@
         android:id="@+id/whiteboard"
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
+    <!--
+         Above the touch layer, so that the chip can be tapped without the tap reaching the
+         card. The overlay itself is not clickable: a tap that misses the chip falls through
+         to the touch layer and flips the card, as it always did.
+    -->
+    <FrameLayout
+        android:layout_gravity="center"
+        android:id="@+id/flashcard_overlay"
+        android:layout_margin="0dip"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <include layout="@layout/include_card_style_chip" />
+    </FrameLayout>
 </merge>

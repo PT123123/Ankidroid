@@ -13,6 +13,7 @@ import android.content.Intent
 import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.graphics.Color
+import android.graphics.PorterDuff
 import android.graphics.Rect
 import android.graphics.Region
 import android.os.Build
@@ -23,7 +24,6 @@ import android.os.Message
 import android.os.Parcelable
 import android.text.SpannableString
 import android.text.style.UnderlineSpan
-import android.util.TypedValue
 import android.view.KeyEvent
 import android.view.Menu
 import android.view.MenuItem
@@ -67,7 +67,6 @@ import androidx.core.view.updatePadding
 import androidx.lifecycle.lifecycleScope
 import anki.frontend.SetSchedulingStatesRequest
 import anki.scheduler.CardAnswer.Rating
-import com.google.android.material.color.MaterialColors
 import com.google.android.material.snackbar.Snackbar
 import com.ichi2.anki.CollectionManager.TR
 import com.ichi2.anki.CollectionManager.withCol
@@ -396,36 +395,19 @@ open class Reviewer :
         val answerButtonsAtBottom = answerButtonsPosition == "bottom"
         val immersive = fullscreenMode.isFullScreenReview()
         enableEdgeToEdge(
-            // the status bar sits over the app bar, which is dark in every theme except E-Ink
+            // The status bar sits over the study surface, which is light in the day and dark at
+            // night, so the icon colour follows that instead of the app bar's colour.
             statusBarStyle =
                 SystemBarStyle.auto(Color.TRANSPARENT, Color.TRANSPARENT) {
-                    currentTheme != DayTheme.EINK
+                    Themes.isNightTheme
                 },
+            // The navigation bar sits over the study surface too, which runs behind the
+            // answer area as well, so its icon colour follows the surface's day/night like
+            // the status bar's. The dark scrim is only used below API 26, where light
+            // navigation icons are unsupported.
             navigationBarStyle =
-                if (answerButtonsAtBottom) {
-                    // The answer area is a surface of its own, so the icon colour has to follow
-                    // that surface rather than the day/night guess: the plain theme paints a
-                    // light bar in the light theme, and E-Ink a black one in the day.
-                    if (answerAreaIsDark()) {
-                        SystemBarStyle.dark(Color.TRANSPARENT)
-                    } else {
-                        SystemBarStyle.light(EDGE_TO_EDGE_LIGHT_SCRIM, EDGE_TO_EDGE_DARK_SCRIM)
-                    }
-                } else if (immersive) {
-                    // use a translucent scrim if there are no answer buttons
-                    // auto() draws nothing over gesture navigation, so use dark/light.
-                    if (Themes.isNightTheme) {
-                        SystemBarStyle.dark(EDGE_TO_EDGE_DARK_SCRIM)
-                    } else {
-                        SystemBarStyle.light(EDGE_TO_EDGE_LIGHT_SCRIM, EDGE_TO_EDGE_DARK_SCRIM)
-                    }
-                } else {
-                    // the navigation bar sits over an empty window-background strip below the
-                    // card. The dark scrim is only used below API 26, where light navigation
-                    // icons are unsupported
-                    SystemBarStyle.auto(Color.TRANSPARENT, EDGE_TO_EDGE_DARK_SCRIM) {
-                        Themes.isNightTheme
-                    }
+                SystemBarStyle.auto(Color.TRANSPARENT, EDGE_TO_EDGE_DARK_SCRIM) {
+                    Themes.isNightTheme
                 },
         )
 
@@ -498,9 +480,9 @@ open class Reviewer :
             val bars = insets.bars()
             container.updatePadding(left = bars.left, top = bars.top, right = bars.right)
             if (answerButtonsAtBottom && Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                // SystemBarStyle.dark suits a bottom bar over the dark answer area, but a
-                // side bar sits over the window background, where light icons would be
-                // unreadable in day themes: have the system draw its contrasting scrim there
+                // a side navigation bar sits over the sheet's side slivers, where light icons
+                // would be unreadable in day themes: have the system draw its contrasting
+                // scrim there
                 val nav = insets.getInsets(navigationBars())
                 window.isNavigationBarContrastEnforced = nav.left > 0 || nav.right > 0
             }
@@ -550,31 +532,14 @@ open class Reviewer :
         }
 
         val answerArea = findViewById<ViewGroup>(R.id.answer_options_layout)
-        answerArea.setBackgroundColor(MaterialColors.getColor(this, R.attr.showAnswerColor, 0))
-        // The bottom inset is painted showAnswerColor by the background, extending the
-        // answer area's color underneath the navigation bar - or, in immersive review,
-        // down to the screen edge
+        // the answer area carries no background of its own: the study surface runs behind it
+        // and underneath the navigation bar, so the buttons sit on the same sheet as the card
         val answerAreaBottomHeld =
             if (immersive) resetInsetsWhenFadeEnds(answerArea, answerAreaBottom) else answerAreaBottom
         clearInsets(answerArea, bottom = answerAreaBottomHeld)
         extendAnswerButtonsIntoInsets(answerArea)
 
         syncControlsWithSystemBars()
-    }
-
-    /**
-     * Whether the answer area is painted dark.
-     *
-     * The theme decides it, because the answer area's colour does not follow the day/night
-     * setting: the plain theme paints a light bar and E-Ink a black one.
-     */
-    private fun answerAreaIsDark(): Boolean {
-        val typedValue = TypedValue()
-        return if (theme.resolveAttribute(R.attr.answerAreaDark, typedValue, true)) {
-            typedValue.data != 0
-        } else {
-            false
-        }
     }
 
     /**
@@ -1390,8 +1355,41 @@ open class Reviewer :
 
         increaseHorizontalPaddingOfOverflowMenuIcons(menu)
         tintOverflowMenuIcons(menu, skipIf = { isFlagItem(it) })
+        tintStudyChrome(menu)
 
         return super.onCreateOptionsMenu(menu)
+    }
+
+    override fun onPrepareOptionsMenu(menu: Menu): Boolean {
+        // the toolbar's overflow icon is installed when the menu is shown, so the chrome is
+        // repainted here as well as when the menu is created
+        tintStudyChrome(menu)
+        return super.onPrepareOptionsMenu(menu)
+    }
+
+    /**
+     * Repaints the chrome's icons so that they read on the study surface.
+     *
+     * The chrome used to sit on the app bar, where white icons were right. It now sits on the
+     * surface, whose colour follows the theme, so the icons are tinted to match it. The flag
+     * keeps its own colour, as it says which flag the card carries.
+     */
+    private fun tintStudyChrome(menu: Menu) {
+        val color = ThemeUtils.getThemeAttrColor(this, R.attr.studySurfaceIconColor)
+        toolbar.navigationIcon?.mutate()?.setTint(color)
+        toolbar.overflowIcon?.mutate()?.setTint(color)
+        toolbar.setTitleTextColor(color)
+        // the star in the counts bar is white, so it needs the surface's colour too
+        findViewById<ImageView>(R.id.mark_icon)?.setColorFilter(color, PorterDuff.Mode.SRC_IN)
+        // the flag keeps the colour of the flag the card carries; only the empty one is tinted
+        val cardHasFlag = currentCard?.flag?.let { it != Flag.NONE } == true
+        for (id in ACTION_BAR_ITEM_IDS) {
+            val item = menu.findItem(id) ?: continue
+            val icon = item.icon ?: continue
+            if (id == R.id.action_flag && cardHasFlag) continue
+            icon.mutate().setTint(color)
+            item.icon = icon
+        }
     }
 
     private fun setupFlags(subMenu: SubMenu) {
@@ -2156,9 +2154,8 @@ open class Reviewer :
         private const val REQUEST_AUDIO_PERMISSION = 0
         private const val ANIMATION_DURATION = 200
 
-        // the default scrims of androidx.activity.EdgeToEdge, which it keeps private.
-        // These are lazy for unit tests
-        private val EDGE_TO_EDGE_LIGHT_SCRIM by lazy { Color.argb(0xe6, 0xff, 0xff, 0xff) }
+        // the default scrim of androidx.activity.EdgeToEdge, which it keeps private.
+        // This is lazy for unit tests
         private val EDGE_TO_EDGE_DARK_SCRIM by lazy { Color.argb(0x80, 0x1b, 0x1b, 0x1b) }
 
         /**
@@ -2177,6 +2174,27 @@ open class Reviewer :
         const val ACTION_SNACKBAR_TIME = 500
 
         private val flagItemIds: Set<Int> = Flag.entries.map { it.id }.toSet()
+
+        /**
+         * The items the toolbar shows as buttons, rather than in the overflow.
+         *
+         * Their icons are drawn on the study surface, so they follow its colour. The overflow
+         * has a background of its own and keeps the popup's icon colour.
+         */
+        private val ACTION_BAR_ITEM_IDS =
+            intArrayOf(
+                R.id.action_undo,
+                R.id.action_redo,
+                R.id.action_toggle_eraser,
+                R.id.action_clear_whiteboard,
+                R.id.action_hide_whiteboard,
+                R.id.action_change_whiteboard_pen_color,
+                R.id.action_toggle_stylus,
+                R.id.action_flag,
+                R.id.action_edit,
+                R.id.action_mark_card,
+                R.id.action_replay,
+            )
 
         fun getIntent(context: Context): Intent =
             if (Prefs.isNewStudyScreenEnabled) {
@@ -2238,8 +2256,12 @@ private fun ViewGroup.touchBoundsOf(button: View): Rect {
     val bounds = Rect()
     button.getDrawingRect(bounds)
     offsetDescendantRectToMyCoords(button, bounds)
-    if (bounds.left <= paddingLeft) bounds.left = 0
-    if (bounds.right >= width - paddingRight) bounds.right = width
+    // a child's rect is measured from this view's edge, so the outer button's edge sits at
+    // padding + the button's own outer margin — the band has to cover the strip between the
+    // screen's edge and the button all the same
+    val outerMargin = resources.getDimensionPixelSize(R.dimen.answer_button_outer_margin)
+    if (bounds.left <= paddingLeft + outerMargin) bounds.left = 0
+    if (bounds.right >= width - paddingRight - outerMargin) bounds.right = width
     if (bounds.bottom >= height - paddingBottom) bounds.bottom = height
     return bounds
 }

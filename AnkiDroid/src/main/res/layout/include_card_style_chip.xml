@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  ~ SPDX-License-Identifier: GPL-3.0-or-later
+  ~ SPDX-FileCopyrightText: 2026 PT123123 <31439216+PT123123@users.noreply.github.com>
+  -->
+<!--
+  The card style chip. It is included from every flashcard container — the study screen's and
+  the two fullscreen ones — so that the three cannot drift apart: the styles set their own gap,
+  rim and colour on the sheet the chip sits on, and a chip that only existed in one of the
+  layouts would be left behind by that.
+
+  The parent of the include is always the `flashcard_overlay` FrameLayout, which is above the
+  touch layer so that a tap on the chip does not also flip the card. The chip's own size,
+  gravity and margin are part of it, not of the layouts that include it.
+-->
+<ImageButton xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/card_style_button"
+    android:layout_width="@dimen/card_style_chip_size"
+    android:layout_height="@dimen/card_style_chip_size"
+    android:layout_gravity="top|end"
+    android:layout_margin="@dimen/card_style_chip_margin"
+    android:background="@drawable/card_style_chip_background"
+    android:contentDescription="@string/card_style_chip_description_default"
+    android:focusable="false"
+    android:focusableInTouchMode="false"
+    android:scaleType="centerInside"
+    android:src="@drawable/ic_card_style" />

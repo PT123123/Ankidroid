@@ -12,14 +12,30 @@
         android:id="@+id/front_frame"
         android:layout_width="match_parent"
         android:layout_height="match_parent">
+        <!-- The holder for the study surface. It is the first child, so the surface is drawn
+             behind the chrome and the card, and it is larger than the surface, so that the
+             surface's shadow has room to fall on the background. -->
+        <FrameLayout
+            android:id="@+id/study_surface_holder"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_alignParentTop="true"
+            android:layout_above="@+id/bottom_area_layout">
+            <!-- The one surface the study screen is drawn on: the chrome (the toolbar, the counts,
+                 the flag and the mark) and the card sit on it, so they read as a single object
+                 instead of a stack of bands. Its colour and its shape come from the card style. -->
+            <View
+                android:id="@+id/study_surface"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent" />
+        </FrameLayout>
         <!-- The container allows edge-to-edge padding without it being absorbed
              by the Toolbar's minHeight, so the app bar keeps its full height -->
         <FrameLayout
             android:id="@+id/toolbar_container"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_alignParentTop="true"
-            android:background="?attr/appBarColor">
+            android:layout_alignParentTop="true">
 
             <include layout="@layout/include_toolbar"/>
         </FrameLayout>

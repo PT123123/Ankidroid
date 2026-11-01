@@ -8,6 +8,20 @@ xmlns:android="http://schemas.android.com/apk/res/android">
         android:id="@+id/fullscreen_frame"
         android:layout_width="match_parent"
         android:layout_height="match_parent">
+        <!-- The holder for the study surface, the same sheet activity_reviewer.xml draws:
+             it is the first child, so the surface is drawn behind the counts bar, the card
+             and the answer area. The toolbar is an overlay outside this frame, below. -->
+        <FrameLayout
+            android:id="@+id/study_surface_holder"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_alignParentTop="true"
+            android:layout_alignParentBottom="true">
+            <View
+                android:id="@+id/study_surface"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent" />
+        </FrameLayout>
         <include layout="@layout/include_reviewer_topbar"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -29,12 +43,15 @@ xmlns:android="http://schemas.android.com/apk/res/android">
             android:layout_above="@+id/bottom_area_layout"/>
         <include layout="@layout/include_reviewer_answer_buttons"/>
     </RelativeLayout>
-    <!-- Controls that are overlaid over the main content when the user interrupts immersive mode -->
+    <!-- Controls that are overlaid over the main content when the user interrupts immersive mode.
+         The fill keeps the pulled-down toolbar reading as part of the sheet rather than as a bar
+         of its own; cardSurfaceColor is the XML's guess, and the viewer repaints it with the
+         style's own sheet colour (Paper's sheet is cardPaperColor, not this). -->
     <FrameLayout
         android:id="@+id/toolbar_container"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="?attr/appBarColor">
+        android:background="?attr/cardSurfaceColor">
 
         <include layout="@layout/include_toolbar"/>
     </FrameLayout>

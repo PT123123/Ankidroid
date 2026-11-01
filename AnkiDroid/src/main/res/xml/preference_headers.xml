@@ -115,6 +115,15 @@
         app:summaryEntries="@array/backup_limits_summary_entries"
         tools:title="Backups"/>
 
+    <!-- fork feature: sync, backups, import/export and the maintenance checks,
+         which used to sit in the deck picker's toolbar -->
+    <com.ichi2.preferences.HeaderPreference
+        android:fragment="com.ichi2.anki.preferences.BackupTransferFragment"
+        android:key="@string/pref_backup_transfer_screen_key"
+        android:title="@string/backup_transfer_title"
+        android:summary="@string/backup_transfer_summary"
+        android:icon="@drawable/ic_baseline_backup_24"/>
+
     <!-- Advanced Preferences -->
     <com.ichi2.preferences.HeaderPreference
         android:fragment="com.ichi2.anki.preferences.AdvancedSettingsFragment"
@@ -123,6 +132,14 @@
         android:icon="@drawable/ic_tune_white"
         app:summaryEntries="@array/advanced_summary_entries">
     </com.ichi2.preferences.HeaderPreference>
+
+    <!-- fork feature: switch between collection profiles; shown only when the developer
+         switch in the developer options enables it -->
+    <com.ichi2.preferences.HeaderPreference
+        android:fragment="com.ichi2.anki.preferences.profiles.SwitchProfilesFragment"
+        android:key="@string/pref_switch_profile_screen_key"
+        android:title="@string/switch_profile"
+        android:icon="@drawable/ic_switch_profile"/>
 
     <com.ichi2.preferences.HeaderPreference
         android:key="@string/pref_developer_options_screen_key"

@@ -33,6 +33,9 @@
     <dimen name="mtrl_snackbar_background_corner_radius">14dp</dimen>
     <dimen name="popup_corner_radius">12dp</dimen>
     <dimen name="dialog_corner_radius">20dp</dimen>
+    <!-- The shape ramp's small step (styles.xml ShapeAppearance.App.Small), for drawables
+         that cannot take a shape appearance. -->
+    <dimen name="radius_small">12dp</dimen>
 
     <dimen name="reviewer_side_margin">8dp</dimen>
     <dimen name="answer_button_margin_horizontal">3dp</dimen>

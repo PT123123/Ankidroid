@@ -92,6 +92,8 @@
         <item name="cardSurfaceStrokeColor">#14000000</item>
         <item name="cardPaperColor">#F6EFE1</item>
         <item name="cardPaperStrokeColor">#33000000</item>
+        <!-- The chrome is drawn on the study surface, which is white in the day -->
+        <item name="studySurfaceIconColor">@color/black</item>
 
         <item name="alternativeBackgroundColor">#f4f5f9</item>
         <item name="againTextColor">@color/material_red_900</item>
@@ -108,10 +110,6 @@
         <item name="easyIconColor">?easyTextColor</item>
         <!-- Study Screen button drawables -->
         <item name="showAnswerButtonBackground">@color/material_blue_700</item>
-        <!-- The answer area is a surface of its own, not a dark slab: the ease buttons
-             carry the colour and the bar stays quiet behind them. -->
-        <item name="showAnswerColor">?attr/colorSurfaceContainer</item>
-        <item name="answerAreaDark">false</item>
         <item name="againButtonRef">@drawable/footer_button_rounded</item>
         <item name="hardButtonRef">@drawable/footer_button_rounded</item>
         <item name="goodButtonRef">@drawable/footer_button_rounded</item>
@@ -123,6 +121,10 @@
         <item name="easyButtonRippleRef">@drawable/footer_button_rounded_ripple</item>
         <!-- Card Browser Colors -->
         <item name="cardBrowserDivider">#CCCCCC</item>
+        <!-- The hairline: 20% black on the day's background, the same weight the browser
+             divider has. -->
+        <item name="hairlineColor">#CCCCCC</item>
+        <item name="dividerHandleColor">#4D4D4D</item>
         <!-- Browser colors -->
         <item name="suspendedColor">#FFFFB2</item>
         <item name="buriedColor">#FFCE7C</item>

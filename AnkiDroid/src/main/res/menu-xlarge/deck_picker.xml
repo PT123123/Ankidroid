@@ -25,6 +25,6 @@
         android:visible="false"
         tools:title="Undo X"/>
     <!-- Maintenance, backups, import/export and the sync action moved to
-         我的设置 (R.xml.preferences_my_settings); they reach DeckPicker through
-         DeckPicker.EXTRA_DECK_TOOL. -->
+         the settings' "Backup & import/export" screen (R.xml.preferences_backup_transfer); they reach
+         DeckPicker through DeckPicker.EXTRA_DECK_TOOL. -->
 </menu>

@@ -5,15 +5,17 @@
     android:id="@+id/root_layout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="?android:attr/colorBackground"
     android:orientation="vertical">
 
     <com.google.android.material.appbar.MaterialToolbar
         android:id="@+id/troubleshooting_toolbar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:background="?attr/appBarColor"
+        android:theme="@style/ActionBarStyle"
         app:navigationIcon="?attr/homeAsUpIndicator"
         app:navigationContentDescription="@string/abc_action_bar_up_description"
+        app:titleTextColor="?attr/actionBarTextColor"
         app:title="Troubleshooting" />
 
     <androidx.core.widget.NestedScrollView

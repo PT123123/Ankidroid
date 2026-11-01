@@ -20,6 +20,7 @@ import android.content.Context
 import android.util.AttributeSet
 import android.view.LayoutInflater
 import android.widget.FrameLayout
+import com.google.android.material.color.MaterialColors
 import com.ichi2.anki.R
 import com.ichi2.anki.databinding.ViewResizingDividerInternalBinding
 
@@ -38,6 +39,6 @@ class ResizingDivider
             val layoutInflater = LayoutInflater.from(context)
             ViewResizingDividerInternalBinding.inflate(layoutInflater, this)
 
-            setBackgroundColor(context.getColor(R.color.idle_divider_color))
+            setBackgroundColor(MaterialColors.getColor(this, R.attr.hairlineColor))
         }
     }

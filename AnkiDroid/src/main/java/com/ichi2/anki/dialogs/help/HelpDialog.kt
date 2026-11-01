@@ -12,7 +12,6 @@ import androidx.core.os.BundleCompat
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.commit
-import com.ichi2.anki.AnkiDroidApp
 import com.ichi2.anki.R
 import com.ichi2.anki.analytics.AnalyticsDialogFragment
 import com.ichi2.anki.ankiActivity
@@ -225,14 +224,6 @@ internal val childHelpMenuItems =
             id = 200,
             parentId = 2,
             action = OpenUrlResource(R.string.link_forum),
-        ),
-        HelpItem(
-            titleResId = R.string.help_item_report_bug,
-            iconResId = R.drawable.ic_bug_report_black_24dp,
-            analyticsId = LinkAction.OPENED_REPORT_BUG,
-            id = 201,
-            parentId = 2,
-            action = OpenUrl(AnkiDroidApp.feedbackUrl),
         ),
         HelpItem(
             titleResId = R.string.help_item_anki_forums,

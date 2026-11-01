@@ -631,20 +631,6 @@ open class AnkiDroidApp :
         }
 
         /**
-         * Get the url for the properly translated feedback page
-         * @return
-         */
-        val feedbackUrl: String
-            get() = // TODO actually this can be done by translating "link_help" string for each language when the App is
-                // properly translated
-                when (getCurrentLocaleTag()) {
-                    "ja" -> appResources.getString(R.string.link_help_ja)
-                    "zh" -> appResources.getString(R.string.link_help_zh)
-                    "ar" -> appResources.getString(R.string.link_help_ar)
-                    else -> appResources.getString(R.string.link_help)
-                } // TODO actually this can be done by translating "link_manual" string for each language when the App is
-
-        /**
          * Get the url for the properly translated manual
          * @return
          */

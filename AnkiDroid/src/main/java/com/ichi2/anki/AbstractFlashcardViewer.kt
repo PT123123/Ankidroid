@@ -16,6 +16,7 @@ import android.content.SharedPreferences
 import android.content.res.Configuration
 import android.graphics.Bitmap
 import android.graphics.Color
+import android.graphics.drawable.ColorDrawable
 import android.media.MediaPlayer
 import android.net.Uri
 import android.os.Build
@@ -243,6 +244,19 @@ abstract class AbstractFlashcardViewer :
     private var touchLayer: FrameLayout? = null
     private var cardStyleOverlay: FrameLayout? = null
     private var cardStyleButton: ImageButton? = null
+
+    /**
+     * The sheet the study screen is drawn on, when the screen has one.
+     *
+     * It spans the chrome and the card, so the toolbar, the counts and the card are one object
+     * rather than a stack of bands. The fullscreen layouts have no chrome to join and no sheet.
+     */
+    private var studySurface: View? = null
+
+    /** The gap the card keeps from the edge of the screen, which the chip follows. */
+    private var cardGapHorizontal = 0
+    private var cardGapVertical = 0
+
     protected var answerField: FixedEditText? = null
     protected var flipCardLayout: FrameLayout? = null
     protected var easeButtonsLayout: LinearLayout? = null
@@ -1046,7 +1060,124 @@ abstract class AbstractFlashcardViewer :
         cardFrame!!.layoutParams = flashcardContainerParams
         touchLayer!!.layoutParams = touchLayerContainerParams
         cardStyleOverlay!!.layoutParams = cardStyleOverlayParams
+        setUpStudySurface()
+        layoutStudySurface()
+    }
+
+    /**
+     * Puts the study surface in place, if this screen has one.
+     *
+     * The surface is the sheet the screen is drawn on: it covers the whole screen, so the
+     * chrome, the card and the answer area read as one object, and the chrome's own
+     * backgrounds are cleared so that they do not split it up.
+     */
+    private fun setUpStudySurface() {
+        val surface = findViewById<View>(R.id.study_surface) ?: return
+        studySurface = surface
+
+        // the chrome's own backgrounds would split the surface up. In the fullscreen layouts
+        // the toolbar is an overlay pulled over the sheet: it keeps an opaque fill of the
+        // sheet's colour rather than losing its background — the layouts' XML can only guess
+        // the card surface's, which layoutStudySurface repaints with the style's own.
+        findViewById<View>(R.id.toolbar)?.background = null
+        if (!fullscreenMode.isFullScreenReview()) {
+            findViewById<View>(R.id.toolbar_container)?.background = null
+        }
+        topBarLayout?.background = null
+
+        // The holder is the first child of the frame, so the surface is drawn behind the chrome
+        // and the card. It is not the surface itself: a view with an elevation is drawn above
+        // its siblings with a lower one, so the surface could not carry the shadow and stay
+        // behind the chrome at the same time.
+        val holder = findViewById<View>(R.id.study_surface_holder) ?: return
+        val params =
+            RelativeLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT,
+            )
+        params.addRule(RelativeLayout.ALIGN_PARENT_TOP)
+        // the sheet runs behind the answer area as well, so the screen stays one object
+        params.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM)
+        holder.layoutParams = params
+    }
+
+    /**
+     * Lays the sheet and the card out.
+     *
+     * With a sheet, the sheet is the card: it is inset by the style's gap, so that the
+     * background shows around it, and the chrome is inset with it, so that the chrome and the
+     * card are one object. The card is inset by the rim's width, so that the rim at the sheet's
+     * edge shows.
+     */
+    private fun layoutStudySurface() {
+        val style = cardStyle
+        val density = resources.displayMetrics.density
+        val marginH = (style.marginHorizontalDp * density).toInt()
+        val marginV = (style.marginVerticalDp * density).toInt()
+        val stroke = resources.getDimensionPixelSize(R.dimen.card_surface_stroke_width)
+        // the page is inset by the rim's width so that the rim at the sheet's edge shows; a
+        // style without a rim has nothing to keep clear, so its page runs to the sheet's edge
+        val rim = if (style.surfaceStrokeAttr != null) stroke else 0
+        val surface = studySurface
+        val web = webView
+        if (surface != null) {
+            // The sheet is inset inside the holder, not the other way round: the holder is
+            // bigger, so that the sheet's shadow has room to fall on the background outside it.
+            (surface.layoutParams as? FrameLayout.LayoutParams)?.let {
+                it.setMargins(marginH, 0, marginH, marginV)
+                surface.layoutParams = it
+            }
+            insetChrome(marginH)
+            insetCardBand(marginH + rim, 0, marginV + rim)
+            cardGapHorizontal = marginH + rim
+            cardGapVertical = 0
+
+            if (fullscreenMode.isFullScreenReview()) {
+                // the toolbar pulled over the sheet keeps the sheet's colour: the layouts' XML
+                // can only guess the card surface's, which Paper's sheet does not share
+                findViewById<View>(R.id.toolbar_container)?.background =
+                    ColorDrawable(style.studySurfaceColour(this))
+            }
+        } else {
+            insetCardBand(marginH, marginV, marginV)
+            cardGapHorizontal = marginH
+            cardGapVertical = marginV
+        }
         updateCardStyleChip()
+    }
+
+    /**
+     * Insets the card's band — the page and, on top of it, the whiteboard — so that the ink
+     * lands on the card rather than offset from it. [insetTop] is `marginV` only without a
+     * surface, where the card floats free of the screen's top edge.
+     */
+    private fun insetCardBand(
+        insetH: Int,
+        insetTop: Int,
+        insetBottom: Int,
+    ) {
+        for (view in listOfNotNull(webView, findViewById<View>(R.id.whiteboard))) {
+            (view.layoutParams as? ViewGroup.MarginLayoutParams)?.let {
+                it.setMargins(insetH, insetTop, insetH, insetBottom)
+                view.layoutParams = it
+            }
+        }
+    }
+
+    /**
+     * Keeps the chrome inside the sheet, which the card style insets from the screen's edge.
+     */
+    private fun insetChrome(marginH: Int) {
+        for (id in intArrayOf(R.id.toolbar_container, R.id.top_bar)) {
+            val view = findViewById<View>(id) ?: continue
+            // every parent here lays the chrome out in a MarginLayoutParams subclass
+            // (RelativeLayout, FrameLayout or CoordinatorLayout)
+            (view.layoutParams as? ViewGroup.MarginLayoutParams)?.let {
+                it.leftMargin = marginH
+                it.rightMargin = marginH
+                view.layoutParams = it
+            }
+        }
     }
 
     /**
@@ -1073,8 +1204,8 @@ abstract class AbstractFlashcardViewer :
     /** Puts the native half of the style on the card: the sheet, its rim and its gap. */
     private fun applyCardStyle() {
         val webView = webView ?: return
-        cardStyle.applyTo(webView, this)
-        updateCardStyleChip()
+        cardStyle.applyTo(studySurface, webView, this)
+        layoutStudySurface()
     }
 
     /**
@@ -1098,10 +1229,9 @@ abstract class AbstractFlashcardViewer :
         val button = cardStyleButton ?: return
         button.contentDescription =
             getString(R.string.card_style_chip_description, getString(cardStyle.titleRes))
-        val density = resources.displayMetrics.density
         val inset = resources.getDimensionPixelSize(R.dimen.card_style_chip_margin)
-        val top = (cardStyle.marginVerticalDp * density).toInt() + inset
-        val side = (cardStyle.marginHorizontalDp * density).toInt() + inset
+        val top = cardGapVertical + inset
+        val side = cardGapHorizontal + inset
         (button.layoutParams as? FrameLayout.LayoutParams)?.let {
             it.topMargin = top
             it.bottomMargin = 0

@@ -12,9 +12,10 @@ import com.ichi2.anki.ui.internationalization.sentenceCase
 /**
  * The maintenance actions which used to sit in the deck picker's toolbar overflow menu.
  *
- * The fork moved them to the "My settings" screen ([com.ichi2.anki.preferences.MySettingsFragment]),
- * keeping the main screen free of a menu. Selecting one returns to [DeckPicker] with
- * [DeckPicker.EXTRA_DECK_TOOL] set to [name], where [DeckPicker.runDeckTool] performs it.
+ * The fork moved them to the settings' "Backup & import/export" screen
+ * ([com.ichi2.anki.preferences.BackupTransferFragment]), keeping the main screen free of a menu.
+ * Selecting one returns to [DeckPicker] with [DeckPicker.EXTRA_DECK_TOOL] set to [name], where
+ * [DeckPicker.runDeckTool] performs it.
  */
 enum class DeckTool(
     @DrawableRes val iconRes: Int,

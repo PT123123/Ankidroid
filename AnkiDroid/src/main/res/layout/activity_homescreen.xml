@@ -30,9 +30,12 @@
         android:layout_height="match_parent"
         android:visibility="gone" />
 
-    <!-- Hidden by default. Made visible by DeckPicker when devBottomNavEnabled is true. -->
+    <!-- Hidden by default. Made visible by DeckPicker when devBottomNavEnabled is true.
+         The style wires the fork's tab tokens in: the selected item's indicator and icon
+         come from tabLayoutBackgroundColor/tabActiveIconColor, as in the template editor. -->
     <com.google.android.material.bottomnavigation.BottomNavigationView
         android:id="@+id/bottom_navigation"
+        style="@style/BottomNavigationViewStyle"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom"

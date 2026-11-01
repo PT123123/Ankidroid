@@ -7,9 +7,10 @@ import android.view.View
 import androidx.core.view.isVisible
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.ichi2.anki.BottomNavController.NavigationItem
-import com.ichi2.anki.preferences.EXTRA_INITIAL_FRAGMENT
-import com.ichi2.anki.preferences.MySettingsFragment
+import com.ichi2.anki.dialogs.help.HelpDialog
+import com.ichi2.anki.preferences.PreferencesActivity
 import com.ichi2.anki.settings.Prefs
+import com.ichi2.anki.utils.ext.DIALOG_FRAGMENT_TAG
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers.equalTo
 import org.junit.Test
@@ -19,7 +20,7 @@ import org.robolectric.Shadows.shadowOf
 /**
  * Anki Plus ships the bottom navigation bar on the main screen: the deck list keeps the first tab,
  * while the browser, the statistics page (which carries the calendar heatmap) and the hub holding
- * [MySettingsFragment] are reachable below it.
+ * the settings and help entries are reachable below it.
  */
 @RunWith(AndroidJUnit4::class)
 class HomeBottomNavigationTest : RobolectricTest() {
@@ -45,7 +46,7 @@ class HomeBottomNavigationTest : RobolectricTest() {
         }
 
     @Test
-    fun `the more tab opens my settings`() =
+    fun `the more tab opens the settings`() =
         deckPicker {
             binding.bottomNavigation!!.selectedItemId = NavigationItem.MORE.id
             advanceRobolectricLooper()
@@ -54,14 +55,31 @@ class HomeBottomNavigationTest : RobolectricTest() {
                     .findFragmentByTag(NavigationItem.MORE.tag)!!
                     .requireView()
 
-            moreView.findViewById<View>(R.id.more_my_settings).performClick()
+            moreView.findViewById<View>(R.id.more_settings).performClick()
 
             val intent = shadowOf(this).nextStartedActivity
-            assertThat(
-                intent
-                    .getBundleExtra(SingleFragmentActivity.EXTRA_FRAGMENT_ARGS)
-                    ?.getString(EXTRA_INITIAL_FRAGMENT),
-                equalTo(MySettingsFragment::class.java.name),
-            )
+            assertThat(intent.component?.className, equalTo(PreferencesActivity::class.java.name))
+        }
+
+    /**
+     * The fork's More page has no drawer and no overflow menu behind it, so the help rows the drawer
+     * used to carry are gone with it - but the manual and the privacy policy have to stay reachable,
+     * and [HelpDialog] is the only screen listing them.
+     */
+    @Test
+    fun `the more tab keeps an entry to the help dialog`() =
+        deckPicker {
+            binding.bottomNavigation!!.selectedItemId = NavigationItem.MORE.id
+            advanceRobolectricLooper()
+            val moreView =
+                supportFragmentManager
+                    .findFragmentByTag(NavigationItem.MORE.tag)!!
+                    .requireView()
+
+            moreView.findViewById<View>(R.id.more_help).performClick()
+            advanceRobolectricLooper()
+
+            val dialog = supportFragmentManager.findFragmentByTag(DIALOG_FRAGMENT_TAG)
+            assertThat("the help row opens the help dialog", dialog is HelpDialog, equalTo(true))
         }
 }

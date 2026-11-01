@@ -4,12 +4,18 @@
   ~ SPDX-FileCopyrightText: 2026 PT123123 <31439216+PT123123@users.noreply.github.com>
   -->
 <resources>
-    <string name="my_settings_title" maxLength="28">我的设置</string>
-    <string name="my_settings_features" maxLength="41">我添加的功能</string>
-    <string name="my_settings_tools" maxLength="28">常用工具</string>
-    <string name="my_settings_tools_summary" maxLength="200">这些操作会在牌组界面执行</string>
-    <string name="my_settings_card_css" maxLength="41">跟随主题重绘卡片</string>
-    <string name="my_settings_card_css_summary">没改过的笔记类型会强制 Arial 字体、黑字白底，盖掉你选的主题。开启后只去掉这三项，字号和居中保持原样，卡片改用主题的字体与配色。关掉就和桌面端渲染一致。</string>
+    <!-- “备份与导入导出”设置页 -->
+    <string name="backup_transfer_title" maxLength="41">备份与导入导出</string>
+    <string name="backup_transfer_summary" maxLength="200">同步、备份恢复与导入导出</string>
+    <string name="backup_transfer_sync" maxLength="41">同步与备份</string>
+    <string name="backup_transfer_import_export" maxLength="41">导入与导出</string>
+    <string name="backup_transfer_maintenance" maxLength="41">维护</string>
+    <!-- 外观里的卡片渲染 -->
+    <string name="card_rendering" maxLength="41">卡片渲染</string>
+    <string name="stock_card_css_title" maxLength="41">跟随主题重绘卡片</string>
+    <string name="stock_card_css_summary">没改过的笔记类型会强制 Arial 字体、黑字白底，盖掉你选的主题。开启后只去掉这三项，字号和居中保持原样，卡片改用主题的字体与配色。关掉就和桌面端渲染一致。</string>
+    <!-- 更多页的版本行 -->
+    <string name="more_version_title" maxLength="28">版本</string>
 
     <!-- 卡片风格 -->
     <string name="card_style" maxLength="41">卡片风格</string>

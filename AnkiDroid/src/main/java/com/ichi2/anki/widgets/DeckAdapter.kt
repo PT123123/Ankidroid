@@ -153,9 +153,9 @@ class DeckAdapter(
             binding.deckExpander.isClickable = false
             binding.deckExpander.setOnClickListener(null)
         }
-        holder.binding.deckLayout.setBackgroundResource(rowCurrentDrawable)
         // set a different background color for the current selected deck
         if (node.isSelected) {
+            holder.binding.deckLayout.setBackgroundResource(rowCurrentDrawable)
             if (activityHasBackground) {
                 val background =
                     holder.binding.deckLayout.background
@@ -164,7 +164,11 @@ class DeckAdapter(
                 holder.binding.deckLayout.background = background
             }
         } else {
-            holder.binding.deckLayout.setBackgroundResource(selectableItemBackground)
+            // glass rows: a translucent container over the window background. With a user-set
+            // background image the rows stay transparent, so the image shows through.
+            holder.binding.deckLayout.setBackgroundResource(
+                if (activityHasBackground) selectableItemBackground else R.drawable.deck_row_background,
+            )
         }
         // Set deck name and colour. Filtered decks have their own colour
         binding.deckName.text = node.lastDeckNameComponent
@@ -254,7 +258,7 @@ class DeckAdapter(
         private const val SELECTED_DECK_ALPHA_AGAINST_BACKGROUND = 0.45
 
         /** How strongly the count's own hue tints its pill. */
-        private const val COUNT_PILL_ALPHA = 32
+        private const val COUNT_PILL_ALPHA = 72
     }
 
     init {

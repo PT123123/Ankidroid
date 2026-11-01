@@ -5,9 +5,6 @@
     <color name="theme_black_primary_light">#151515</color>
     <color name="theme_black_primary_text">#fff</color> <!-- Alternative: #808080 -->
     <color name="theme_black_row_current">#1a1a1a</color>
-    <!-- The answer bar of the black theme: a hair off true black, so the bar reads as a
-         surface without lighting up the OLED pixels. -->
-    <color name="theme_black_answer_area">#0D0D0D</color>
 
     <style name="Base.Theme.Dark.Black" parent="Theme_Dark">
         <!-- Android colors -->
@@ -48,8 +45,6 @@
         <item name="zeroCountColor">#202020</item>
         <!-- Study Screen colors -->
         <item name="showAnswerButtonBackground">#0c1215</item>
-        <item name="showAnswerColor">@color/theme_black_answer_area</item>
-        <item name="answerAreaDark">true</item>
         <item name="topBarColor">@color/theme_black_primary</item>
         <item name="maxTimerColor">@color/material_red_300</item>
         <!-- Black keeps the night theme's inverted buttons but sinks them back down: a dark
@@ -90,6 +85,8 @@
         <item name="cardSurfaceStrokeColor">#26FFFFFF</item>
         <item name="cardPaperColor">#1C1915</item>
         <item name="cardPaperStrokeColor">#33FFFFFF</item>
+        <!-- The chrome is drawn on the study surface, which is black here -->
+        <item name="studySurfaceIconColor">@color/white</item>
         <item name="againButtonRef">@drawable/footer_button_rounded</item>
         <item name="hardButtonRef">@drawable/footer_button_rounded</item>
         <item name="goodButtonRef">@drawable/footer_button_rounded</item>
@@ -101,6 +98,8 @@
         <item name="easyButtonRippleRef">@drawable/footer_button_rounded_ripple</item>
         <!-- Card Browser Colors -->
         <item name="cardBrowserDivider">#26FFFFFF</item>
+        <item name="hairlineColor">#33FFFFFF</item>
+        <item name="dividerHandleColor">#B3FFFFFF</item>
         <!-- Browser colors -->
         <item name="suspendedColor">#A8A634</item>
         <item name="selectedColor">#a86634</item>

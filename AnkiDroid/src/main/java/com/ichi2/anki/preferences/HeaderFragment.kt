@@ -16,6 +16,7 @@ import com.ichi2.anki.CollectionManager.TR
 import com.ichi2.anki.R
 import com.ichi2.anki.common.android.AdaptionUtil
 import com.ichi2.anki.compat.CompatHelper
+import com.ichi2.anki.lansync.LanSyncFragment
 import com.ichi2.anki.preferences.profiles.SwitchProfilesFragment
 import com.ichi2.anki.preferences.reviewer.ReviewerMenuSettingsFragment
 import com.ichi2.anki.reviewreminders.ScheduleRemindersFragment
@@ -55,6 +56,10 @@ class HeaderFragment : SettingsFragment() {
 
         requirePreference<HeaderPreference>(R.string.pref_review_reminders_screen_key).isVisible = Prefs.newReviewRemindersEnabled
         requirePreference<HeaderPreference>(R.string.pref_notifications_screen_key).isVisible = !Prefs.newReviewRemindersEnabled
+
+        // fork feature: the profile switcher is only reachable when the developer switch enables it
+        requirePreference<HeaderPreference>(R.string.pref_switch_profile_screen_key)
+            .isVisible = Prefs.switchProfileEnabled
 
         configureSearchBar(
             requireActivity() as AppCompatActivity,
@@ -111,8 +116,7 @@ class HeaderFragment : SettingsFragment() {
                 }
 
                 index(R.xml.preferences_appearance)
-                index(R.xml.preferences_my_settings)
-                    .addBreadcrumb(activity.getString(R.string.my_settings_title))
+                index(R.xml.preferences_backup_transfer)
                 if (!Prefs.isNewStudyScreenEnabled) {
                     index(R.xml.preferences_custom_buttons)
                         .addBreadcrumb(TR.preferencesAppearance())
@@ -239,13 +243,14 @@ class HeaderFragment : SettingsFragment() {
             when (fragment) {
                 is GeneralSettingsFragment -> R.string.pref_general_screen_key
                 is ReviewingSettingsFragment -> R.string.pref_reviewing_screen_key
-                is SyncSettingsFragment, is CustomSyncServerSettingsFragment -> R.string.pref_sync_screen_key
+                is SyncSettingsFragment, is CustomSyncServerSettingsFragment, is LanSyncFragment -> R.string.pref_sync_screen_key
                 is NotificationsSettingsFragment -> R.string.pref_notifications_screen_key
                 is ScheduleRemindersFragment -> R.string.pref_review_reminders_screen_key
                 is AppearanceSettingsFragment, is CustomButtonsSettingsFragment -> R.string.pref_appearance_screen_key
                 is ControlsSettingsFragment -> R.string.pref_controls_screen_key
                 is AccessibilitySettingsFragment -> R.string.pref_accessibility_screen_key
                 is BackupLimitsSettingsFragment -> R.string.pref_backup_limits_screen_key
+                is BackupTransferFragment -> R.string.pref_backup_transfer_screen_key
                 is AdvancedSettingsFragment -> R.string.pref_advanced_screen_key
                 is ReviewerOptionsFragment, is ReviewerMenuSettingsFragment -> R.string.new_reviewer_options_key
                 is DeveloperOptionsFragment -> R.string.pref_developer_options_screen_key

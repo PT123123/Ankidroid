@@ -114,9 +114,9 @@ android {
         //
         // This ensures the correct ordering between the various types of releases (dev < alpha < beta < release) which is
         // needed for upgrades to be offered correctly.
-        versionCode=22500208
+        versionCode=22500211
         // If you change this to a new version, you probably also want to update .gradle/workflows/milestone.yml for the new version...
-        versionName="1.0.2"
+        versionName="1.0.5"
         minSdk = libs.versions.minSdk.get().toInteger()
 
         // After #13695: change .tests_emulator.yml

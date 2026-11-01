@@ -66,7 +66,6 @@ import com.ichi2.utils.listItems
 import com.ichi2.utils.listItemsAndMessage
 import com.ichi2.utils.message
 import com.ichi2.utils.negativeButton
-import com.ichi2.utils.neutralButton
 import com.ichi2.utils.positiveButton
 import com.ichi2.utils.show
 import com.ichi2.utils.title
@@ -119,7 +118,7 @@ class DatabaseErrorDialog : AsyncDialogFragment() {
             }
             DIALOG_DB_ERROR -> {
                 // Database Check failed to execute successfully; give user the option of either choosing from repair
-                // options, submitting an error report, or closing the activity
+                // options or closing the activity
                 alertDialog
                     .create {
                         cancelable(false)
@@ -129,16 +128,11 @@ class DatabaseErrorDialog : AsyncDialogFragment() {
                         positiveButton(R.string.error_handling_options) {
                             showDatabaseErrorDialog(DIALOG_ERROR_HANDLING)
                         }
-                        negativeButton(R.string.answering_error_report) {
-                            requireDeckPicker().sendErrorReport()
-                            requireActivity().dismissAllDialogFragments()
-                        }
-                        neutralButton(R.string.close) {
+                        negativeButton(R.string.close) {
                             closeCollectionAndFinish()
                         }
                     }.apply {
                         show()
-                        getButton(Dialog.BUTTON_NEGATIVE).isEnabled = requireDeckPicker().hasErrorFiles()
                     }
             }
             DIALOG_ERROR_HANDLING -> {

@@ -4,8 +4,9 @@
 > window transition animations, modern corner radii, soft elevation and translucent "glass" surfaces.
 > Sections 1-4 are theme-layer only. Section 5 touches the reviewer footer (layouts + the drawables
 > those layouts resolve), section 6 changes the HTML handed to the card WebView, section 7 makes
-> the card face and the answer buttons switchable, and section 8 brings the deck list and the card
-> browser onto the same ramp.
+> the card face and the answer buttons switchable, section 8 brings the deck list and the card
+> browser onto the same ramp, section 9 puts the study screen's chrome and its card on one
+> surface, and section 10 gives the corners — hairlines, rules and grips — one themed weight.
 
 ## What changed
 
@@ -151,7 +152,7 @@ So the day slab and the stuck font are the wins; night colours were already surv
 `body.night_mode` (0,1,1) outranks `.card` (0,1,0) — the font was the only thing wrong there.
 
 The rewrite changes what the phone shows for stock note types versus desktop, so it is a switch:
-我的设置 ▸ *Restyle card defaults* (`pref_stock_card_css_key`, on by default). Off = the stock
+Settings ▸ Appearance ▸ *Restyle card defaults* (`pref_stock_card_css_key`, on by default). Off = the stock
 string reaches the WebView untouched.
 
 ### 7. Card styles (the card face and the answer buttons)
@@ -171,7 +172,7 @@ not in decoration.
 
 The four are stored as `CardStylePreset` (`settings/enums/CardStylePreset.kt`), which is the value
 in `R.string.card_style_*_value`; `Prefs.cardStylePreset` and the *Card style* list preference in
-[我的设置](../my-settings/README.md) read the same store, so the chip in the card and the settings
+[Appearance](../my-settings/README.md) read the same store, so the chip in the card and the settings
 page never disagree.
 
 **Two halves, and each half has its own owner.**
@@ -236,9 +237,221 @@ brought onto the same ramp.
 
   Note that `android:divider` / `android:dividerHeight` on the `RecyclerView` in
   `fragment_card_browser.xml` do nothing — those are `ListView` attributes, and `RecyclerView`
-  ignores them silently. The decoration is the only thing that draws the line.
+  ignores them silently. The decoration is the only thing that draws the line. Both dead
+  attributes are now gone from the layout, along with `drawSelectorOnTop`, and the empty-deck
+  placeholder's `TextAppearance.AppCompat.*` styles are M3 (`textAppearanceTitleMedium` /
+  `textAppearanceBodyMedium`).
 
-## Keeping §5, §6 and §7 honest
+**The four tabs.** The home screen's four tabs did not share one chrome: decks and browse put the
+theme colour on the app bar (`?attr/appBarColor`, translucent at night), while statistics and more
+had a plain `colorSurface` bar — two chrome languages one tap apart. Statistics and more now carry
+the same themed bar (`page_statistics.xml`, `fragment_more.xml`), their toolbars wearing
+`ActionBarStyle` like `include_toolbar.xml`, so the title, the deck selector and the save-as-PDF
+action all read on the colour. The more tab gained a version row on the way
+(`more_version_title`, `VersionUtils.pkgVersionName`), and the bottom bar is finally wired to the
+fork's tab tokens (`BottomNavigationViewStyle`: the selected indicator from
+`tabLayoutBackgroundColor`, the active icon from `tabActiveIconColor` — the same treatment the
+template editor's tab bar already had). The selected deck's highlight in the deck list left the
+squared slab for the ramp's small step: a 12dp rounded shape over the same
+`currentDeckBackgroundColor` (`item_background_selected.xml`). The screens the tabs lead into
+were carried along: the settings host (`fragment_settings.xml`), the review-reminder schedules
+(`fragment_schedule_reminders.xml`) and the note-type manager (`activity_manage_note_types.xml`)
+now paint the same themed bar — the collapsing ones setting `contentScrim` to it as well, so the
+collapsed state does not fall back to M3's own surface.
+
+Follow-up on the same theme: the tabs' *content* shows the gradient too. The More tab no longer
+paints an opaque `colorBackground` root over it, and the shared-decks downloader dropped its
+opaque content slab, while the reminder-troubleshooting toolbar now wears the themed bar. One
+deliberate exception: `fragment_schedule_reminders.xml` kept its opaque list background —
+removing it was believed to break the status-bar inset behavior the review-reminders tests pin
+(`ReviewRemindersInsetsTest`). §10 untangled it: the tests pin the insets, not the colour, so the
+slab went. The deck list rows read as glass over the gradient instead of disappearing into it: a
+12dp translucent `?attr/colorSurfaceContainer` fill (`deck_row_background.xml`), and the count
+pills carry their hue at a strength that survives the dark background
+(`DeckAdapter.COUNT_PILL_ALPHA`).
+
+### 9. One surface for the study screen (the chrome and the card)
+
+The study screen was a stack of bands: the themed app bar, the pale counts bar, the theme
+gradient, and the card as a white rounded sheet floating on top of it. The chrome read as one
+object and the card as another, and the two were only related by being stacked on the same
+screen. The back arrow, the ★ mark and the ⋮ menu were on the app bar, and the card was
+somewhere below it.
+
+Now the card style's sheet **is** the study screen: it carries the chrome, the card and the
+answer area, so the whole screen is one surface with one colour, one rim and one shadow.
+
+**The surface.** `activity_reviewer.xml` gained a `study_surface` View, inside a
+`study_surface_holder` FrameLayout which is the **first** child of `front_frame` — the first
+child is the one drawn at the back, so the surface is behind the chrome and the card.
+
+The holder is deliberately not the surface itself. A view with an elevation is drawn *above* its
+siblings with a lower one (`ViewGroup.buildOrderedChildList()` sorts the children by `getZ()`,
+which is the elevation), so a sheet that carries the shadow could not also stay behind the
+chrome. The holder keeps the sheet out of that comparison — it is drawn first as a whole — and
+it is bigger than the sheet, so the shadow has room to fall on the background instead of being
+clipped at the sheet's edge.
+
+**What the surface carries.** `CardStyle.applyTo(surface, webView, context)` puts the style's
+fill on the surface's background, the rim on its `foreground` (a page cannot draw its own rim),
+the shadow on its `elevation`, and the corner radii on the drawable. Only the **bottom** corners
+are rounded (`setCornerRadii(0, 0, 0, 0, r, r, r, r)`): the top of the sheet runs off the top of
+the screen, so there is no top corner to round. The WebView then becomes only the page: the
+style's fill as its background, no rim of its own, no `clipToOutline` and no elevation — the card
+is *inside* the sheet, not a sheet of its own. The viewer insets it by the rim's width, so that
+the rim at the sheet's edge shows — and only when the style has a rim: Classic and Minimal have
+none, so their page runs to the sheet's edge rather than keeping a 1dp sliver clear for nothing.
+The whiteboard is inset the same way (`insetCardBand`), so the ink lands on the card instead of
+offset from it by the gap.
+
+**The chrome.** The toolbar's and the counts bar's own backgrounds are cleared at runtime
+(`toolbar`, `top_bar`, and `toolbar_container` in the default layout) and inset by the style's
+horizontal gap, so that the chrome and the card share the sheet's edges. They are cleared at
+runtime rather than in the XML because `include_toolbar.xml` and `include_reviewer_topbar.xml`
+are shared with `activity_reviewer_fullscreen*.xml`. There the toolbar is an overlay pulled over
+the sheet when immersive mode is interrupted, so it keeps an opaque fill instead — the XML guesses
+`?attr/cardSurfaceColor`, and `layoutStudySurface` repaints it with the style's own sheet colour
+(`CardStyle.studySurfaceColour`), so the overlay reads as part of the sheet whichever style is on
+it, Paper's paper included.
+The chrome is inset in every layout: the fullscreen ones put the toolbar in a
+`CoordinatorLayout`, so `insetChrome` takes any `MarginLayoutParams`.
+
+**The icons.** The chrome used to sit on the app bar, where white icons were right. It now sits
+on the surface, whose colour follows the theme, so the navigation icon, the overflow icon, the
+toolbar title, the ★ in the counts bar and the toolbar's action icons are re-tinted with
+`?attr/studySurfaceIconColor` (black in the day themes, white at night). The flag keeps its own
+colour when the card carries one — the flag says *which* flag the card has, so it is not the
+surface's business. `Reviewer.tintStudyChrome()` runs in `onCreateOptionsMenu` **and** in
+`onPrepareOptionsMenu`, because the overflow icon is only installed when the menu is shown.
+
+**Why the page does not clash with the sheet.** The WebView's page is painted over the sheet, so
+the sheet's colour is only seen where the page is transparent — and where the page does paint, it
+paints the same colour: by day the body is transparent (§6), at night
+`body.ankidroid_dark_mode` is `#303030` and `body.night_mode` is black, which are exactly the
+`cardSurfaceColor` of the night and black themes, and the Paper preset paints its body with
+`?attr/cardPaperColor`, the same colour as its sheet.
+
+**The status bar** follows the surface rather than the app bar: `SystemBarStyle.auto`'s lambda
+was `currentTheme != DayTheme.EINK` and is now `Themes.isNightTheme`.
+
+**The fallback.** `CardStyle.applyTo(null, webView, context)` — the web view carrying the sheet
+itself, as §7 did it — stays as the fallback for any screen without a surface. The two fullscreen
+layouts used to be that case; they now carry a surface of their own. In
+`activity_reviewer_fullscreen_noanswers.xml` the holder is the first child of the **outer**
+frame, not of `front_frame` — that frame is drawn *over* the card there, so a surface inside it
+would cover the card. The fullscreen flashcard includes also gained the chip's overlay, which
+they were missing (the viewer looks the overlay up unconditionally).
+
+**The trade-off.** The themed app bar no longer paints the study screen: the screen *is* the
+sheet, and the theme's gradient shows only around it — the 12dp slivers at the sides and the 8dp
+gap at the bottom. The answer area was first left outside the sheet, which kept the screen
+reading as two objects; the sheet now runs behind it as well, and the answer area's own
+`showAnswerColor` band is gone with it — as is the `answerAreaDark` rule that decided the
+navigation bar's icon colour from that band, the navigation bar now following the surface's
+day/night like the status bar. Every other screen keeps its themed app bar, and the
+experimental "new study screen" is untouched.
+
+### 10. The corners (hairlines, rules and grips)
+
+The edges of the interface were the last place where the fork spoke in literals. A hairline was
+`#66888888` in one place, `#44888888` in another, `#dddddd` in a third — each one opaque, each one
+a fixed grey in every theme, and each one a slightly different weight from the others. Nothing in
+the theme said what a rule should look like; every screen spelled it out on its own.
+
+Two tokens say it now.
+
+- **`?attr/hairlineColor`** — the weight of a rule: 20 % black (`#CCCCCC`) in the day themes,
+  20 % white (`#33FFFFFF`) in the night themes, black in E-ink. It is a sibling of
+  `cardBrowserDivider`, which is the same `#CCCCCC` by day and a shade fainter (`#26FFFFFF`) at
+  night — the browser's rows are denser than a settings list, so their rule can be lighter.
+- **`?attr/dividerHandleColor`** — the grip on the divider between the two panes of the tablet
+  layout. It has to read as something you can grab, so it is stronger than the hairline beside it:
+  30 % black (`#4D4D4D`) by day, 70 % white (`#B3FFFFFF`) at night, black in E-ink.
+
+**The contrast, measured.** The weights were computed, not eyeballed — WCAG relative luminance
+against each theme's *own* background. The day themes' window background is the gradient, so the
+day range runs from its tint to white; the night themes' are `#303030` (dark) and black (black).
+
+| | day | night (dark) | night (black) |
+| --- | --- | --- | --- |
+| `hairlineColor` | 1.61:1 on white, 1.43:1 on the gradient's tint | 1.88:1 | 1.66:1 |
+| `dividerHandleColor` | 8.45:1 | 7.33:1 | 10.02:1 |
+| the drag line (`colorPrimary`) | 2.63:1 | 4.99:1 | 7.93:1 |
+
+A rule is a decorative separator, not a control boundary, so it sits below the 3:1 that WCAG asks
+of the latter. That is deliberate, and it is where Material 3 puts its own `outlineVariant`
+(1.66:1 in the light theme). The grip is a control, and it clears 3:1 everywhere by a wide margin.
+The drag line clears the fork's own border bar (≥ 2.2:1) in every theme.
+
+What the fixed greys measured, for comparison: the old preference separator (`#66888888`) was
+1.56:1 by day but 1.74:1 on black; the old pane-divider line (`#C7C7C7`) was 1.69:1 by day and
+**7.81:1** at night; the old grip (`#4D4D4D`) was 8.45:1 by day and **1.56:1** at night. A fixed
+grey does not keep its weight when the theme changes the page under it — that is the whole reason
+these became tokens. The new pair keeps its weight in every theme, and the grip, which used to
+disappear at night, is now the strongest thing about the divider.
+
+**What moved onto them.**
+
+| Was | Now | Where |
+| --- | --- | --- |
+| `#66888888` | `?attr/hairlineColor` | the separator between a preference and its switch (`preference_widget_switch_with_separator.xml`) |
+| `#44888888` | `?attr/hairlineColor` | the 1.5dp stroke around a preference's text box (`bg_preference_widget_text.xml`) |
+| `#dddddd` | `?attr/hairlineColor` | the 2dp rule under the intro screen's title (portrait and landscape) |
+| `@color/divider_handle_color` | `?attr/dividerHandleColor` | the grip on the pane divider (`divider_handle_background.xml`) |
+| `@color/idle_divider_color` | `?attr/hairlineColor` | the pane divider's idle line (`ResizingDivider.kt`) |
+| `@color/drag_divider_color` | `?attr/colorPrimary` | the pane divider's drag line (`ResizablePaneManager.kt`) |
+| `#CABBBBBB` | `#33000000` | the drop shadow of the audio-recording popup (`bg_rounded_drop_shadow.xml`) |
+| `#CABBBBBB` | `?attr/hairlineColor` | the 1dp rim on that popup's sheet |
+| `#898f9d` | `?android:attr/textColorSecondary` | the "slide to cancel" hint (`view_audio_record.xml`) |
+
+Three of those are more than a recolour.
+
+**The shadow now darkens.** `#CABBBBBB` was a *light* grey at 79 % alpha: a halo, not a shadow.
+It was drawn one pixel down and right, so it read as a glow around a sheet that was lighter than
+the page — fine on the day themes, and wrong at night, where it was the brightest thing on the
+screen. The shadow is `#33000000` now: 20 % black, so it darkens whatever is behind it and stays
+out of the way of the content. In the night themes it disappears — a drop shadow has nothing to
+darken on a black page — and the rim (`?attr/hairlineColor`) carries the edge instead. That is
+Material 3's own trade: elevation is tonal, not a shadow.
+
+**The drag line follows the theme.** `@color/drag_divider_color` was `#1A90FF`, a blue that
+matched no theme in the app; it is `?attr/colorPrimary` now, so the divider belongs to whichever
+theme is running and its drag state is the accent the user chose. The numbers move with it: the
+old blue measured 3.24:1 by day and 4.07:1 at night, the theme's primary 2.63:1 by day and
+4.99:1 at night — both above the fork's 2.2:1 bar for a border, and neither of them the right
+colour for the ten accent overlays, where the drag line used to stay blue while the whole app
+was emerald.
+
+**E-ink is the exception.** There, both tokens are solid black. That theme is deliberately flat —
+"no motion, no shadows, flat paper look": its `colorSurfaceContainer` is a solid `#F0F0F0` rather
+than a 10 % tint, and its own `cardBrowserDivider` is black too. A 20 % rule has no place on a
+page that has no translucency in it.
+
+**The three colours are gone.** `idle_divider_color`, `drag_divider_color` and
+`divider_handle_color` were deleted from `values/colors.xml`: a colour nothing points at any more
+is a fatal `UnusedResources` at the release gate.
+
+**The reminders screen stopped being the odd one out.** §8 had left
+`fragment_schedule_reminders.xml` with an opaque `?android:attr/colorBackground` list, because
+removing it "silently breaks the status-bar inset behavior the review-reminders tests pin". That
+was a misreading of what the tests pin: `ReviewRemindersInsetsTest` pins the *insets* — the
+app bar's padding, the toolbar's position, the button's margin, the list's bottom padding — and
+none of that depends on the list's colour. The list now wears `?attr/colorSurfaceContainer` — a
+10 % accent tint in every theme but E-ink, which stays flat by design — the same translucent
+surface the deck list's rows sit on, so the theme's own background shows through it instead of
+being covered by an opaque slab; the app bar above it wears `?attr/appBarColor` with the
+collapsing toolbar's scrim and both of its title colours following the theme, exactly as
+`fragment_settings.xml` does. The screen is now themed like the home tab that leads to it.
+
+**What is still a literal, and why.** The launcher widgets (`widget_small.xml`,
+`widget_bg_*`) cannot use `?attr/*`: a `RemoteViews` is inflated by the launcher, which has no
+theme of ours. The intro screen's coloured buttons keep their upstream accents — no accent in the
+palette clears 4.5:1 against a white label, so tinting them would trade a contrast failure for a
+cosmetic win, and the intro is upstream branding that
+[`docs/fork-identity/README.md`](../fork-identity/README.md) lists as deliberately
+unchanged. The flag colours in `bg_flag_*` are pictures of flags, not theme.
+
+## Keeping §5, §6, §7, §9 and §10 honest
 
 - `StockCardCssTest` pins the remap: current and legacy stock blocks rewritten, customised and
   grouped selectors untouched, the switch off leaving the HTML alone, and — as the control against
@@ -252,3 +465,27 @@ brought onto the same ramp.
 - The body class is read for **every card** (`AndroidCardRenderContext` → `CardAppearance`), not
   only when the viewer is created. That is what lets the chip change the style of the card already
   on screen and of the next one alike.
+- The sheet's fill and the page's background have to be the **same colour**, or the card shows a
+  seam against the chrome (§9). A style whose page paints its own background — Paper does, with
+  `?attr/cardPaperColor` — has to give its sheet that same colour, and the night themes'
+  `cardSurfaceColor` has to stay equal to the page's `body.ankidroid_dark_mode` (#303030) and
+  `body.night_mode` (black).
+- The sheet is drawn by the **surface**, not by the web view: the web view keeps only the page.
+  A new style that wants a different sheet changes `CardStyle`, not the viewer's layout.
+- The page and the whiteboard are inset by the **rim's width** only when the style has a rim;
+  a rimless style keeps its page and its ink at the sheet's edge. The fullscreen toolbar
+  overlay's fill is repainted with `CardStyle.studySurfaceColour`, so a style with its own sheet
+  colour needs no XML change for the pulled-down toolbar either.
+- Two gates cover §9 rather than one screenshot each: `CardStyleSurfaceTest` runs every style
+  against every theme **without** an activity — the sheet's fill and the page's background have
+  to come out the same colour, a rim appears only on a style that declares one, the shadow sits
+  on the sheet and never on the page, and `?attr/studySurfaceIconColor` has to clear 3:1 against
+  the sheet it is drawn on. `StudySurfaceTest` then launches the real screen in each of the three
+  study layouts and checks what only shows once views are placed: the holder is the first child
+  of its parent (§9's z-order trap), the sheet and the page keep the style's gap and rim, every
+  piece of chrome shares the sheet's left and right edges, the fullscreen overlay is painted the
+  style's colour, and the chip is there to switch the style with.
+- The chip is **one** file, `include_card_style_chip.xml`, included by all three flashcard
+  containers. Three copies of the same `ImageButton` were how a layout ended up without the
+  overlay the viewer looks up unconditionally; a new style attribute on the chip belongs in that
+  file, not in a layout.

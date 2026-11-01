@@ -12,13 +12,17 @@
         android:id="@+id/app_bar_layout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:background="?attr/appBarColor"
+        app:statusBarForeground="?attr/appBarColor"
         android:fitsSystemWindows="true">
 
         <com.google.android.material.appbar.MaterialToolbar
             android:id="@+id/toolbar"
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
+            android:theme="@style/ActionBarStyle"
             app:title="@string/model_browser_label"
+            app:titleTextColor="?attr/actionBarTextColor"
             app:navigationContentDescription="@string/abc_action_bar_up_description"
             app:navigationIcon="?attr/homeAsUpIndicator" />
 

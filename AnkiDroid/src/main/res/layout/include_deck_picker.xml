@@ -82,7 +82,7 @@
                         android:layout_marginBottom="8dp"
                         android:gravity="center"
                         android:text="@string/no_cards_placeholder_title"
-                        style="@style/TextAppearance.AppCompat.Medium" />
+                        android:textAppearance="?attr/textAppearanceTitleMedium" />
 
                     <com.ichi2.ui.FixedTextView
                         android:layout_width="match_parent"
@@ -90,7 +90,7 @@
                         android:gravity="center"
                         android:textAlignment="center"
                         android:text="@string/no_cards_placeholder_description"
-                        style="@style/TextAppearance.AppCompat.Body1" />
+                        android:textAppearance="?attr/textAppearanceBodyMedium" />
                 </LinearLayout>
 
             </FrameLayout>

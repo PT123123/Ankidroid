@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  ~ SPDX-License-Identifier: GPL-3.0-or-later
+  ~ SPDX-FileCopyrightText: 2026 PT123123 <31439216+PT123123@users.noreply.github.com>
+  -->
+<!--
+  The collection actions which used to sit in the deck picker's toolbar, gathered under one
+  settings entry. The categories are empty here: BackupTransferFragment fills them at run time
+  because most tool labels only exist in the backend translations.
+-->
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    android:key="@string/pref_backup_transfer_screen_key"
+    android:title="@string/backup_transfer_title">
+
+    <PreferenceCategory
+        android:key="@string/backup_transfer_sync_category_key"
+        android:title="@string/backup_transfer_sync">
+        <!-- Filled by BackupTransferFragment: sync, create backup, restore backup -->
+    </PreferenceCategory>
+
+    <PreferenceCategory
+        android:key="@string/backup_transfer_import_export_category_key"
+        android:title="@string/backup_transfer_import_export">
+        <!-- Filled by BackupTransferFragment: import, export -->
+    </PreferenceCategory>
+
+    <PreferenceCategory
+        android:key="@string/backup_transfer_maintenance_category_key"
+        android:title="@string/backup_transfer_maintenance">
+        <!-- Filled by BackupTransferFragment: check database, check media, empty cards, note types -->
+    </PreferenceCategory>
+</PreferenceScreen>

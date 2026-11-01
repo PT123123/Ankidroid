@@ -6,8 +6,10 @@
 
 ## What it is
 
-Settings drawer entry → **我的设置 / My settings** → **Theme color** (主题色) offers 10 accent
-choices. (It sat under Settings → Appearance until the [my-settings split](../my-settings/README.md).) Each theme color:
+Settings → **Appearance** → **Theme color** (主题色) offers 10 accent
+choices. (It moved to the
+fork's own settings page for a while and has since been merged back — see
+[my-settings](../my-settings/README.md).) Each theme color:
 
 - recolors primary/accent/surfaces/app bar/FAB/tabs/status bar across nearly every screen, and
 - paints the window background with a **vertical gradient** (deep tone of the chosen color at
@@ -45,7 +47,7 @@ No layout or Activity code changes per color. Everything is a `ThemeOverlay` app
    `tc_<color>_gradient_bottom`, wired in as `android:windowBackground`.
 
 Changing the value at runtime recreates the current Activity
-(`MySettingsFragment.initSubscreen` → `ActivityCompat.recreate`), which
+(`AppearanceSettingsFragment` → `ActivityCompat.recreate`), which
 re-runs `Themes.setTheme`.
 
 ## The 10 colors
@@ -81,4 +83,8 @@ the window gradient shows through the bar.
 ## Related fork changes
 
 - The navigation drawer (`res/menu/navigation_drawer.xml`) no longer shows **Help** or
-  **Support AnkiDroid**; that group has Settings plus the fork's **我的设置**.
+  **Support AnkiDroid**; that group keeps Settings.
+- The study screen is the one place the themed app bar does **not** paint: the card style's
+  sheet carries the chrome and the card together ([UI polish §9](../ui-polish/README.md)), so the
+  theme's gradient shows around the sheet and behind the answer buttons instead of under an app
+  bar. Every other screen keeps its themed app bar.

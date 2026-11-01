@@ -55,6 +55,31 @@
             android:icon="@drawable/ic_dark_mode_24"
             app:useSimpleSummaryProvider="true"
             />
+        <!-- fork feature: the accent colour the theme gradients and bars are built from -->
+        <ListPreference
+            android:defaultValue="@string/theme_color_emerald_value"
+            android:entries="@array/theme_color_labels"
+            android:entryValues="@array/theme_color_values"
+            android:icon="@drawable/ic_palette"
+            android:key="@string/theme_color_key"
+            android:title="@string/theme_color"
+            app:useSimpleSummaryProvider="true" />
+    </PreferenceCategory>
+    <!-- fork feature: how the card surface itself is drawn -->
+    <PreferenceCategory android:title="@string/card_rendering">
+        <SwitchPreferenceCompat
+            android:defaultValue="true"
+            android:key="@string/pref_stock_card_css_key"
+            android:summary="@string/stock_card_css_summary"
+            android:title="@string/stock_card_css_title" />
+        <ListPreference
+            android:defaultValue="@string/card_style_modern_value"
+            android:entries="@array/card_style_labels"
+            android:entryValues="@array/card_style_values"
+            android:icon="@drawable/ic_card_style"
+            android:key="@string/card_style_key"
+            android:title="@string/card_style"
+            app:useSimpleSummaryProvider="true" />
     </PreferenceCategory>
     <PreferenceCategory android:title="@string/background_image_title" >
         <Preference

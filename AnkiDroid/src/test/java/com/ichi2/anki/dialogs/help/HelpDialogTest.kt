@@ -13,7 +13,6 @@ import androidx.test.espresso.matcher.RootMatchers.isDialog
 import androidx.test.espresso.matcher.ViewMatchers.isDisplayed
 import androidx.test.espresso.matcher.ViewMatchers.withText
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import com.ichi2.anki.AnkiDroidApp
 import com.ichi2.anki.R
 import io.mockk.mockk
 import io.mockk.verify
@@ -132,11 +131,10 @@ class HelpDialogTest {
             fragment.actionsDispatcher = mockActionDispatcher
             onView(withText(R.string.help_item_anki_manual)).inRoot(isDialog()).perform(click())
             verify(exactly = 1) { mockActionDispatcher.onOpenUrlResource(R.string.link_anki_manual) }
-            // start the second submenu
+            // start the second submenu; its "report a bug" entry is gone from the fork
             onView(withText(R.string.help_title_get_help)).inRoot(isDialog()).perform(click())
-            // the feedback url is being shown
-            onView(withText(R.string.help_item_report_bug)).inRoot(isDialog()).perform(click())
-            verify(exactly = 1) { mockActionDispatcher.onOpenUrl(AnkiDroidApp.feedbackUrl) }
+            onView(withText(R.string.help_item_mailing_list)).inRoot(isDialog()).perform(click())
+            verify(exactly = 1) { mockActionDispatcher.onOpenUrlResource(R.string.link_forum) }
         }
     }
 }

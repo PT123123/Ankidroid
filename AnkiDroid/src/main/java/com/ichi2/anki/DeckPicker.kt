@@ -120,7 +120,6 @@ import com.ichi2.anki.deckpicker.EmptyCardsResult
 import com.ichi2.anki.deckpicker.OptionsMenuState
 import com.ichi2.anki.deckpicker.ShortcutData
 import com.ichi2.anki.dialogs.AsyncDialogFragment
-import com.ichi2.anki.dialogs.BackupPromptDialog
 import com.ichi2.anki.dialogs.CreateDeckDialog
 import com.ichi2.anki.dialogs.DatabaseErrorDialog.CustomExceptionData
 import com.ichi2.anki.dialogs.DatabaseErrorDialog.DatabaseErrorDialogType
@@ -234,7 +233,7 @@ import com.ichi2.anki.common.android.R as CommonR
  *   * A user may [pull down][pullToSyncWrapper] on the 'tree view' to sync
  *   * Blocks the UI and displays sync progress when syncing
  * * Displaying 'General' AnkiDroid options: backups, import, 'check media' etc...
- *   * These actions now live in the "My settings" screen: [com.ichi2.anki.preferences.MySettingsFragment] via [DeckTool]
+ *   * These actions now live in the settings' "Backup & import/export" screen: [com.ichi2.anki.preferences.BackupTransferFragment] via [DeckTool]
  *   * General handler for error/global dialogs (search for 'as DeckPicker')
  *   * Such as import: [ImportViewModel]
  * * A Floating Action Button [floatingActionMenu] allowing the user to quickly add notes/cards.
@@ -1319,7 +1318,7 @@ open class DeckPicker :
 
     /**
      * Runs one of the maintenance actions which used to live in the toolbar overflow menu.
-     * They are now entries of the "My settings" screen, which returns here through
+     * They are now entries of the settings' "Backup & import/export" screen, which returns here through
      * [EXTRA_DECK_TOOL].
      */
     fun runDeckTool(tool: DeckTool) {
@@ -1695,9 +1694,7 @@ open class DeckPicker :
      */
     private fun onFinishedStartup() {
         launchCatchingTask {
-            if (!automaticSync()) {
-                BackupPromptDialog.showIfAvailable(this@DeckPicker)
-            }
+            automaticSync()
         }
     }
 
@@ -1808,11 +1805,6 @@ open class DeckPicker :
         showAsyncDialogFragment(newFragment, NotificationChannel.SYNC)
     }
 
-    // Callback method to submit error report
-    fun sendErrorReport() {
-        CrashReportService.sendExceptionReport(RuntimeException(), "DeckPicker.sendErrorReport")
-    }
-
     // Callback method to handle repairing deck
     fun repairCollection() {
         Timber.i("Repairing the Collection")
@@ -1870,16 +1862,6 @@ open class DeckPicker :
 
     fun restoreFromBackup(path: String) {
         importColpkg(path)
-    }
-
-    // Helper function to check if there are any saved stacktraces
-    fun hasErrorFiles(): Boolean {
-        for (file in fileList()) {
-            if (file.endsWith(".stacktrace")) {
-                return true
-            }
-        }
-        return false
     }
 
     /** In the conflict case, we need to store the USN received from the initial sync, and reuse
@@ -2305,7 +2287,7 @@ open class DeckPicker :
         const val INTENT_SYNC_FROM_LOGIN = "syncFromLogin"
 
         /**
-         * Key of the [DeckTool] name which "My settings" asks the deck picker to run.
+         * Key of the [DeckTool] name which the settings' "Backup & import/export" screen asks the deck picker to run.
          */
         const val EXTRA_DECK_TOOL = "deckTool"
 
@@ -2340,7 +2322,7 @@ open class DeckPicker :
 
         /**
          * Builds an intent which opens the deck picker and runs [tool] once the collection is up.
-         * Used by the "My settings" screen, where the former toolbar overflow actions live now.
+         * Used by the settings' "Backup & import/export" screen, where the former toolbar overflow actions live now.
          */
         fun getIntentForTool(
             context: Context,

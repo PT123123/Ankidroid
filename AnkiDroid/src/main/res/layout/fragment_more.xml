@@ -7,13 +7,12 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:background="?android:attr/colorBackground">
+    android:orientation="vertical">
 
     <com.google.android.material.appbar.AppBarLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="?attr/colorSurface"
+        android:background="?attr/appBarColor"
         app:statusBarForeground="?attr/appBarColor"
         android:fitsSystemWindows="true"
         app:elevation="0dp">
@@ -22,7 +21,9 @@
             android:id="@+id/toolbar"
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
+            android:theme="@style/ActionBarStyle"
             app:title="@string/bottom_nav_more"
+            app:titleTextColor="?attr/actionBarTextColor"
             app:titleTextAppearance="?attr/textAppearanceTitleLarge" />
     </com.google.android.material.appbar.AppBarLayout>
 
@@ -36,38 +37,6 @@
             android:orientation="vertical"
             android:paddingTop="8dp"
             android:paddingBottom="16dp">
-
-            <!-- fork feature: theme color, profiles, LAN sync and the former deck picker actions -->
-            <LinearLayout
-                android:id="@+id/more_my_settings"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:background="?attr/selectableItemBackground"
-                android:gravity="center_vertical"
-                android:minHeight="56dp"
-                android:paddingHorizontal="16dp">
-
-                <ImageView
-                    android:importantForAccessibility="no"
-                    android:layout_width="24dp"
-                    android:layout_height="24dp"
-                    android:layout_marginEnd="16dp"
-                    app:srcCompat="@drawable/ic_palette"
-                    app:tint="?attr/colorOnSurfaceVariant" />
-
-                <com.ichi2.ui.FixedTextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="@string/my_settings_title"
-                    android:textAppearance="?attr/textAppearanceBodyLarge" />
-            </LinearLayout>
-
-            <com.google.android.material.divider.MaterialDivider
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:layout_marginBottom="8dp"
-                android:layout_marginHorizontal="16dp" />
 
             <!-- Settings -->
             <LinearLayout
@@ -101,24 +70,15 @@
                 android:layout_marginBottom="8dp"
                 android:layout_marginHorizontal="16dp" />
 
-            <!-- Help section -->
-            <com.ichi2.ui.FixedTextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:paddingHorizontal="16dp"
-                android:paddingTop="8dp"
-                android:paddingBottom="4dp"
-                android:text="@string/help"
-                android:textAppearance="?attr/textAppearanceLabelLarge"
-                android:textColor="?attr/colorPrimary" />
-
+            <!-- Help. One row, not four: the manual, getting help, the community and the privacy
+                 policy are reached through the dialog upstream already has. -->
             <LinearLayout
-                android:id="@+id/more_help_manual"
+                android:id="@+id/more_help"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:background="?attr/selectableItemBackground"
                 android:gravity="center_vertical"
-                android:minHeight="48dp"
+                android:minHeight="56dp"
                 android:paddingHorizontal="16dp">
 
                 <ImageView
@@ -126,23 +86,30 @@
                     android:layout_width="24dp"
                     android:layout_height="24dp"
                     android:layout_marginEnd="16dp"
-                    app:srcCompat="@drawable/ic_manual_black_24dp"
+                    app:srcCompat="@drawable/help_outline"
                     app:tint="?attr/colorOnSurfaceVariant" />
 
                 <com.ichi2.ui.FixedTextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="@string/help_item_anki_manual"
+                    android:text="@string/help"
                     android:textAppearance="?attr/textAppearanceBodyLarge" />
             </LinearLayout>
 
-            <LinearLayout
-                android:id="@+id/more_help_get_help"
+            <com.google.android.material.divider.MaterialDivider
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:background="?attr/selectableItemBackground"
+                android:layout_marginTop="8dp"
+                android:layout_marginBottom="8dp"
+                android:layout_marginHorizontal="16dp" />
+
+            <!-- Version. Information only: the row has no ripple and takes no taps. -->
+            <LinearLayout
+                android:id="@+id/more_version"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
                 android:gravity="center_vertical"
-                android:minHeight="48dp"
+                android:minHeight="56dp"
                 android:paddingHorizontal="16dp">
 
                 <ImageView
@@ -150,62 +117,22 @@
                     android:layout_width="24dp"
                     android:layout_height="24dp"
                     android:layout_marginEnd="16dp"
-                    app:srcCompat="@drawable/ic_help_black_24dp"
+                    app:srcCompat="@drawable/ic_outline_info_24"
                     app:tint="?attr/colorOnSurfaceVariant" />
 
                 <com.ichi2.ui.FixedTextView
-                    android:layout_width="match_parent"
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:text="@string/help_title_get_help"
+                    android:layout_weight="1"
+                    android:text="@string/more_version_title"
                     android:textAppearance="?attr/textAppearanceBodyLarge" />
-            </LinearLayout>
-
-            <LinearLayout
-                android:id="@+id/more_help_community"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:background="?attr/selectableItemBackground"
-                android:gravity="center_vertical"
-                android:minHeight="48dp"
-                android:paddingHorizontal="16dp">
-
-                <ImageView
-                    android:importantForAccessibility="no"
-                    android:layout_width="24dp"
-                    android:layout_height="24dp"
-                    android:layout_marginEnd="16dp"
-                    app:srcCompat="@drawable/ic_people_black_24dp"
-                    app:tint="?attr/colorOnSurfaceVariant" />
 
                 <com.ichi2.ui.FixedTextView
-                    android:layout_width="match_parent"
+                    android:id="@+id/more_version_text"
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="@string/help_title_community"
-                    android:textAppearance="?attr/textAppearanceBodyLarge" />
-            </LinearLayout>
-
-            <LinearLayout
-                android:id="@+id/more_help_privacy"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:background="?attr/selectableItemBackground"
-                android:gravity="center_vertical"
-                android:minHeight="48dp"
-                android:paddingHorizontal="16dp">
-
-                <ImageView
-                    android:importantForAccessibility="no"
-                    android:layout_width="24dp"
-                    android:layout_height="24dp"
-                    android:layout_marginEnd="16dp"
-                    app:srcCompat="@drawable/ic_baseline_privacy_tip_24"
-                    app:tint="?attr/colorOnSurfaceVariant" />
-
-                <com.ichi2.ui.FixedTextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="@string/help_title_privacy"
-                    android:textAppearance="?attr/textAppearanceBodyLarge" />
+                    android:textAppearance="?attr/textAppearanceBodyMedium"
+                    android:textColor="?attr/colorOnSurfaceVariant" />
             </LinearLayout>
 
         </LinearLayout>

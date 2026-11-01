@@ -70,6 +70,8 @@
         <item name="cardSurfaceStrokeColor">@color/black</item>
         <item name="cardPaperColor">@color/white</item>
         <item name="cardPaperStrokeColor">@color/black</item>
+        <!-- The chrome is drawn on the study surface, which is white in E-Ink -->
+        <item name="studySurfaceIconColor">@color/black</item>
 
         <item name="againTextColor">@color/black</item>
         <item name="hardTextColor">@color/black</item>
@@ -93,11 +95,12 @@
         <item name="easyButtonRippleRef">@drawable/footer_button_rounded_ripple</item>
 
         <item name="showAnswerButtonBackground">@color/black</item>
-        <item name="showAnswerColor">@color/black</item>
-        <item name="answerAreaDark">true</item>
 
         <item name="alternativeBackgroundColor">@color/white</item>
         <item name="cardBrowserDivider">@color/black</item>
+        <!-- E-Ink draws crisp black rules: a 20% grey would dither away. -->
+        <item name="hairlineColor">@color/black</item>
+        <item name="dividerHandleColor">@color/black</item>
         <item name="editTextBackgroundColor">@color/white</item>
         <item name="editTextHighlightColor">@color/material_grey_300</item>
         <item name="toolbarBackgroundColor">@color/white</item>

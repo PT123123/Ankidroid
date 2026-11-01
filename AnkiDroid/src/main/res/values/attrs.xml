@@ -135,7 +135,6 @@
     <attr name="hardButtonBackground" format="color"/>
     <attr name="goodButtonBackground" format="color"/>
     <attr name="easyButtonBackground" format="color"/>
-    <attr name="showAnswerColor" format="reference"/>
     <attr name="againButtonRef" format="reference"/>
     <attr name="hardButtonRef" format="reference"/>
     <attr name="goodButtonRef" format="reference"/>
@@ -172,8 +171,9 @@
     <attr name="cardSurfaceStrokeColor" format="color"/>
     <attr name="cardPaperColor" format="color"/>
     <attr name="cardPaperStrokeColor" format="color"/>
-    <!-- Whether the answer area is dark, which decides the navigation bar's icon colour -->
-    <attr name="answerAreaDark" format="boolean"/>
+    <!-- The colour of the icons on the study surface: the chrome and the card share one
+         surface, so the icons follow that surface instead of the app bar's colour. -->
+    <attr name="studySurfaceIconColor" format="color"/>
 
     <attr name="againTextColor" format="color"/>
     <attr name="hardTextColor" format="color"/>
@@ -189,6 +189,12 @@
     <attr name="easyIconColor" format="color"/>
     <!-- Card Browser Colors -->
     <attr name="cardBrowserDivider" format="color"/>
+    <!-- A hairline rule: the thin separators between rows and the rules under a title.
+         One token for every theme, so a rule is never a colour that only reads in one theme. -->
+    <attr name="hairlineColor" format="color"/>
+    <!-- The grip on the divider between two panes (the tablet layout): it has to read as
+         something you can grab, so it is stronger than the hairline next to it. -->
+    <attr name="dividerHandleColor" format="color"/>
     <!-- Study Screen other colors -->
     <attr name="topBarColor" format="color"/>
     <attr name="maxTimerColor" format="color"/>

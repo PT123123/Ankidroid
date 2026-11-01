@@ -4,18 +4,23 @@
   ~ SPDX-FileCopyrightText: 2026 PT123123 <31439216+PT123123@users.noreply.github.com>
   -->
 <!--
-  Strings of the fork's "My settings" screen, which keeps the additions made on top of upstream
-  (theme color, profiles, LAN sync) and the actions which used to be in the deck picker toolbar
-  separate from Anki's own settings.
+  Strings of the fork's settings additions, which live inside AnkiDroid's own settings: the card
+  rendering entries in Appearance, and the "Backup & import/export" screen holding the actions
+  which used to be in the deck picker toolbar.
 -->
 <resources>
-    <!-- maxLength 28, not 41: the lint rule counts the navigation drawer menu item it titles. -->
-    <string name="my_settings_title" maxLength="28">My settings</string>
-    <string name="my_settings_features" maxLength="41">Added features</string>
-    <string name="my_settings_tools" maxLength="41">Tools</string>
-    <string name="my_settings_tools_summary" maxLength="200">These actions run in the deck list screen</string>
-    <string name="my_settings_card_css" maxLength="41">Restyle card defaults</string>
-    <string name="my_settings_card_css_summary">A note type you never edited forces Arial, black text and a white background over whatever theme is set. This drops those three only, so the card takes the theme font and colours while keeping Anki\'s size and centring. Switch off to render it exactly like the desktop.</string>
+    <!-- The "Backup & import/export" settings screen. -->
+    <string name="backup_transfer_title" maxLength="41">Backup &amp; import/export</string>
+    <string name="backup_transfer_summary" maxLength="200">Sync, back up, restore, import and export the collection</string>
+    <string name="backup_transfer_sync" maxLength="41">Sync &amp; backups</string>
+    <string name="backup_transfer_import_export" maxLength="41">Import &amp; export</string>
+    <string name="backup_transfer_maintenance" maxLength="41">Maintenance</string>
+    <!-- Card rendering, in Appearance. -->
+    <string name="card_rendering" maxLength="41">Card rendering</string>
+    <string name="stock_card_css_title" maxLength="41">Restyle card defaults</string>
+    <string name="stock_card_css_summary">A note type you never edited forces Arial, black text and a white background over whatever theme is set. This drops those three only, so the card takes the theme font and colours while keeping Anki\'s size and centring. Switch off to render it exactly like the desktop.</string>
+    <!-- The More screen's version row. -->
+    <string name="more_version_title" maxLength="28">Version</string>
 
     <!-- Card style: how the card surface and the answer buttons are drawn. -->
     <string name="card_style" maxLength="41">Card style</string>

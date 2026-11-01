@@ -1,52 +1,42 @@
-# My settings + bare main screen (fork feature)
+# Settings merge (fork feature)
 
-> **⚠ Fork-specific.** anki-plus addition. It moves the fork's own options out of AnkiDroid's
-> stock settings list and strips the deck picker toolbar down to the search icon.
+> **⚠ Fork-specific.** anki-plus addition. The fork's options used to live on a separate
+> **我的设置 / My settings** page (`MySettingsFragment`, `res/xml/preferences_my_settings.xml` —
+> both deleted); they now live inside AnkiDroid's own settings, so there is one settings surface.
+> The deck picker toolbar stays stripped to the search icon either way.
 
-## Decision
+## Where everything went
 
-Three surfaces changed together, on request:
+| Fork item | Old home (我的设置) | New home |
+|-----------|--------------------|----------|
+| Theme color | Added features | Settings ▸ Appearance, inside *Themes* |
+| Restyle card defaults | Added features | Settings ▸ Appearance ▸ *Card rendering* |
+| Card style | Added features | Settings ▸ Appearance ▸ *Card rendering* |
+| Switch profile | Added features | Settings root list (below Advanced; hidden unless the developer switch enables it) |
+| LAN sync | Added features | Settings ▸ Sync |
+| Deck tools (Sync, Create/Restore backup, Import, Export, Check database/media, Empty cards, Note types) | Tools | Settings ▸ **备份与导入导出 / Backup & import/export** |
 
-| Surface | Before | After |
-|---------|--------|---------|
-| Deck picker toolbar | search + **Sync** icon + overflow (Check ▸ database/media/empty cards, Create backup, Restore from backup, Manage note types, Import, Export) | search only (+ the deck-scoped items Study Options adds back, which stay) |
-| Settings list (`HeaderFragment`) | upstream categories **plus** Theme color (inside Appearance), Switch profile, LAN sync | upstream categories only |
-| Navigation drawer | Settings | Settings + **我的设置 / My settings** |
+The More tab (and the tablet drawer) list plain **Settings** only — no separate fork entry.
 
-On a phone the drawer has since been replaced by the [bottom tab bar](../home-tabs/README.md), which
-is why 我的设置 also sits at the top of the *More* tab; on a tablet the drawer is still the entry.
+## The "Backup & import/export" screen
 
-**我的设置 (`MySettingsFragment`, `res/xml/preferences_my_settings.xml`)** now holds:
+`BackupTransferFragment` + `res/xml/preferences_backup_transfer.xml`. The three categories
+(*Sync & backups*, *Import & export*, *Maintenance*) are empty in XML and filled at run time from
+`DeckTool.entries`, because most tool labels only exist in the backend translations.
 
-- *Added features*: Theme color, Restyle card defaults, Card style, Switch profile, LAN sync (the
-  last two are `HeaderPreference`s pointing at their existing fragments, so those screens did not
-  move).
-  *Restyle card defaults* is the escape hatch for the stock `.card` CSS rewrite — see
-  [ui-polish §6](../ui-polish/README.md).
-  *Card style* picks how the card surface, its type and the answer buttons are drawn
-  (classic / modern / paper / minimal) — see [ui-polish §7](../ui-polish/README.md). The same
-  choice is reachable from the chip in the card's corner while studying, so the two entries are two
-  doors to one setting: `Prefs.cardStylePreset` and the `ListPreference` read the same store, and
-  the list's values are the `R.string.card_style_*_value` strings that `CardStylePreset` stores.
-  The card chip writes the preference and re-styles the card that is on screen; this page writes
-  the preference, and the style applies to the next card.
-- *Tools*: one entry per `DeckTool`, built in code from the enum rather than from XML.
-
-## How the tools still run
-
-The actions are DeckPicker behaviour (dialogs, `viewModel`, backup progress), so the settings
+The actions stay DeckPicker behaviour (dialogs, `viewModel`, backup progress), so the settings
 page does not re-implement them: it returns to the deck picker with an extra.
 
-1. `MySettingsFragment` → `DeckPicker.getIntentForTool(context, tool)`
+1. `BackupTransferFragment` → `DeckPicker.getIntentForTool(context, tool)`
    (`CLEAR_TOP|SINGLE_TOP` + `EXTRA_DECK_TOOL` = enum name), then finishes itself so the settings
    page does not stay under the deck list.
 2. `DeckPicker` stores it in `pendingDeckTool` (from `onCreate` for a cold start, `onNewIntent`
    for a warm one).
 3. `refreshState()` — which only runs once the drawer is ready and collection storage is granted —
    consumes the field and calls `runDeckTool(tool)`, the single place where all nine actions are
-   dispatched. It replaces the nine `onOptionsItemSelected` branches.
+   dispatched.
 
-Sync is therefore still reachable three ways: 我的设置 ▸ Sync, the pull-down gesture
+Sync is therefore still reachable three ways: 备份与导入导出 ▸ Sync, the pull-down gesture
 (`pullToSyncWrapper`), and whatever automatic sync the sync settings schedule.
 
 **What the sync icon used to carry is gone**: the pending-changes badge and the one-way /
@@ -55,26 +45,23 @@ progress bar). `SyncActionProvider` and `BadgeDrawableBuilder` are now unreferen
 to avoid a needless upstream-merge conflict; their two menu labels
 (`sync_menu_title_one_way_sync`, `sync_menu_title_no_account`) carry
 `tools:ignore="UnusedResources"` for the same reason — `lintVital` treats `UnusedResources` as
-fatal, so a release APK would not assemble otherwise. `checks_action` ("Check", the submenu header
-the `DeckTool` enum replaced) was deleted outright: nothing in the fork or upstream asks for it.
+fatal, so a release APK would not assemble otherwise.
 
-## Notes for later
+## Notes
 
-- Theme color's listener (`ActivityCompat.recreate` on change) moved with the preference;
-  `Prefs.themeColor` and the overlay mechanism are unchanged — see
+- The preference **keys did not change** (`themeColor`, `cardStylePreset`, `stockCardCssRethemed`,
+  `switchProfileScreen`, `lanSyncScreen`), so existing installs keep their values. Only the XML
+  file holding them changed.
+- Theme color's listener (`ActivityCompat.recreate` on change) moved with the preference into
+  `AppearanceSettingsFragment`; `Prefs.themeColor` and the overlay mechanism are unchanged — see
   [themecolor](../themecolor/README.md).
-- The preference **keys did not change** (`themeColor`, `switchProfileScreen`, `lanSyncScreen`),
-  so existing installs keep their values. Only the XML file holding them changed.
-- *Card style* adds a new key, `cardStylePreset` (`R.string/card_style_key`). An install that
-  upgrades has no value for it, so it reads `CardStylePreset.DEFAULT` (modern). Because
-  `CardStylePreset` is a `PrefEnum`, the stored value is the `*_value` **string**, not the enum
-  name: renaming an enum keeps the setting, renaming a `*_value` string loses it (the read falls
-  back to the default).
-- Settings search still finds Theme color: `HeaderFragment.configureSearchBar` indexes
-  `R.xml.preferences_my_settings` and `getFragmentFromXmlRes` maps it back to `MySettingsFragment`.
-  The tool entries are runtime `Preference`s without keys, so they are intentionally not searchable.
-- `menu-xlarge/deck_picker.xml` (tablet) was trimmed the same way; the rename/delete-deck actions
-  that it declares as buttons are untouched.
-- Wide screens: `PreferencesActivity` opens the initial fragment passed by
-  `PreferencesActivity.getIntent(context, MySettingsFragment::class)`, so 我的设置 is a page of its
-  own rather than a category inside the settings list.
+- *Card style* is stored as `cardStylePreset`; the list's values are the
+  `R.string.card_style_*_value` strings that `CardStylePreset` stores. The chip in the card's
+  corner while studying and the Appearance entry are two doors to one setting — see
+  [ui-polish §7](../ui-polish/README.md).
+- Settings search: `HeaderFragment.configureSearchBar` indexes `R.xml.preferences_backup_transfer`
+  and `getFragmentFromXmlRes` maps it back to `BackupTransferFragment`; the Appearance and Sync
+  entries are found through their own screens. The tool entries are runtime `Preference`s without
+  keys, so they are intentionally not searchable.
+- `menu-xlarge/deck_picker.xml` (tablet) stays trimmed the same way; the rename/delete-deck
+  actions that it declares as buttons are untouched.

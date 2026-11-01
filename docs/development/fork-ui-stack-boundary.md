@@ -15,7 +15,7 @@ Counts are `:AnkiDroid/src/main` only, excluding `build/`:
 | Files declaring a `Fragment`/`DialogFragment` subclass | **99** | the app is still View-based |
 | `res/layout/*.xml` | **202** | the screens' UI definitions |
 | `res/xml/*.xml` | **25** | `PreferenceFragmentCompat` hierarchies (XML-only DSL) |
-| Files containing `@Composable` | **8** | the fork's own pages (我的设置 etc.) |
+| Files containing `@Composable` | **8** | the fork's own pages (profile & LAN-sync hosts etc.) |
 | Files touching `RemoteViews` | **4** | app widgets — cannot be Compose without Glance |
 | Whole repo, `.kt` / `.java` | 1437 / **0** | AnkiDroid is fully Kotlin; `java` is gone |
 
@@ -72,7 +72,7 @@ which is orthogonal to the UI stack. See [fork-build-speed.md](fork-build-speed.
 
 ## Fork convention (what we do instead)
 
-- **New screens default to Compose**, and the fork's own features (我的设置, home tabs) stay Compose.
+- **New screens default to Compose**, and the fork's own features (profile & LAN-sync hosts, home tabs) stay Compose.
   This matches upstream's direction in [compose.md](compose.md) — including what upstream explicitly
   refuses: no migration mandate, no roadmap, no "migrate screen X" PR without another reason to touch
   it, and no `:ui-compose` module yet.

@@ -46,8 +46,6 @@
         <item name="goodButtonBackground">@color/theme_plain_primary_dark</item>
         <item name="easyButtonBackground">@color/theme_plain_primary_dark</item>
         <item name="showAnswerButtonBackground">@color/theme_plain_primary_dark</item>
-        <item name="showAnswerColor">?attr/colorSurfaceContainer</item>
-        <item name="answerAreaDark">false</item>
         <!-- Plain stays monochrome: the outline variant of the buttons takes the same grey. -->
         <item name="againButtonAccent">@color/material_grey_800</item>
         <item name="hardButtonAccent">@color/material_grey_800</item>
@@ -65,6 +63,8 @@
         <item name="cardSurfaceStrokeColor">#14000000</item>
         <item name="cardPaperColor">#F6EFE1</item>
         <item name="cardPaperStrokeColor">#33000000</item>
+        <!-- The chrome is drawn on the study surface, which is white in the day -->
+        <item name="studySurfaceIconColor">@color/theme_plain_primary_dark</item>
         <item name="againButtonRef">@drawable/footer_button_rounded</item>
         <item name="hardButtonRef">@drawable/footer_button_rounded</item>
         <item name="goodButtonRef">@drawable/footer_button_rounded</item>
@@ -76,6 +76,8 @@
         <item name="easyButtonRippleRef">@drawable/footer_button_rounded_ripple</item>
         <!-- Card Browser Colors -->
         <item name="cardBrowserDivider">#CCCCCC</item>
+        <item name="hairlineColor">#CCCCCC</item>
+        <item name="dividerHandleColor">#4D4D4D</item>
         <!-- Note editor colors -->
         <item name="editTextBackgroundColor">#EBCCCCCC</item>
         <item name="editTextHighlightColor">@color/material_grey_300</item>

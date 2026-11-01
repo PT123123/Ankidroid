@@ -12,7 +12,7 @@
 
 ## What it is
 
-我的设置 / My settings → **局域网同步 / LAN sync** (`LanSyncFragment`; see [my-settings](../my-settings/README.md)). Turn the switch on and the device:
+Settings → **同步 / Sync** → **局域网同步 / LAN sync** (`LanSyncFragment`; see [my-settings](../my-settings/README.md)). Turn the switch on and the device:
 
 1. serves the v2 HTTP API on the Wi-Fi interface,
 2. announces itself (`ANKI-LAN/2` + `ANKIPLUS-LAN/1` UDP, `_ankisync._tcp` + `_ankiplus-sync._tcp`

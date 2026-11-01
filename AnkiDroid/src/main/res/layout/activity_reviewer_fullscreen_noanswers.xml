@@ -7,6 +7,21 @@
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent">
+        <!-- The holder for the study surface, the same sheet activity_reviewer.xml draws. It
+             is the first child of this outer frame — not of front_frame, which is drawn over
+             the card — so the surface is drawn behind the card, the chrome and the answer
+             area alike. -->
+        <FrameLayout
+            android:id="@+id/study_surface_holder"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_alignParentTop="true"
+            android:layout_alignParentBottom="true">
+            <View
+                android:id="@+id/study_surface"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent" />
+        </FrameLayout>
         <!-- Main content that takes up the fullscreen -->
         <include
             layout="@layout/include_reviewer_mic_tool_bar"
@@ -23,12 +38,16 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent">
 
+            <!-- Controls that are overlaid over the main content when the user interrupts
+                 immersive mode. The fill keeps the pulled-down toolbar reading as part of the
+                 sheet rather than as a bar of its own; cardSurfaceColor is the XML's guess, and
+                 the viewer repaints it with the style's own sheet colour. -->
             <FrameLayout
                 android:id="@+id/toolbar_container"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_alignParentTop="true"
-                android:background="?attr/appBarColor">
+                android:background="?attr/cardSurfaceColor">
 
                 <include layout="@layout/include_toolbar"/>
             </FrameLayout>
