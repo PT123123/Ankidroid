@@ -260,7 +260,6 @@
     <!-- Messages displayed after the user enabled developer options, and warned remaining messages will be in English -->
     <string name="dev_options_enabled_msg">Enabled developer options</string>
     <!-- About -->
-    <string name="about_screen_key">aboutScreen</string>
 
     <!-- Backup limits -->
     <string name="pref_backups_screen_key">backupsScreen</string>

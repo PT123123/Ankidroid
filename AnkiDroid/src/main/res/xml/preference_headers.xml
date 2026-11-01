@@ -148,10 +148,4 @@
         android:fragment="com.ichi2.anki.preferences.DeveloperOptionsFragment"
         app:isPreferenceVisible="false">
     </com.ichi2.preferences.HeaderPreference>
-    <!-- About -->
-    <com.ichi2.preferences.HeaderPreference
-        android:key="@string/about_screen_key"
-        android:icon="@drawable/ic_outline_info_24"
-        android:title="@string/pref_cat_about_title"
-        android:fragment="com.ichi2.anki.preferences.AboutFragment"/>
 </PreferenceScreen>

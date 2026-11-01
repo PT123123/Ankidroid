@@ -408,7 +408,7 @@
         </activity>
         <activity
             android:name="com.ichi2.anki.Info"
-            android:label="@string/pref_cat_about_title"
+            android:label="@string/more_version_title"
             android:exported="false"
             />
 

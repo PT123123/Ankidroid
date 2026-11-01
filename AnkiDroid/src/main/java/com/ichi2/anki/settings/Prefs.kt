@@ -414,7 +414,7 @@ open class PrefsRepository(
     /**
      * Whether developer options should be shown to the user.
      * True in case [BuildConfig.DEBUG] is true
-     * or if the user has enabled it with the secret on [com.ichi2.anki.preferences.AboutFragment]
+     * or if the user has enabled it with the secret on the More tab's version row
      *
      * @see com.ichi2.anki.preferences.DeveloperOptionsFragment
      */

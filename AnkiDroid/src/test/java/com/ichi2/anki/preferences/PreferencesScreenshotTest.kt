@@ -105,9 +105,6 @@ class PreferencesScreenshotTest : ScreenshotTest() {
                 "/storage/emulated/0/AnkiDroid"
             }
         }
-        (settingsFragment as? AboutFragment)?.apply {
-            binding.buildDate.text = "May 18, 2026"
-        }
     }
 
     /**
