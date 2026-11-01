@@ -5,17 +5,15 @@
 
 package com.ichi2.anki
 
-import android.annotation.SuppressLint
 import android.graphics.Color
 import android.os.Bundle
+import android.text.SpannableStringBuilder
+import android.text.method.LinkMovementMethod
+import android.text.style.URLSpan
 import android.view.View
-import android.webkit.WebChromeClient
-import android.webkit.WebResourceRequest
-import android.webkit.WebView
-import android.webkit.WebViewClient
-import androidx.activity.OnBackPressedCallback
 import androidx.activity.SystemBarStyle
 import androidx.activity.enableEdgeToEdge
+import androidx.core.text.HtmlCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat.Type.displayCutout
 import androidx.core.view.WindowInsetsCompat.Type.systemBars
@@ -30,17 +28,14 @@ import com.ichi2.utils.IntentUtil.canOpenIntent
 import com.ichi2.utils.IntentUtil.tryOpenIntent
 import com.ichi2.utils.VersionUtils.appName
 import com.ichi2.utils.VersionUtils.pkgVersionName
-import com.ichi2.utils.ViewGroupUtils.setRenderWorkaround
-import com.ichi2.utils.toRGBHex
 import dev.androidbroadcast.vbpd.viewBinding
 import timber.log.Timber
 
-private const val CHANGE_LOG_URL = "https://docs.ankidroid.org/changelog.html"
-
 /**
- * Shows an about box, which is a small HTML page.
+ * Shows an about box with the changelog.
  *
- * Typically for the AnkiDroid changelog
+ * The changelog used to be `changelog.html` in a WebView; it is now the same asset parsed with
+ * [HtmlCompat] into a themed text view.
  */
 class Info :
     AnkiActivity(R.layout.activity_info),
@@ -51,7 +46,6 @@ class Info :
         anchorView = binding.buttons
     }
 
-    @SuppressLint("SetJavaScriptEnabled")
     override fun onCreate(savedInstanceState: Bundle?) {
         if (showedActivityFailedScreen(savedInstanceState)) {
             return
@@ -69,18 +63,6 @@ class Info :
             binding.donate.isVisible = false
         }
         title = "$appName v$pkgVersionName"
-        binding.webView.webChromeClient =
-            object : WebChromeClient() {
-                override fun onProgressChanged(
-                    view: WebView,
-                    progress: Int,
-                ) {
-                    // Hide the progress indicator when the page has finished loaded
-                    if (progress == 100) {
-                        binding.progressBar.visibility = View.GONE
-                    }
-                }
-            }
         binding.leftButton.run {
             if (canOpenMarketUri()) {
                 setText(R.string.info_rate)
@@ -94,88 +76,32 @@ class Info :
                 visibility = View.GONE
             }
         }
-        val onBackPressedCallback =
-            object : OnBackPressedCallback(false) {
-                override fun handleOnBackPressed() {
-                    if (binding.webView.canGoBack()) binding.webView.goBack()
-                }
-            }
-        // Apply Theme colors
-        val typedArray = theme.obtainStyledAttributes(intArrayOf(android.R.attr.colorBackground, android.R.attr.textColor))
-        val backgroundColor = typedArray.getColor(0, -1)
-        val textColor = typedArray.getColor(1, -1).toRGBHex()
-
-        val anchorTextThemeColor = getColorFromAttr(this, android.R.attr.colorAccent)
-        val anchorTextColor = anchorTextThemeColor.toRGBHex()
-
-        binding.webView.setBackgroundColor(backgroundColor)
-        binding.webView.settings.allowFileAccess = true
-        binding.webView.settings.allowContentAccess = true
-        setRenderWorkaround(this)
         binding.rightButton.run {
             text = getString(R.string.dialog_continue)
             setOnClickListener { close() }
         }
-        val background = backgroundColor.toRGBHex()
-        binding.webView.loadUrl("/android_asset/changelog.html")
-        binding.webView.settings.javaScriptEnabled = true
-        binding.webView.webViewClient =
-            object : WebViewClient() {
-                override fun onPageFinished(
-                    view: WebView,
-                    url: String,
-                ) {
-                /* The order of below javascript code must not change (this order works both in debug and release mode)
-                 *  or else it will break in any one mode.
-                 */
-                    @Suppress("ktlint:standard:max-line-length")
-                    binding.webView.loadUrl(
-                        """javascript:document.body.style.setProperty("color", "$textColor");
-                            x=document.getElementsByTagName("a");
-                            for(i=0; i<x.length; i++){
-                              x[i].style.color="$anchorTextColor";
-                            }
-                            document.getElementsByTagName("h1")[0].style.color="$textColor";
-                            x=document.getElementsByTagName("h2");
-                            for(i=0; i<x.length; i++){
-                              x[i].style.color="#E37068";
-                            }
-                            document.body.style.setProperty("background", "$background");""",
-                    )
-                    if (!BuildConfig.SHOW_DONATE_LINKS) {
-                        // remove donation links, keeping the text
-                        binding.webView.evaluateJavascript(
-                            """document.querySelectorAll('a[href*="opencollective.com"]')
-                                .forEach((a) => a.replaceWith(...a.childNodes));""",
-                            null,
-                        )
-                    }
-                }
+        binding.changelogText.run {
+            text = loadChangelog()
+            movementMethod = LinkMovementMethod.getInstance()
+            setLinkTextColor(getColorFromAttr(this@Info, android.R.attr.colorAccent))
+        }
+    }
 
-                override fun shouldOverrideUrlLoading(
-                    view: WebView?,
-                    request: WebResourceRequest?,
-                ): Boolean {
-                    // Excludes the url that are opened inside the changelog.html
-                    // and redirect the user to the browser
-                    val url = request?.url?.toString() ?: return false
-                    if (url == CHANGE_LOG_URL) {
-                        return false
-                    }
-                    this@Info.openUrl(url)
-                    return true
-                }
-
-                override fun doUpdateVisitedHistory(
-                    view: WebView?,
-                    url: String?,
-                    isReload: Boolean,
-                ) {
-                    super.doUpdateVisitedHistory(view, url, isReload)
-                    onBackPressedCallback.isEnabled = view != null && view.canGoBack()
+    /**
+     * Parses the changelog asset into styled text. Without donation links, their anchors are
+     * removed while keeping the wording, exactly like the WebView used to.
+     */
+    private fun loadChangelog(): CharSequence {
+        val html = assets.open("changelog.html").bufferedReader().use { it.readText() }
+        val builder = SpannableStringBuilder(HtmlCompat.fromHtml(html, HtmlCompat.FROM_HTML_MODE_LEGACY))
+        if (!BuildConfig.SHOW_DONATE_LINKS) {
+            for (span in builder.getSpans(0, builder.length, URLSpan::class.java)) {
+                if ("opencollective.com" in span.url) {
+                    builder.removeSpan(span)
                 }
             }
-        onBackPressedDispatcher.addCallback(this, onBackPressedCallback)
+        }
+        return builder
     }
 
     /**

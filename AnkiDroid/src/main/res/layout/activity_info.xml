@@ -34,31 +34,20 @@
             android:layout_weight="1"
             android:orientation="vertical">
 
-            <RelativeLayout
+            <ScrollView
                 android:layout_width="match_parent"
                 android:layout_height="0dp"
                 android:layout_weight="1"
-                android:fadingEdge="vertical"
-                android:gravity="center">
-                <WebView
-                    android:id="@+id/web_view"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:gravity="center_vertical" />
-                <!-- progress bar -->
-                <LinearLayout
-                    android:id="@+id/progress_bar_layout"
+                android:fadingEdge="vertical">
+
+                <TextView
+                    android:id="@+id/changelog_text"
                     android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:gravity="center"
-                    android:orientation="vertical">
-                    <ProgressBar
-                        android:id="@+id/progress_bar"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content" >
-                    </ProgressBar>
-                </LinearLayout>
-            </RelativeLayout>
+                    android:layout_height="wrap_content"
+                    android:padding="16dp"
+                    android:textAppearance="?attr/textAppearanceBodyMedium"
+                    android:textColor="?android:textColorPrimary" />
+            </ScrollView>
 
             <com.google.android.material.divider.MaterialDivider
                 android:layout_width="match_parent"
