@@ -15,7 +15,7 @@ Counts are `:AnkiDroid/src/main` only, excluding `build/`:
 | Files declaring a `Fragment`/`DialogFragment` subclass | **99** | the app is still View-based |
 | `res/layout/*.xml` | **202** | the screens' UI definitions |
 | `res/xml/*.xml` | **25** | `PreferenceFragmentCompat` hierarchies (XML-only DSL) |
-| Files containing `@Composable` | **12** | the fork's own pages (statistics, congrats, card info, profile & LAN-sync hosts etc.) |
+| Files containing `@Composable` | **14** | the fork's own pages (statistics, congrats, card info, importers, profile & LAN-sync hosts etc.) |
 | Files touching `RemoteViews` | **4** | app widgets — cannot be Compose without Glance |
 | Whole repo, `.kt` / `.java` | 1437 / **0** | AnkiDroid is fully Kotlin; `java` is gone |
 
