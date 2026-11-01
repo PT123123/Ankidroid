@@ -10,10 +10,10 @@ import android.view.Menu
 import android.view.MenuInflater
 import android.view.MenuItem
 import android.view.View
-import android.webkit.WebViewClient
 import androidx.annotation.StringRes
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.text.HtmlCompat
 import androidx.core.view.MenuHost
 import androidx.core.view.MenuProvider
 import androidx.core.view.isVisible
@@ -23,7 +23,6 @@ import androidx.lifecycle.lifecycleScope
 import com.ichi2.anki.CollectionManager.TR
 import com.ichi2.anki.R
 import com.ichi2.anki.SingleFragmentActivity
-import com.ichi2.anki.common.utils.android.getColorFromAttr
 import com.ichi2.anki.databinding.FragmentMediaCheckBinding
 import com.ichi2.anki.launchCatchingTask
 import com.ichi2.anki.progress.observeProgress
@@ -34,7 +33,6 @@ import com.ichi2.utils.negativeButton
 import com.ichi2.utils.positiveButton
 import com.ichi2.utils.show
 import com.ichi2.utils.title
-import com.ichi2.utils.toRGBHex
 import dev.androidbroadcast.vbpd.viewBinding
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
@@ -68,7 +66,7 @@ class MediaCheckFragment : Fragment(R.layout.fragment_media_check) {
 
         lifecycleScope.launch {
             viewModel.mediaCheckResult.collectLatest { result ->
-                updateWebView(result?.report.orEmpty())
+                updateReport(result?.report.orEmpty())
                 if (result != null) {
                     binding.tagMissingMediaButton.isVisible = result.missingCount != 0
                     binding.deleteUsedMediaButton.isVisible = result.unusedCount != 0
@@ -116,28 +114,9 @@ class MediaCheckFragment : Fragment(R.layout.fragment_media_check) {
         )
     }
 
-    private fun updateWebView(report: String) {
-        val backgroundColor = getColorFromAttr(requireContext(), android.R.attr.colorBackground)
-        val textColor = getColorFromAttr(requireContext(), android.R.attr.textColorPrimary)
-
-        val backgroundColorHex = backgroundColor.toRGBHex()
-        val textColorHex = textColor.toRGBHex()
-
-        val html =
-            """
-            <html>
-                <body style="
-                    background-color: $backgroundColorHex;
-                    color: $textColorHex;
-                    padding: 0px 8px;
-                    font-size:14px;
-                    white-space: pre-wrap;">$report
-                </body>
-            </html>
-            """.trimIndent()
-
-        binding.webView.webViewClient = WebViewClient()
-        binding.webView.loadDataWithBaseURL(null, html, "text/html", "UTF-8", null)
+    private fun updateReport(report: String) {
+        // the backend's report is HTML; render it themed in a text view instead of a WebView
+        binding.reportText.text = HtmlCompat.fromHtml(report, HtmlCompat.FROM_HTML_MODE_LEGACY)
     }
 
     private fun setupButtonListeners() {
