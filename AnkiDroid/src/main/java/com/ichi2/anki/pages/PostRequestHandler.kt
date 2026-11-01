@@ -131,7 +131,6 @@ typealias UIBackendInterface = FragmentActivity.(bytes: ByteArray) -> Deferred<B
 val uiMethods =
     hashMapOf<String, UIBackendInterface>(
         "searchInBrowser" to { bytes -> lifecycleScope.async { searchInBrowser(bytes) } },
-        "updateDeckConfigs" to { bytes -> lifecycleScope.async { updateDeckConfigsRaw(bytes) } },
         "latestProgress" to { bytes ->
             lifecycleScope.async {
                 withContext(Dispatchers.IO) {
@@ -158,8 +157,6 @@ val uiMethods =
                 withCol { updateImageOcclusionNoteRaw(bytes) }
             }
         },
-        "deckOptionsReady" to { bytes -> lifecycleScope.async { deckOptionsReady(bytes) } },
-        "deckOptionsRequireClose" to { bytes -> lifecycleScope.async { deckOptionsRequireClose(bytes) } },
     )
 
 sealed class UiPostRequestResponse {

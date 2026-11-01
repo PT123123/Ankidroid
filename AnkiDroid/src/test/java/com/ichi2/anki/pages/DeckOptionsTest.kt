@@ -2,23 +2,23 @@
 
 package com.ichi2.anki.pages
 
-import android.webkit.WebView
-import androidx.core.view.children
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import com.ichi2.anki.R
+import com.ichi2.anki.CollectionManager.withCol
 import com.ichi2.anki.RobolectricTest
-import com.ichi2.anki.SingleFragmentActivity
 import com.ichi2.anki.libanki.Consts
+import com.ichi2.anki.pages.deckoptions.DeckOptionsViewModel
 import com.ichi2.anki.settings.Prefs
 import com.ichi2.testutils.ext.clear
+import kotlinx.coroutines.runBlocking
 import org.hamcrest.MatcherAssert.assertThat
-import org.hamcrest.Matchers.containsString
+import org.hamcrest.Matchers.equalTo
+import org.hamcrest.Matchers.notNullValue
 import org.junit.After
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.robolectric.Shadows.shadowOf
 
-/** Test for [DeckOptions] */
+/** Tests for the [DeckOptions] view model behind the Compose screen */
 @RunWith(AndroidJUnit4::class)
 class DeckOptionsTest : RobolectricTest() {
     @After
@@ -28,32 +28,45 @@ class DeckOptionsTest : RobolectricTest() {
     }
 
     @Test
-    fun `double tap interval is sent to the page when it is ready`() {
-        Prefs.putInt(R.string.double_tap_timeout_pref_key, 800)
+    fun `loading fills the presets and selects the deck's config`() =
+        runBlocking {
+            val viewModel = DeckOptionsViewModel()
+            viewModel.load(Consts.DEFAULT_DECK_ID)
+            waitFor { !viewModel.state.value.loading }
+            val state = viewModel.state.value
+            assertTrue(state.presets.isNotEmpty())
+            assertThat(state.currentConfig, notNullValue())
+            assertThat(state.selectedPresetId, equalTo(state.currentConfig!!.id))
+        }
 
-        withDeckOptions {
-            onWebViewReady()
+    @Test
+    fun `saving pushes the edited config to the collection`() =
+        runBlocking {
+            val viewModel = DeckOptionsViewModel()
+            viewModel.load(Consts.DEFAULT_DECK_ID)
+            waitFor { !viewModel.state.value.loading }
+            val presetId = viewModel.state.value.selectedPresetId!!
+            viewModel.setNewPerDay(15)
+            var saved = false
+            viewModel.save { saved = true }
+            waitFor { saved }
+            waitFor { !viewModel.state.value.dirty }
+            val newPerDay =
+                withCol {
+                    decks
+                        .getDeckConfigsForUpdate(Consts.DEFAULT_DECK_ID)
+                        .allConfigList
+                        .first { it.config.id == presetId }
+                        .config.config.newPerDay
+                }
+            assertThat("newPerDay", newPerDay, equalTo(15))
+        }
 
-            assertThat(lastEvaluatedJavascript, containsString("setParameterUnlockClickTimeoutMs"))
-            assertThat(lastEvaluatedJavascript, containsString("800"))
+    /** The loads and saves run on Dispatchers.IO; poll until they settle. */
+    private fun waitFor(condition: () -> Boolean) {
+        val deadline = System.currentTimeMillis() + 10_000
+        while (!condition() && System.currentTimeMillis() < deadline) {
+            Thread.sleep(25)
         }
     }
-
-    private fun withDeckOptions(block: DeckOptions.() -> Unit) {
-        val activity =
-            startActivityNormallyOpenCollectionWithIntent(
-                SingleFragmentActivity::class.java,
-                DeckOptions.getIntent(targetContext, Consts.DEFAULT_DECK_ID),
-            )
-        advanceRobolectricLooper()
-        block(activity.fragment as DeckOptions)
-    }
-
-    /** The last JavaScript evaluated by the WebView of [DeckOptions] */
-    private val DeckOptions.lastEvaluatedJavascript: String?
-        get() =
-            webViewLayout.children
-                .filterIsInstance<WebView>()
-                .single()
-                .let { shadowOf(it).lastEvaluatedJavascript }
 }
