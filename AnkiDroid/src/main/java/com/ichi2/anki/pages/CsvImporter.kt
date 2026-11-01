@@ -7,87 +7,67 @@ import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.view.View
-import android.webkit.WebView
 import androidx.activity.OnBackPressedCallback
-import com.google.android.material.appbar.MaterialToolbar
-import com.ichi2.anki.CollectionManager
+import androidx.compose.runtime.getValue
+import androidx.fragment.app.Fragment
+import androidx.fragment.app.viewModels
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.lifecycleScope
 import com.ichi2.anki.CollectionManager.TR
 import com.ichi2.anki.R
 import com.ichi2.anki.SingleFragmentActivity
 import com.ichi2.anki.common.destinations.CsvImporterDestination
-import com.ichi2.anki.hideShowButtonCss
-import com.ichi2.utils.OLDEST_WORKING_WEBVIEW_VERSION
-import com.ichi2.utils.WebViewVersion
+import com.ichi2.anki.databinding.PageCsvImporterBinding
+import com.ichi2.anki.pages.importer.CsvImporterScreen
+import com.ichi2.anki.pages.importer.CsvImporterViewModel
+import com.ichi2.compose.theme.AnkiDroidTheme
+import dev.androidbroadcast.vbpd.viewBinding
+import kotlinx.coroutines.launch
 
 /**
- * Anki page used to import text/csv files
+ * The CSV import wizard, rendered natively in Compose. It used to be the backend's SvelteKit
+ * "import-csv" route in a WebView; the metadata detection and the import itself now run through
+ * the typed backend calls.
  */
-class CsvImporter : PageFragment() {
-    override val pagePath: String by lazy {
-        val filePath = requireArguments().getString(KEY_FILE_PATH)
-        "import-csv$filePath"
-    }
+class CsvImporter : Fragment(R.layout.page_csv_importer) {
+    private val binding by viewBinding(PageCsvImporterBinding::bind)
+    private val viewModel by viewModels<CsvImporterViewModel>()
 
-    override val minimumWebViewVersion: WebViewVersion = OLDEST_WORKING_WEBVIEW_VERSION
-
-    override fun onCreateWebViewClient(savedInstanceState: Bundle?): PageWebViewClient {
-        // the back callback is only enabled when import is running and showing progress
-        val backCallback =
-            object : OnBackPressedCallback(false) {
-                override fun handleOnBackPressed() {
-                    CollectionManager.getBackend().setWantsAbort()
-                    // once triggered the callback is not needed as the import process can't be resumed
-                    remove()
-                }
+    /**
+     * Back is only enabled while the import is running and showing progress; it aborts the
+     * import, which cannot be resumed.
+     */
+    private val backCallback =
+        object : OnBackPressedCallback(false) {
+            override fun handleOnBackPressed() {
+                viewModel.abort()
+                remove()
             }
-        super.onCreate(savedInstanceState)
-        requireActivity().onBackPressedDispatcher.addCallback(this, backCallback)
-        return CsvImporterWebViewClient(backCallback)
-    }
+        }
 
     override fun onViewCreated(
         view: View,
         savedInstanceState: Bundle?,
     ) {
         super.onViewCreated(view, savedInstanceState)
-        view.findViewById<MaterialToolbar>(R.id.toolbar)?.title = TR.actionsImport()
-    }
+        binding.toolbar.setTitle(TR.actionsImport())
+        binding.toolbar.setNavigationOnClickListener {
+            if (backCallback.isEnabled) backCallback.handleOnBackPressed() else requireActivity().finish()
+        }
+        requireActivity().onBackPressedDispatcher.addCallback(viewLifecycleOwner, backCallback)
 
-    inner class CsvImporterWebViewClient(
-        private val backCallback: OnBackPressedCallback,
-    ) : PageWebViewClient() {
-        /**
-         * Ideally, to handle the state of the back callback, we would just need to check for
-         * `/latestProgress` calls followed by one `/importDone` call. However there are some extra
-         * calls to `/latestProgress` AFTER `/importDone` and this property keeps track of this.
-         */
-        private var isDone = false
-
-        override fun onPageFinished(
-            view: WebView?,
-            url: String?,
-        ) {
-            view!!.evaluateJavascript(hideShowButtonCss) {
-                super.onPageFinished(view, url)
+        binding.composeView.setContent {
+            AnkiDroidTheme {
+                val state by viewModel.state.collectAsStateWithLifecycle()
+                CsvImporterScreen(state = state, viewModel = viewModel)
             }
         }
 
-        override fun onLoadResource(
-            view: WebView?,
-            url: String?,
-        ) {
-            super.onLoadResource(view, url)
-            backCallback.isEnabled =
-                when {
-                    url == null -> false
-                    url.endsWith("latestProgress") && !isDone -> true
-                    url.endsWith("importDone") -> {
-                        isDone = true // import was done so disable any back callback changes after this call
-                        false
-                    }
-                    else -> false
-                }
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewModel.state.collect { backCallback.isEnabled = it.importing }
         }
+
+        viewModel.load(requireArguments().getString(KEY_FILE_PATH) ?: return)
     }
 
     companion object {

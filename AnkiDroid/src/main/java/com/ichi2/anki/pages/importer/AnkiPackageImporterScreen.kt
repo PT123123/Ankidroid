@@ -3,15 +3,12 @@
 
 package com.ichi2.anki.pages.importer
 
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -129,70 +126,7 @@ fun AnkiPackageImporterScreen(state: AnkiPackageImporterUiState) {
                     color = MaterialTheme.colorScheme.error,
                 )
             }
-            else -> ImportLog(state.result)
+            else -> ImportLogView(state.result)
         }
     }
 }
-
-@Composable
-private fun ImportLog(result: ImportResponse?) {
-    if (result == null) {
-        CircularProgressIndicator()
-        return
-    }
-    val log = result.log
-    Text(
-        TR.importingImportingComplete(),
-        style = MaterialTheme.typography.titleMedium,
-        textAlign = TextAlign.Center,
-    )
-    if (log.foundNotes == 0) {
-        Text(
-            TR.importingNoNotesInFile(),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(top = 8.dp),
-        )
-        return
-    }
-    val skipped =
-        log.duplicateCount + log.conflictingCount + log.firstFieldMatchCount +
-            log.missingNotetypeCount + log.missingDeckCount + log.emptyFirstFieldCount
-    Column(
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .padding(top = 12.dp),
-        verticalArrangement = Arrangement.spacedBy(6.dp),
-    ) {
-        LogLine(TR.importingNotesAdded(log.newCount), log.newCount)
-        LogLine(TR.importingNotesUpdated(log.updatedCount), log.updatedCount)
-        if (skipped > 0) {
-            LogLine(TR.importingExistingNotesSkipped(skipped), skipped)
-        }
-    }
-}
-
-@Composable
-private fun LogLine(
-    label: String,
-    count: Int,
-) {
-    Row(Modifier.fillMaxWidth()) {
-        Text(
-            label,
-            style = MaterialTheme.typography.bodyMedium,
-            modifier = Modifier.weight(1f),
-        )
-        Text(count.toString(), style = MaterialTheme.typography.bodyMedium)
-    }
-}
-
-private val ImportResponse.Log.newCount: Int get() = newList.size
-private val ImportResponse.Log.updatedCount: Int get() = updatedList.size
-private val ImportResponse.Log.duplicateCount: Int get() = duplicateList.size
-private val ImportResponse.Log.conflictingCount: Int get() = conflictingList.size
-private val ImportResponse.Log.firstFieldMatchCount: Int get() = firstFieldMatchList.size
-private val ImportResponse.Log.missingNotetypeCount: Int get() = missingNotetypeList.size
-private val ImportResponse.Log.missingDeckCount: Int get() = missingDeckList.size
-private val ImportResponse.Log.emptyFirstFieldCount: Int get() = emptyFirstFieldList.size
