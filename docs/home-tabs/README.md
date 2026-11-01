@@ -16,7 +16,7 @@ parallel one.
 |-----|------------------|---------|
 | 牌组 / Decks | `HOME` | the deck list, the FAB, pull-down sync (unchanged) |
 | 浏览 / Browse | `BROWSER` | `CardBrowserFragment`, hosted in place, state kept across switches |
-| 统计 / Statistics | `STATS` | `pages/Statistics` — the WebView report, whose first graph is the **calendar heatmap**; its own toolbar keeps the deck picker and *Save as PDF*, only the back arrow is suppressed (`ARG_HIDE_BACK_BUTTON`) |
+| 统计 / Statistics | `STATS` | `pages/Statistics` — a native Compose page (the WebView report is gone), whose first card is the **calendar heatmap**; its toolbar keeps the deck picker, only the back arrow is suppressed (`ARG_HIDE_BACK_BUTTON`) |
 | 更多 / More | `MORE` | `MoreFragment`: Settings, Help, and the version |
 
 - The bar replaces the navigation drawer on phones, exactly as upstream designed it: with it on,

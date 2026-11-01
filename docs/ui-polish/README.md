@@ -253,11 +253,16 @@ fork's tab tokens (`BottomNavigationViewStyle`: the selected indicator from
 `tabLayoutBackgroundColor`, the active icon from `tabActiveIconColor` — the same treatment the
 template editor's tab bar already had). The selected deck's highlight in the deck list left the
 squared slab for the ramp's small step: a 12dp rounded shape over the same
-`currentDeckBackgroundColor` (`item_background_selected.xml`). The screens the tabs lead into
+`currentDeckBackgroundColor` (`item_background_selected.xml`). Over the theme gradient (the
+default) it has since moved one step further up the ramp —
+`deck_row_background_selected.xml` fills with `?attr/colorSurfaceContainerHigh`, the hue-tinted
+step above the resting rows' glass — while the wallpaper path keeps the
+`currentDeckBackgroundColor` highlight at 45 % alpha. The screens the tabs lead into
 were carried along: the settings host (`fragment_settings.xml`), the review-reminder schedules
 (`fragment_schedule_reminders.xml`) and the note-type manager (`activity_manage_note_types.xml`)
 now paint the same themed bar — the collapsing ones setting `contentScrim` to it as well, so the
-collapsed state does not fall back to M3's own surface.
+collapsed state does not fall back to M3's own surface. The More tab's toolbar also dropped its
+`textAppearanceTitleLarge` override, so every tab title renders with the same toolbar default.
 
 Follow-up on the same theme: the tabs' *content* shows the gradient too. The More tab no longer
 paints an opaque `colorBackground` root over it, and the shared-decks downloader dropped its
