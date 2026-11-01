@@ -230,8 +230,8 @@ import com.ichi2.anki.common.android.R as CommonR
  *   * A long press opens a menu allowing modification of the deck
  *   * Filtering decks (if more than 10) [toolbarSearchView]
  * * Controlling syncs
- *   * A user may [pull down][pullToSyncWrapper] on the 'tree view' to sync
- *   * Blocks the UI and displays sync progress when syncing
+ *   * Syncing is triggered from the settings (backup & import/export) or automatically;
+ *     pulling down on the deck list only reloads the local deck list
  * * Displaying 'General' AnkiDroid options: backups, import, 'check media' etc...
  *   * These actions now live in the settings' "Backup & import/export" screen: [com.ichi2.anki.preferences.BackupTransferFragment] via [DeckTool]
  *   * General handler for error/global dialogs (search for 'as DeckPicker')
@@ -729,11 +729,13 @@ open class DeckPicker :
     private fun setupPullToSync() {
         pullToSyncWrapper =
             deckPickerBinding.pullToSyncWrapper.apply {
-                setDistanceToTriggerSync(SWIPE_TO_SYNC_TRIGGER_DISTANCE)
+                setDistanceToTriggerSync(SWIPE_TO_REFRESH_TRIGGER_DISTANCE)
                 setOnRefreshListener {
-                    Timber.i("Pull to Sync: Syncing")
-                    pullToSyncWrapper.isRefreshing = false
-                    sync()
+                    Timber.i("Pull to refresh: reloading the deck list")
+                    launchCatchingTask {
+                        viewModel.updateDeckList().join()
+                        pullToSyncWrapper.isRefreshing = false
+                    }
                 }
             }
         // Only allow pull-to-sync when the deck list is scrolled to the top.
@@ -1551,11 +1553,6 @@ open class DeckPicker :
                 }
                 return true
             }
-            KeyEvent.KEYCODE_Y -> {
-                Timber.i("Sync from keypress")
-                sync()
-                return true
-            }
             KeyEvent.KEYCODE_SLASH -> {
                 Timber.d("Search from keypress")
                 if (toolbarSearchItem?.isVisible == true) {
@@ -2303,7 +2300,7 @@ open class DeckPicker :
          * Skips the automatic sync if this time has not elapsed.
          */
         private val AUTOMATIC_SYNC_MINIMAL_INTERVAL: Duration = 10.minutes
-        private const val SWIPE_TO_SYNC_TRIGGER_DISTANCE = 400
+        private const val SWIPE_TO_REFRESH_TRIGGER_DISTANCE = 400
 
         private const val PREF_DECK_PICKER_PANE_WEIGHT = "deckPickerPaneWeight"
         private const val PREF_STUDY_OPTIONS_PANE_WEIGHT = "studyOptionsPaneWeight"
