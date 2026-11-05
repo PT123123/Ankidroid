@@ -45,19 +45,52 @@ So "unify on Compose" is not a cleanup pass: it is a rewrite of roughly nine-ten
    [`scripts/ankidroid-cardviewer.js`](../../AnkiDroid/src/main/assets/scripts/ankidroid-cardviewer.js)
    line 7 points straight back at anki's `ts/reviewer/index.ts`, and Anki Desktop runs that same
    `ts/reviewer` bundle inside QtWebEngine. **The card is HTML on every platform, by design.**
+   → **Superseded for the card surface only, see "Card IR replaces the WebView card surface" below.**
+   The constraint that matters — *a user's template must render the same way it does in Anki
+   Desktop / AnkiMobile* — stays; only the mechanism changes.
 4. **XML-forced surfaces.** Preference screens (`res/xml`, XML DSL only), app widgets
    (`RemoteViews`), and the theme/`attr` system the fork's theme-colour feature is built on — see
    [theming-modularization.md](theming-modularization.md).
 
 **Consequence.** The thing the request wants protected — "native Anki data renders correctly" — lives
-in layer 3, and layer 3 cannot be Compose. Re-rendering a user's template with Compose would mean
-reimplementing the template engine plus MathJax plus the JS hooks, and from then on nothing
-guarantees the fork's cards match what AnkiDesktop/AnkiMobile show for the same collection. That is
-the one line this fork should not cross: it is a data-compatibility break dressed as a UI choice.
+in layer 3. Re-rendering a user's template with Compose would mean reimplementing the template engine
+plus MathJax plus the JS hooks, and from then on nothing guarantees the fork's cards match what
+AnkiDesktop/AnkiMobile show for the same collection. That is a data-compatibility break dressed as a
+UI choice, and the fork must not cross it — **by reimplementing the template engine in Kotlin.**
 
 What *can* be unified is layer 2: a screen can be a Compose surface with the WebView embedded through
 `AndroidView`, leaving the bridge untouched. That is the only form of "all Compose" that keeps
 layer 3 intact.
+
+## Card IR replaces the WebView card surface (2026-11-05 decision)
+
+The fork's boundary is **not** "the card must stay HTML in the app". It is **"a user's template must
+render the way it renders in Anki Desktop / AnkiMobile"**. The Card IR route keeps that promise while
+moving the browser out of the runtime:
+
+- **The template engine is frozen at compile time, not reimplemented at runtime.** The note type's
+  HTML/CSS/JS is executed by a headless Chromium **at import time**; the result is a pure-data
+  **Card IR** (resolved styles, absolute rects, behaviour primitives). The runtime draws that IR with
+  Compose and never evaluates CSS or JS.
+- **The browser therefore leaves the app.** Android's WebView is a system component with a 0 MB
+  incremental cost, so package size was never the reason; the reason is that one IR can produce the
+  same pixels on Windows and Android, and that card interactions (audio, cloze, panels) can go
+  through native paths instead of a JS bridge.
+- **WebView survives in exactly two places**: ① as the compile-time tool that freezes templates,
+  ② as the **fallback channel** — if the IR is missing, corrupt, version-incompatible, or the template
+  is `unsupported`, the reviewer falls back to today's WebView path and the user loses nothing.
+- **Scope of the change**: the new Compose card screen only. `AbstractFlashcardViewer`'s 60+ JS API,
+  MathJax, gestures and crash recovery stay untouched until the IR path is proven on real decks.
+
+Plan, protocol and measurements: `anki-qt/docs/native-card-render/PLAN.md` (same decision recorded in
+`anki-qt/docs/anki-qt/DECISION-2026-11.md` §6). The Windows renderer and its QA baseline are already
+in place: 9 real templates, both faces, both themes, compared against the compile-time Chromium
+screenshots region by region.
+
+**Prerequisites before the IR path takes over the reviewer**: the QA baseline has to hold on real
+decks, and the fallback contract has to be in place. Until then, the existing WebView reviewer keeps
+working exactly as it does today.
+
 
 ## What a Compose rewrite does **not** buy: build cost
 
