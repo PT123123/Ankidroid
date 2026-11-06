@@ -25,8 +25,15 @@ data class CardIr(
     val layout_mode: String? = null,
     val variants: List<String> = emptyList(),
     val sides: Map<String, Map<String, IrFrame>> = emptyMap(),
+    val behaviors: List<IrBehavior> = emptyList(),
     val warnings: List<String> = emptyList(),
     val unsupported: List<String> = emptyList(),
+)
+
+@Serializable
+data class IrBehavior(
+    val kind: String = "",
+    val trigger: String? = null,
 )
 
 /** One face of a card in one variant (theme + width + scale). */
@@ -52,13 +59,32 @@ data class IrNode(
     @SerialName("type")
     val type: String = "",
     val tag: String? = null,
+    val attrs: Map<String, String> = emptyMap(),
     val text: String? = null,
     val src: String? = null,
     val style: Map<String, String> = emptyMap(),
     val rect: IrRect = IrRect(),
     val runs: List<IrRun> = emptyList(),
+    val actions: List<IrAction> = emptyList(),
     val children: List<IrNode> = emptyList(),
 )
+
+@Serializable
+data class IrAction(
+    val on: String = "",
+    val kind: String = "",
+)
+
+/** Plain text currently represented by this node's text descendants. */
+fun IrNode.displayedText(): String =
+    if (type == "text") {
+        text ?: runs.joinToString(separator = "") { it.text }
+    } else {
+        children.joinToString(separator = "") { it.displayedText() }
+    }
+
+/** Whether a cloze node currently displays a placeholder instead of its answer. */
+fun IrNode.needsClozeReveal(): Boolean = type == "cloze" && attrs["data-cloze"]?.let { it != displayedText() } == true
 
 /** An axis aligned rectangle in CSS pixels. */
 @Serializable

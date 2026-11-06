@@ -52,6 +52,7 @@ import com.ichi2.utils.show
 import com.ichi2.utils.stripDangerousPermissions
 import com.ichi2.utils.title
 import com.ichi2.utils.usesDangerousScheme
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import timber.log.Timber
@@ -150,9 +151,39 @@ abstract class CardViewerFragment(
         setupWebView(savedInstanceState)
         setupErrorListeners()
         viewModel.eval.collectIn(lifecycleScope) { eval ->
-            webViewLayout.evaluateJavascript(eval)
+            val renderedSide =
+                when {
+                    eval.startsWith("_showQuestion(") -> "question"
+                    eval.startsWith("_showAnswer(") -> "answer"
+                    else -> null
+                }
+            if (renderedSide != null) {
+                val renderedNatively =
+                    try {
+                        renderCardWithoutWebView(renderedSide)
+                    } catch (error: CancellationException) {
+                        throw error
+                    } catch (error: Exception) {
+                        onNativeRenderFailed()
+                        Timber.w(error, "Native card render failed; falling back to WebView")
+                        false
+                    }
+                if (renderedNatively) return@collectIn
+            }
+            webViewLayout.evaluateJavascript(eval) {
+                if (renderedSide != null && this@CardViewerFragment.view != null) onCardSideRendered(renderedSide)
+            }
         }
     }
+
+    /** Called after a question or answer update has executed in the WebView. */
+    protected open fun onCardSideRendered(side: String) = Unit
+
+    /** Return true after a subclass has rendered this face without the WebView. */
+    protected open suspend fun renderCardWithoutWebView(side: String): Boolean = false
+
+    /** Clear a stale native surface before the card falls back to WebView. */
+    protected open fun onNativeRenderFailed() = Unit
 
     override fun onStart() {
         super.onStart()

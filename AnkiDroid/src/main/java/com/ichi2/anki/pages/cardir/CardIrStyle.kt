@@ -24,6 +24,14 @@ object CardIrStyle {
         listOf(
             "color",
             "background-color",
+            "fill",
+            "fill-opacity",
+            "fill-rule",
+            "stroke",
+            "stroke-opacity",
+            "stroke-width",
+            "stroke-linecap",
+            "stroke-linejoin",
             "font-family",
             "font-size",
             "font-style",
@@ -44,7 +52,6 @@ object CardIrStyle {
             "unicode-bidi",
             "vertical-align",
             "visibility",
-            "opacity",
             "list-style-position",
             "list-style-type",
         )
@@ -142,7 +149,14 @@ object CardIrStyle {
     /** The font weight as an Android [android.graphics.Typeface] style flag. */
     fun fontStyle(style: Map<String, String>): Int {
         val weight = style["font-weight"]?.trim()?.toIntOrNull() ?: 400
-        return if (weight >= 600) android.graphics.Typeface.BOLD else android.graphics.Typeface.NORMAL
+        val bold = weight >= 600
+        val italic = style["font-style"]?.trim()?.lowercase() in setOf("italic", "oblique")
+        return when {
+            bold && italic -> android.graphics.Typeface.BOLD_ITALIC
+            bold -> android.graphics.Typeface.BOLD
+            italic -> android.graphics.Typeface.ITALIC
+            else -> android.graphics.Typeface.NORMAL
+        }
     }
 
     /** The border width of one side in pixels. */

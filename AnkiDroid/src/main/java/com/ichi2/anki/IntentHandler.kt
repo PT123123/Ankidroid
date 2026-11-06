@@ -182,7 +182,7 @@ class IntentHandler : AbstractIntentHandler() {
         Timber.i("Handling intent to review deck '%d'", deckId)
 
         val reviewIntent =
-            if (Prefs.isNewStudyScreenEnabled) {
+            if (Prefs.isNewStudyScreenEnabled || !Prefs.useWebViewCardRenderer) {
                 ReviewerFragment.getIntent(this)
             } else {
                 Intent(this, Reviewer::class.java).apply {

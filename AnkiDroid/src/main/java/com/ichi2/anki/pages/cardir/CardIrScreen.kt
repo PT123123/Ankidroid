@@ -34,6 +34,7 @@ sealed interface CardIrUiState {
     /** The card is ready to be drawn. */
     data class Ready(
         val card: CardIr,
+        val irJson: ByteArray,
         val frame: IrFrame,
         val variant: String,
         val fonts: CardIrFonts,
@@ -81,6 +82,8 @@ fun CardIrScreen(
         is CardIrUiState.Ready ->
             CardIrView(
                 frame = state.frame,
+                irJson = state.irJson,
+                variant = state.variant,
                 modifier = modifier,
                 fonts = state.fonts,
                 mediaDirectory = state.mediaDirectory,

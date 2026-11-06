@@ -12,16 +12,19 @@ import androidx.core.app.NotificationManagerCompat
 import androidx.work.Constraints
 import androidx.work.CoroutineWorker
 import androidx.work.Data
+import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.ExistingWorkPolicy
 import androidx.work.ForegroundInfo
 import androidx.work.NetworkType
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.OutOfQuotaPolicy
+import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import anki.collection.Progress
 import anki.sync.SyncAuth
 import anki.sync.SyncCollectionResponse
+import anki.sync.SyncStatusResponse
 import anki.sync.syncAuth
 import com.ichi2.anki.CollectionManager
 import com.ichi2.anki.CollectionManager.TR
@@ -33,14 +36,19 @@ import com.ichi2.anki.common.permissions.canPostNotifications
 import com.ichi2.anki.notifications.NotificationId
 import com.ichi2.anki.setLastSyncTimeToNow
 import com.ichi2.anki.settings.Prefs
+import com.ichi2.anki.shouldFetchMedia
+import com.ichi2.anki.sync.MeteredSyncPolicy
 import com.ichi2.anki.utils.ext.trySetForeground
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import timber.log.Timber
+import java.util.concurrent.TimeUnit
 import kotlin.coroutines.cancellation.CancellationException
+import com.ichi2.anki.syncAuth as prefsSyncAuth
 
 /**
  * Syncs collection and media in the background.
@@ -54,6 +62,12 @@ import kotlin.coroutines.cancellation.CancellationException
  *
  * That is useful when the user isn't interacting with
  * the app, like when doing an automatic sync after leaving the app.
+ *
+ * fork feature: the worker is also scheduled periodically by the user
+ * ("background sync frequency" preference). Periodic runs carry no auth in
+ * their input data - [com.ichi2.anki.syncAuth] rebuilds it from the current
+ * preferences - and gate on the cheap `syncStatus` call so the collection is
+ * only opened when there is something to sync.
  */
 class SyncWorker(
     context: Context,
@@ -70,19 +84,65 @@ class SyncWorker(
 
     override suspend fun doWork(): Result {
         Timber.v("SyncWorker::doWork")
-        trySetForeground(getForegroundInfo())
 
-        val hkey =
-            inputData.getString(HKEY_KEY)
-                ?: return Result.failure()
+        val isPeriodic = inputData.getBoolean(IS_PERIODIC_KEY, false)
+        val hkey = inputData.getString(HKEY_KEY)
         val auth =
-            syncAuth {
-                this.hkey = hkey
-                inputData.getString(ENDPOINT_KEY)?.let {
-                    endpoint = it
+            if (hkey != null) {
+                syncAuth {
+                    this.hkey = hkey
+                    inputData.getString(ENDPOINT_KEY)?.let {
+                        endpoint = it
+                    }
+                }
+            } else {
+                // periodic runs rebuild the auth from the current preferences,
+                // so re-logging in does not require rescheduling
+                prefsSyncAuth()
+            }
+        if (auth == null) {
+            Timber.d("SyncWorker: no sync auth available, skipping (periodic=%b)", isPeriodic)
+            return if (isPeriodic) Result.success() else Result.failure()
+        }
+
+        if (isPeriodic) {
+            // Quire-style gating: keep a periodic run cheap. Only open the
+            // collection when there is something to sync.
+            if (MeteredSyncPolicy.shouldBlock()) {
+                Timber.d("SyncWorker: periodic sync blocked by metered connection")
+                return Result.success()
+            }
+            val required =
+                withContext(Dispatchers.IO) {
+                    CollectionManager.getBackend().syncStatus(auth)
+                }.required
+            when (required) {
+                SyncStatusResponse.Required.NORMAL_SYNC -> {} // changes to sync: proceed below
+                SyncStatusResponse.Required.FULL_SYNC -> {
+                    Timber.d("SyncWorker: periodic sync skipped, full sync required")
+                    notify {
+                        setContentTitle(applicationContext.getString(R.string.sync_background_full_sync_required))
+                        setAutoCancel(true)
+                    }
+                    return Result.success()
+                }
+                SyncStatusResponse.Required.NO_CHANGES,
+                SyncStatusResponse.Required.UNRECOGNIZED,
+                null,
+                -> {
+                    Timber.d("SyncWorker: periodic sync, no changes")
+                    return Result.success()
                 }
             }
-        val shouldSyncMedia = inputData.getBoolean(SYNC_MEDIA_KEY, false)
+        }
+        trySetForeground(getForegroundInfo())
+
+        val shouldSyncMedia =
+            if (isPeriodic) {
+                shouldFetchMedia()
+            } else {
+                inputData.getBoolean(SYNC_MEDIA_KEY, false)
+            }
 
         try {
             syncCollection(auth, shouldSyncMedia)
@@ -233,6 +293,7 @@ class SyncWorker(
         private const val HKEY_KEY = "hkey"
         private const val ENDPOINT_KEY = "endpoint"
         private const val SYNC_MEDIA_KEY = "syncMedia"
+        private const val IS_PERIODIC_KEY = "isPeriodic"
 
         fun start(
             context: Context,
@@ -263,6 +324,41 @@ class SyncWorker(
             WorkManager
                 .getInstance(context)
                 .enqueueUniqueWork(UniqueWorkNames.SYNC, ExistingWorkPolicy.KEEP, request)
+        }
+
+        /**
+         * fork feature: schedules (or reschedules) the periodic AnkiWeb sync, or
+         * cancels it when [intervalMinutes] is 0. The OS wakes the process for
+         * each run, so nothing stays resident between runs.
+         */
+        fun schedulePeriodic(
+            context: Context,
+            intervalMinutes: Long,
+        ) {
+            if (intervalMinutes <= 0L) {
+                cancelPeriodic(context)
+                return
+            }
+            val constraints =
+                Constraints
+                    .Builder()
+                    .setRequiredNetworkType(
+                        if (Prefs.allowSyncOnMeteredConnections) NetworkType.CONNECTED else NetworkType.UNMETERED,
+                    ).build()
+            val request =
+                PeriodicWorkRequestBuilder<SyncWorker>(intervalMinutes, TimeUnit.MINUTES)
+                    .setConstraints(constraints)
+                    .setInputData(Data.Builder().putBoolean(IS_PERIODIC_KEY, true).build())
+                    .build()
+            WorkManager
+                .getInstance(context)
+                .enqueueUniquePeriodicWork(UniqueWorkNames.SYNC_PERIODIC, ExistingPeriodicWorkPolicy.UPDATE, request)
+        }
+
+        fun cancelPeriodic(context: Context) {
+            WorkManager
+                .getInstance(context)
+                .cancelUniqueWork(UniqueWorkNames.SYNC_PERIODIC)
         }
 
         fun cancel(context: Context) {

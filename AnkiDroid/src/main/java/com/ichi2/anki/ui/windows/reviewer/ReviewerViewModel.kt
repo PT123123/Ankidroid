@@ -245,6 +245,36 @@ class ReviewerViewModel(
         isMarkedFlow.emit(NoteService.isMarked(note))
     }
 
+    /** Finds notes whose fields contain a wikilink to the current note's first field. */
+    suspend fun wikilinkBacklinks(): List<String> {
+        val currentNoteId = currentCard.await().nid
+        return withCol {
+            val title =
+                getNote(currentNoteId)
+                    .fields
+                    .firstOrNull()
+                    ?.trim()
+                    .orEmpty()
+            if (title.isEmpty()) return@withCol emptyList()
+            val escaped = title.replace("\"", "\\\"")
+            val candidates = findNotes("\"$escaped\"").take(100)
+            val linkPattern = Regex("""\[\[([^\]|]+)(?:\|[^\]]+)?\]\]""")
+            candidates
+                .asSequence()
+                .filter { it != currentNoteId }
+                .mapNotNull { noteId ->
+                    val note = getNote(noteId)
+                    val linksHere =
+                        note.fields.any { field ->
+                            linkPattern.findAll(field).any { it.groupValues[1].trim().equals(title, ignoreCase = true) }
+                        }
+                    note.fields.firstOrNull()?.takeIf { linksHere }
+                }.distinct()
+                .take(12)
+                .toList()
+        }
+    }
+
     private suspend fun setFlag(flag: Flag) {
         Timber.v("ReviewerViewModel::setFlag")
         val card = currentCard.await()

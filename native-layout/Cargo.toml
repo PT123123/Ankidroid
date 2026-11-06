@@ -1,0 +1,24 @@
+[package]
+name = "anki_native_layout"
+version = "0.0.0"
+edition = "2021"
+publish = false
+rust-version = "1.80"
+
+# Standalone workspace on purpose: this crate must not join backend/'s
+# workspace, because backend/ is a path dependency on rslib and the root
+# AGENTS.md forbids touching rslib, the DB schema or the sync protocol.
+[workspace]
+
+[lib]
+name = "anki_native_layout"
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+taffy = "0.15"
+jni = "0.21"
+
+[profile.release]
+lto = true

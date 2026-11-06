@@ -106,6 +106,13 @@ abstract class CardViewerViewModel(
     // This cancels it
     fun onVideoPaused() = cardMediaPlayer.onVideoPaused()
 
+    /** Re-send the displayed side after switching from a native renderer back to WebView. */
+    fun reloadCurrentSideInWebView() {
+        launchCatchingIO {
+            eval.emit(if (showingAnswer.value) answerEvaluation() else questionEvaluation())
+        }
+    }
+
     /* *********************************************************************************************
      *************************************** Internal methods ***************************************
      ********************************************************************************************* */
@@ -127,14 +134,16 @@ abstract class CardViewerViewModel(
     protected open suspend fun showQuestion() {
         Timber.v("showQuestion")
         showingAnswer.emit(false)
+        eval.emit(questionEvaluation())
+    }
 
+    private suspend fun questionEvaluation(): String {
         val card = currentCard.await()
         val questionData = withCol { card.question(this) }
         val question = mungeQA(questionData)
         val answer =
             withCol { media.escapeMediaFilenames(card.answer(this)) }
-
-        eval.emit("_showQuestion(${Json.encodeToString(question)}, ${Json.encodeToString(answer)}, '${bodyClass()}');")
+        return "_showQuestion(${Json.encodeToString(question)}, ${Json.encodeToString(answer)}, '${bodyClass()}');"
     }
 
     /**
@@ -149,12 +158,14 @@ abstract class CardViewerViewModel(
         Timber.v("showAnswer()")
         showingAnswer.emit(true)
         mediaErrorHandler.onCardSideChange()
+        eval.emit(answerEvaluation())
+    }
 
+    private suspend fun answerEvaluation(): String {
         val card = currentCard.await()
         val answerData = withCol { card.answer(this) }
         val answer = mungeQA(answerData)
-
-        eval.emit("_showAnswer(${Json.encodeToString(answer)}, '${bodyClass()}');")
+        return "_showAnswer(${Json.encodeToString(answer)}, '${bodyClass()}');"
     }
 
     override suspend fun handlePostRequest(

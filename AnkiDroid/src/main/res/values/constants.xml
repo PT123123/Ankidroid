@@ -235,6 +235,25 @@
         <item>@string/sync_media_never_value</item>
     </string-array>
 
+    <!-- fork feature: periodic background AnkiWeb sync -->
+    <string-array name="sync_background_frequency_entries">
+        <item>@string/sync_background_off</item>
+        <item>@string/sync_background_15m</item>
+        <item>@string/sync_background_30m</item>
+        <item>@string/sync_background_1h</item>
+        <item>@string/sync_background_3h</item>
+        <item>@string/sync_background_6h</item>
+    </string-array>
+
+    <string-array name="sync_background_frequency_values">
+        <item>@string/sync_background_off_value</item>
+        <item>@string/sync_background_15m_value</item>
+        <item>@string/sync_background_30m_value</item>
+        <item>@string/sync_background_1h_value</item>
+        <item>@string/sync_background_3h_value</item>
+        <item>@string/sync_background_6h_value</item>
+    </string-array>
+
     <string-array name="hide_system_bars_entries">
         <item>@string/hide_system_bars_none</item>
         <item>@string/hide_system_bars_status_bar</item>

@@ -165,6 +165,8 @@
     </plurals>
     <string name="pref_keep_screen_on" maxLength="41">Keep screen on</string>
     <string name="pref_keep_screen_on_summ">Disable screen timeout</string>
+    <string name="pref_use_webview_card_renderer" maxLength="41">Use WebView for cards</string>
+    <string name="pref_use_webview_card_renderer_summary">Prefer WebView rendering when a native Card IR is available</string>
     <string name="enable_api_title" maxLength="41">Enable AnkiDroid API</string>
     <string name="enable_api_summary">Let other apps connect to AnkiDroid and read / write data without your intervention</string>
     <string name="custom_buttons" maxLength="41">App bar buttons</string>

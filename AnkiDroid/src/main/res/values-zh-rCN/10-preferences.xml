@@ -172,6 +172,8 @@
     </plurals>
     <string name="pref_keep_screen_on" maxLength="41">保持屏幕常亮</string>
     <string name="pref_keep_screen_on_summ">防止自动息屏</string>
+    <string name="pref_use_webview_card_renderer" maxLength="41">使用 WebView 渲染卡片</string>
+    <string name="pref_use_webview_card_renderer_summary">有原生 Card IR 时优先使用 WebView 渲染</string>
     <string name="enable_api_title" maxLength="41">启用 AnkiDroid API</string>
     <string name="enable_api_summary">让其他的应用程序连接到 AnkiDroid 读写数据</string>
     <string name="custom_buttons" maxLength="41">顶栏按钮</string>

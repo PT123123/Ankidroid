@@ -3,6 +3,9 @@
 
 package com.ichi2.anki.pages.cardir
 
+import android.util.AtomicFile
+import org.json.JSONArray
+import org.json.JSONObject
 import java.io.File
 
 /**
@@ -49,15 +52,79 @@ object CardIrStore {
     fun read(
         collectionDirectory: File,
         cardId: Long,
-    ): CardIr? {
+    ): CardIr? = readText(collectionDirectory, cardId)?.let(CardIrParser::parse)
+
+    /** Reads the raw JSON so the same document can be passed to the Taffy kernel. */
+    fun readText(
+        collectionDirectory: File,
+        cardId: Long,
+    ): String? {
         val file = irFile(collectionDirectory, cardId)
         if (!file.isFile) return null
-        val text =
+        return runCatching { file.readText() }.getOrNull()
+    }
+
+    /** Atomically adds a face captured from the already-rendered reviewer DOM. */
+    fun writeCapturedFace(
+        collectionDirectory: File,
+        cardId: Long,
+        side: String,
+        variant: String,
+        frameJson: String,
+        unsupported: List<String>,
+    ): Boolean {
+        if (side !in setOf("question", "answer")) return false
+        val frame = runCatching { JSONObject(frameJson) }.getOrNull() ?: return false
+        val file = irFile(collectionDirectory, cardId)
+        val document =
+            readText(collectionDirectory, cardId)
+                ?.let { runCatching { JSONObject(it) }.getOrNull() }
+                ?: JSONObject()
+        val sides = document.optJSONObject("sides") ?: JSONObject()
+        val sideVariants = sides.optJSONObject(side) ?: JSONObject()
+        sideVariants.put(variant, frame)
+        sides.put(side, sideVariants)
+
+        val variants = LinkedHashSet<String>()
+        document.optJSONArray("variants")?.let { existing ->
+            for (index in 0 until existing.length()) existing.optString(index).takeIf(String::isNotBlank)?.let(variants::add)
+        }
+        variants.add(variant)
+
+        // Keep compiler-authored unsupported markers separate from capture
+        // results. A template can change between reviews, so stale capture
+        // markers must not permanently disable the native path.
+        val captureUnsupported = document.optJSONObject("android_capture_unsupported") ?: JSONObject()
+        captureUnsupported.put(side, JSONArray(unsupported.distinct()))
+        document.put("android_capture_unsupported", captureUnsupported)
+
+        val compilerUnsupported =
+            document.optJSONArray("android_compiler_unsupported") ?: document.optJSONArray("unsupported") ?: JSONArray()
+        // Preserve the compiler's global markers. Android DOM capture markers
+        // stay face-specific so an unsupported answer does not hide a safe
+        // question (and vice versa).
+        document.put("android_compiler_unsupported", compilerUnsupported)
+
+        document.put("ir_version", CardIrParser.SUPPORTED_VERSION)
+        document.put("card_id", cardId.toString())
+        document.put("notetype", document.optString("notetype", "Android capture"))
+        document.put("layout_mode", "bounds")
+        document.put("variants", JSONArray(variants.toList()))
+        document.put("sides", sides)
+        document.put("unsupported", compilerUnsupported)
+
+        return runCatching {
+            file.parentFile?.mkdirs()
+            val atomicFile = AtomicFile(file)
+            val stream = atomicFile.startWrite()
             try {
-                file.readText()
-            } catch (e: Exception) {
-                return null
+                stream.write(document.toString().toByteArray(Charsets.UTF_8))
+                atomicFile.finishWrite(stream)
+            } catch (error: Exception) {
+                atomicFile.failWrite(stream)
+                throw error
             }
-        return CardIrParser.parse(text)
+            true
+        }.getOrDefault(false)
     }
 }

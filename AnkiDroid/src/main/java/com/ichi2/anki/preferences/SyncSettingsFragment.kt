@@ -17,6 +17,7 @@ package com.ichi2.anki.preferences
 
 import androidx.appcompat.app.AlertDialog
 import androidx.preference.EditTextPreference
+import androidx.preference.ListPreference
 import androidx.preference.Preference
 import com.google.android.material.snackbar.Snackbar
 import com.ichi2.anki.CollectionManager.TR
@@ -29,6 +30,7 @@ import com.ichi2.anki.settings.Prefs
 import com.ichi2.anki.snackbar.showSnackbar
 import com.ichi2.anki.ui.internationalization.sentenceCase
 import com.ichi2.anki.utils.ext.ifNullOrEmpty
+import com.ichi2.anki.worker.SyncWorker
 import com.ichi2.preferences.NumberRangePreferenceCompat
 import com.ichi2.utils.show
 
@@ -91,6 +93,15 @@ class SyncSettingsFragment : SettingsFragment() {
         // Custom sync server
         requirePreference<Preference>(R.string.custom_sync_server_key).setSummaryProvider {
             customSyncBase() ?: getString(R.string.custom_sync_server_summary_none_of_the_two_servers_used)
+        }
+
+        // fork feature: periodic background AnkiWeb sync
+        requirePreference<ListPreference>(R.string.sync_background_frequency_key).apply {
+            setOnPreferenceChangeListener { _, newValue ->
+                val minutes = (newValue as? String)?.toLongOrNull() ?: 0L
+                SyncWorker.schedulePeriodic(requireContext(), minutes)
+                true
+            }
         }
     }
 

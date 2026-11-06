@@ -11,14 +11,11 @@ import com.ichi2.anki.CollectionManager.withCol
 import com.ichi2.anki.libanki.DeckId
 import com.ichi2.anki.libanki.NoteId
 import com.ichi2.anki.libanki.NoteTypeId
-import com.ichi2.anki.pages.ImageOcclusion
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.launch
 import kotlinx.parcelize.Parcelize
-import org.json.JSONObject
 import timber.log.Timber
 
 /**
@@ -44,27 +41,6 @@ sealed class ImageOcclusionArgs : Parcelable {
     data class Edit(
         val noteId: NoteId,
     ) : ImageOcclusionArgs()
-
-    /**
-     * A [JSONObject] containing options for loading the [image occlusion page][ImageOcclusion].
-     * This includes the type of operation ("add" or "edit"), and relevant IDs and paths.
-     *
-     * See 'IOMode' in https://github.com/ankitects/anki/blob/main/ts/routes/image-occlusion/lib.ts
-     */
-    fun toImageOcclusionMode() =
-        when (this) {
-            is Add ->
-                JSONObject().also {
-                    it.put("kind", "add")
-                    it.put("imagePath", this.imagePath)
-                    it.put("notetypeId", this.noteTypeId)
-                }
-            is Edit ->
-                JSONObject().also {
-                    it.put("kind", "edit")
-                    it.put("noteId", this.noteId)
-                }
-        }
 }
 
 /**
@@ -116,7 +92,7 @@ class ImageOcclusionViewModel(
     /**
      * Executed when the 'save' operation is completed, before the UI receives the response
      */
-    fun onSaveOperationCompleted() {
+    suspend fun onSaveOperationCompleted() {
         Timber.i("save operation completed")
         if (originalDeckId != null) {
             resetTemporaryDeckOverride(originalDeckId)
@@ -128,7 +104,7 @@ class ImageOcclusionViewModel(
      *
      * Only for [ImageOcclusionArgs.Add] mode
      */
-    private fun resetTemporaryDeckOverride(originalDeckId: DeckId) {
+    private suspend fun resetTemporaryDeckOverride(originalDeckId: DeckId) {
         // no need to reset if the DeckId was unchanged
         if (originalDeckId == selectedDeckIdFlow?.value) return
 
@@ -136,10 +112,8 @@ class ImageOcclusionViewModel(
         // avoids other screens unexpectedly having their working decks modified
         // For example, the study screen: if a user backgrounds the screen, then
         // adds an occluded image via 'Share'
-        viewModelScope.launch {
-            Timber.i("resetting temporary deck override")
-            withCol { backend.setCurrentDeck(originalDeckId) }
-        }
+        Timber.i("resetting temporary deck override")
+        withCol { backend.setCurrentDeck(originalDeckId) }
     }
 
     companion object {

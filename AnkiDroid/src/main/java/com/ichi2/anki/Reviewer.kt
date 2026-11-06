@@ -2197,7 +2197,12 @@ open class Reviewer :
             )
 
         fun getIntent(context: Context): Intent =
-            if (Prefs.isNewStudyScreenEnabled) {
+            // The native Card IR renderer lives in ReviewerFragment. Make it
+            // the default review path, while preserving the legacy Activity
+            // when users explicitly prefer WebView and have not enabled the
+            // New Study Screen. With New Study Screen enabled, the renderer
+            // preference remains independently selectable in that fragment.
+            if (Prefs.isNewStudyScreenEnabled || !Prefs.useWebViewCardRenderer) {
                 ReviewerFragment.getIntent(context)
             } else {
                 Intent(context, Reviewer::class.java)

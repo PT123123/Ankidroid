@@ -7,6 +7,7 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
+import android.text.TextPaint
 import android.view.KeyEvent
 import android.view.MenuItem
 import android.view.View
@@ -19,6 +20,13 @@ import android.widget.FrameLayout
 import android.widget.LinearLayout
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.widget.ActionMenuView
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.content.ContextCompat
 import androidx.core.content.getSystemService
@@ -37,21 +45,36 @@ import androidx.lifecycle.flowWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import anki.scheduler.CardAnswer.Rating
+import com.ichi2.anki.AbstractFlashcardViewer
 import com.ichi2.anki.CollectionManager
 import com.ichi2.anki.DispatchKeyEventListener
 import com.ichi2.anki.Flag
 import com.ichi2.anki.R
 import com.ichi2.anki.android.AnkiShakeDetector
+import com.ichi2.anki.browser.toIntent
 import com.ichi2.anki.cardviewer.Gesture
 import com.ichi2.anki.common.annotations.NeedsTest
+import com.ichi2.anki.common.destinations.BrowserDestination
 import com.ichi2.anki.common.destinations.DeckOptionsDestination
 import com.ichi2.anki.common.destinations.navigate
+import com.ichi2.anki.common.storage.CollectionHelper
 import com.ichi2.anki.common.utils.android.isRobolectric
 import com.ichi2.anki.databinding.FragmentReviewerBinding
 import com.ichi2.anki.dialogs.showDeckOptionsSelectionDialog
 import com.ichi2.anki.dialogs.tags.TagsDialogFactory
 import com.ichi2.anki.dialogs.tags.TagsDialogListener
 import com.ichi2.anki.model.CardStateFilter
+import com.ichi2.anki.pages.cardir.CardIrFonts
+import com.ichi2.anki.pages.cardir.CardIrMedia
+import com.ichi2.anki.pages.cardir.CardIrParser
+import com.ichi2.anki.pages.cardir.CardIrStore
+import com.ichi2.anki.pages.cardir.CardIrStyle
+import com.ichi2.anki.pages.cardir.CardIrView
+import com.ichi2.anki.pages.cardir.IrFrame
+import com.ichi2.anki.pages.cardir.IrNode
+import com.ichi2.anki.pages.cardir.TaffyCardLayout
+import com.ichi2.anki.pages.cardir.displayedText
+import com.ichi2.anki.pages.cardir.needsClozeReveal
 import com.ichi2.anki.preferences.reviewer.ViewerAction
 import com.ichi2.anki.previewer.CardViewerActivity
 import com.ichi2.anki.previewer.CardViewerFragment
@@ -84,15 +107,32 @@ import com.ichi2.utils.dp
 import com.ichi2.utils.show
 import com.squareup.seismic.ShakeDetector
 import dev.androidbroadcast.vbpd.viewBinding
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import org.json.JSONArray
+import org.json.JSONObject
+import org.json.JSONTokener
 import timber.log.Timber
+import java.io.File
 import kotlin.math.max
 import kotlin.math.roundToInt
 import kotlin.reflect.jvm.jvmName
+
+private data class NativeReviewerCard(
+    val cardId: Long,
+    val irJson: ByteArray,
+    val frame: IrFrame,
+    val side: String,
+    val variant: String,
+    val fonts: CardIrFonts,
+    val mediaDirectory: File?,
+)
 
 class ReviewerFragment :
     CardViewerFragment(R.layout.fragment_reviewer),
@@ -107,6 +147,17 @@ class ReviewerFragment :
     override val webViewLayout: SafeWebViewLayout get() = binding.webViewLayout
     private lateinit var bindingMap: BindingMap<ReviewerBinding, ViewerAction>
     private var shakeDetector: AnkiShakeDetector? = null
+    private val nativeCardContent = mutableStateOf<NativeReviewerCard?>(null)
+    private var nativeCardLoadJob: Job? = null
+    private var cardCaptureJob: Job? = null
+    private var currentFaceSkippedWebView = false
+    private var wikilinkPageVersion = 0
+    private val gestureParser by lazy {
+        GestureParser(
+            scope = lifecycleScope,
+            isDoubleTapEnabled = bindingMap.isBound(Gesture.DOUBLE_TAP),
+        )
+    }
     private val whiteboardFragment get() = childFragmentManager.findFragmentByTag(WhiteboardFragment::class.jvmName) as? WhiteboardFragment
     private val isBigScreen: Boolean get() = resources.configuration.smallestScreenWidthDp >= 720
 
@@ -125,7 +176,7 @@ class ReviewerFragment :
     override fun onLoadInitialHtml(): String =
         stdHtml(
             context = requireContext(),
-            extraJsAssets = listOf("scripts/ankidroid-reviewer.js"),
+            extraJsAssets = listOf("scripts/ankidroid-reviewer.js", "scripts/card-ir-capture.js"),
             nightMode = Themes.isNightTheme,
         )
 
@@ -140,6 +191,32 @@ class ReviewerFragment :
             viewModel.stopAutoAdvance()
         }
         shakeDetector?.stop()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        if (view != null) {
+            // The renderer preference can change in Reviewing settings while
+            // this fragment is stopped; apply it as soon as Reviewer returns.
+            if (Prefs.useWebViewCardRenderer && currentFaceSkippedWebView) {
+                currentFaceSkippedWebView = false
+                // The last face was rendered only by Compose, so the WebView
+                // needs the current side again when the user switches back.
+                viewModel.reloadCurrentSideInWebView()
+            }
+            refreshNativeCard()
+            captureCurrentCardFace()
+        }
+    }
+
+    override fun onCardSideRendered(side: String) {
+        refreshNativeCard()
+        captureCurrentCardFace(side)
+    }
+
+    override fun onNativeRenderFailed() {
+        currentFaceSkippedWebView = false
+        showNativeCard(null)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -158,6 +235,7 @@ class ReviewerFragment :
         }
 
         setupBindings()
+        setupNativeCardRenderer()
         setupImmersiveMode()
         setupTypeAnswer()
         setupAnswerButtons()
@@ -235,6 +313,392 @@ class ReviewerFragment :
         if (Prefs.keepScreenOn) {
             window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         }
+    }
+
+    private fun setupNativeCardRenderer() {
+        binding.nativeCardCompose.setViewCompositionStrategy(
+            ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed,
+        )
+        binding.nativeCardCompose.setContent {
+            val nativeCardScrollState = rememberScrollState()
+            nativeCardContent.value?.let { card ->
+                CardIrView(
+                    frame = card.frame,
+                    irJson = card.irJson,
+                    side = card.side,
+                    variant = card.variant,
+                    modifier = Modifier.fillMaxSize().verticalScroll(nativeCardScrollState),
+                    fonts = card.fonts,
+                    mediaDirectory = card.mediaDirectory,
+                    onAction = ::handleNativeCardAction,
+                    onTap = { tap -> handleNativeCardTap(tap, nativeCardScrollState.value) },
+                    onSwipe = { deltaX -> handleNativeCardSwipe(deltaX = deltaX) },
+                    verticalScrollOffset = { nativeCardScrollState.value },
+                    onVerticalSwipe = { deltaY, startOffset ->
+                        val endOffset = nativeCardScrollState.value
+                        val atSameScrollPosition = startOffset == endOffset
+                        val towardScrollBoundary =
+                            (deltaY > 0f && endOffset == 0) ||
+                                (deltaY < 0f && endOffset == nativeCardScrollState.maxValue)
+                        if (atSameScrollPosition && towardScrollBoundary) {
+                            handleNativeCardSwipe(deltaY = deltaY)
+                        }
+                    },
+                    onMultiTouch = ::handleNativeMultiTouch,
+                    onLayoutUnavailable = { fallbackNativeCardToWebView(card.cardId, card.side) },
+                )
+            }
+        }
+        viewModel.onCardUpdatedFlow
+            .flowWithLifecycle(lifecycle)
+            .collectIn(lifecycleScope) {
+                refreshNativeCard()
+            }
+        viewModel.showingAnswer
+            .flowWithLifecycle(lifecycle)
+            .collectIn(lifecycleScope) {
+                refreshNativeCard()
+            }
+        viewModel.typeAnswerFlow
+            .flowWithLifecycle(lifecycle)
+            .collectIn(lifecycleScope) { refreshNativeCard() }
+    }
+
+    /** Load the safe native subset; any interactive/unsupported IR keeps WebView visible. */
+    private fun refreshNativeCard() {
+        nativeCardLoadJob?.cancel()
+        val typeAnswerUsesWebView = Prefs.isHtmlTypeAnswerEnabled && viewModel.typeAnswerFlow.value != null
+        if (Prefs.useWebViewCardRenderer || typeAnswerUsesWebView) {
+            showNativeCard(null)
+            return
+        }
+        nativeCardLoadJob =
+            lifecycleScope.launch {
+                val cardId = viewModel.getCardId()
+                val side = if (viewModel.showingAnswer.value) "answer" else "question"
+                val card = loadNativeCardSafely(cardId, side)
+                if (viewModel.getCardId() != cardId ||
+                    (if (viewModel.showingAnswer.value) "answer" else "question") != side ||
+                    Prefs.useWebViewCardRenderer
+                ) {
+                    return@launch
+                }
+                showNativeCard(card)
+            }
+    }
+
+    /** Use an existing eligible frame before the eval collector sends card HTML to WebView. */
+    override suspend fun renderCardWithoutWebView(side: String): Boolean {
+        currentFaceSkippedWebView = false
+        if (Prefs.useWebViewCardRenderer ||
+            (Prefs.isHtmlTypeAnswerEnabled && viewModel.typeAnswerFlow.value != null)
+        ) {
+            showNativeCard(null)
+            return false
+        }
+        val cardId = viewModel.getCardId()
+        val card = loadNativeCardSafely(cardId, side)
+        if (card == null) {
+            showNativeCard(null)
+            return false
+        }
+        if (viewModel.getCardId() != cardId ||
+            (if (viewModel.showingAnswer.value) "answer" else "question") != side ||
+            Prefs.useWebViewCardRenderer
+        ) {
+            showNativeCard(null)
+            return false
+        }
+        showNativeCard(card)
+        currentFaceSkippedWebView = true
+        return true
+    }
+
+    private suspend fun loadNativeCardSafely(
+        cardId: Long,
+        side: String,
+    ): NativeReviewerCard? =
+        try {
+            loadNativeCard(cardId, side)
+        } catch (error: CancellationException) {
+            throw error
+        } catch (error: Exception) {
+            Timber.w(error, "Unable to load native card %d (%s); using WebView", cardId, side)
+            showNativeCard(null)
+            null
+        }
+
+    /** Load and validate a frame without touching the WebView. */
+    private suspend fun loadNativeCard(
+        cardId: Long,
+        side: String,
+    ): NativeReviewerCard? =
+        withContext(Dispatchers.IO) {
+            val context = requireContext().applicationContext
+            val collectionDirectory =
+                runCatching {
+                    CollectionHelper.getCurrentAnkiDroidDirectory(context)
+                }.getOrNull() ?: return@withContext null
+            val irText = CardIrStore.readText(collectionDirectory, cardId) ?: return@withContext null
+            val ir = CardIrParser.parse(irText) ?: return@withContext null
+            if (ir.unsupported.isNotEmpty() || ir.behaviors.any { !it.isSupportedByNativeReviewer() }) {
+                return@withContext null
+            }
+            val capturedUnsupported =
+                runCatching {
+                    JSONObject(irText)
+                        .optJSONObject("android_capture_unsupported")
+                        ?.optJSONArray(side)
+                        ?.length() ?: 0
+                }.getOrDefault(0)
+            if (capturedUnsupported > 0) return@withContext null
+            // Never substitute the question frame for an answer. Some cards
+            // have only one captured face while the other is still loading.
+            if (ir.sides[side].isNullOrEmpty()) return@withContext null
+            val (frame, variant) =
+                CardIrParser.selectFrame(ir, side, Themes.isNightTheme, 0) ?: return@withContext null
+            val mediaDirectory = runCatching { CollectionHelper.getMediaDirectory(context) }.getOrNull()
+            val fonts = CardIrFonts.load(mediaDirectory)
+            if (!supportsNativeReviewer(frame.root, fonts) ||
+                !CardIrMedia.imagesAreRenderable(frame.root, mediaDirectory)
+            ) {
+                return@withContext null
+            }
+            val irJson = irText.encodeToByteArray()
+            // Ruby, cloze, and inline sup/sub need captured browser positions;
+            // other supported nodes are positioned by the shared Taffy kernel.
+            if (!frame.root.requiresCapturedGeometry() &&
+                TaffyCardLayout.layout(irJson, side, variant, frame.width, fonts) == null
+            ) {
+                return@withContext null
+            }
+            NativeReviewerCard(
+                cardId = cardId,
+                irJson = irJson,
+                frame = frame,
+                side = side,
+                variant = variant,
+                fonts = fonts,
+                mediaDirectory = mediaDirectory,
+            )
+        }
+
+    private fun supportsNativeReviewer(
+        node: IrNode,
+        fonts: CardIrFonts,
+        inheritedStyle: Map<String, String> = emptyMap(),
+    ): Boolean {
+        val style = CardIrStyle.inheritedStyle(inheritedStyle, node.style)
+        val supportedType = node.type in setOf("text", "box", "image", "svg", "audio", "break", "ruby", "cloze")
+        val supportedActions =
+            node.actions.all { action ->
+                action.on in setOf("reveal", "click", "tap") &&
+                    action.kind == "reveal-cloze" && node.type == "cloze"
+            }
+        val hasRenderableClozeAnswer =
+            if (node.type != "cloze") {
+                true
+            } else {
+                val answer = node.attrs["data-cloze"]
+                val paint =
+                    TextPaint().apply {
+                        textSize = CardIrStyle.fontSize(style)
+                        typeface = fonts.resolve(style)
+                        letterSpacing = if (textSize > 0f) CardIrStyle.length(style, "letter-spacing") / textSize else 0f
+                    }
+                answer != null && !Regex("<[^>]*>").containsMatchIn(answer) &&
+                    '\n' !in answer && '\r' !in answer &&
+                    paint.measureText(
+                        answer,
+                    ) + CardIrStyle.length(style, "word-spacing") * answer.count { it == ' ' } <= node.rect.w + 0.5f &&
+                    if (node.needsClozeReveal()) {
+                        node.actions.any { it.kind == "reveal-cloze" }
+                    } else {
+                        node.displayedText() == answer
+                    }
+            }
+        val childStyle = CardIrStyle.childStyle(style)
+        return supportedType && supportedActions && hasRenderableClozeAnswer &&
+            node.children.all { supportsNativeReviewer(it, fonts, childStyle) }
+    }
+
+    /** These actions are dispatched through the reviewer's existing audio and URL handlers. */
+    private fun com.ichi2.anki.pages.cardir.IrBehavior.isSupportedByNativeReviewer(): Boolean =
+        (kind in setOf("play-audio", "replay-audio", "open-link") && trigger in setOf("click", "tap")) ||
+            (kind == "reveal-cloze" && trigger in setOf("click", "tap", "reveal"))
+
+    /** Route supported native links through the Reviewer's existing URL handler. */
+    private fun handleNativeCardAction(node: IrNode) {
+        if (node.type == "audio") {
+            val audioUrl = node.src?.takeIf { it.matches(Regex("playsound:[qa]:\\d+")) } ?: return
+            viewModel.playSoundFromUrl(audioUrl)
+            return
+        }
+        val link = node.src?.takeIf { node.tag == "a" && it.matches(Regex("(?i)(https?|mailto|tel):.*")) } ?: return
+        (requireActivity() as? AbstractFlashcardViewer)?.webViewClient?.filterUrl(link)
+    }
+
+    private fun IrNode.requiresCapturedGeometry(): Boolean =
+        type == "ruby" || type == "cloze" || attrs["captured-inline"] == "true" || children.any { it.requiresCapturedGeometry() }
+
+    private fun showNativeCard(card: NativeReviewerCard?) {
+        nativeCardContent.value = card
+        binding.nativeCardCompose.isVisible = card != null
+        binding.webViewLayout.isVisible = card == null
+    }
+
+    /** Restore this face in WebView if a runtime Taffy layout fails after its eval was skipped. */
+    private fun fallbackNativeCardToWebView(
+        cardId: Long,
+        side: String,
+    ) {
+        if (nativeCardContent.value?.let { it.cardId == cardId && it.side == side } != true) return
+        val needsWebViewEval = currentFaceSkippedWebView && !Prefs.useWebViewCardRenderer
+        currentFaceSkippedWebView = false
+        showNativeCard(null)
+        if (!needsWebViewEval) return
+        lifecycleScope.launch {
+            if (viewModel.getCardId() == cardId &&
+                (if (viewModel.showingAnswer.value) "answer" else "question") == side
+            ) {
+                viewModel.reloadCurrentSideInWebView()
+            }
+        }
+    }
+
+    /** Routes Canvas taps through the same user-configured tap gesture map as WebView. */
+    private fun handleNativeCardTap(
+        tap: Offset,
+        scrollOffsetY: Int,
+    ) {
+        val scale = webViewLayout.scale.takeIf { it > 0f } ?: 1f
+        val tapUri =
+            Uri
+                .parse("gesture://tapOrSwipe")
+                .buildUpon()
+                .appendQueryParameter("x", (tap.x / scale).roundToInt().toString())
+                .appendQueryParameter("y", ((tap.y - scrollOffsetY) / scale).roundToInt().toString())
+                .appendQueryParameter("deltaX", "0")
+                .appendQueryParameter("deltaY", "0")
+                .appendQueryParameter("time", System.currentTimeMillis().toString())
+                .build()
+        dispatchNativeGesture(tapUri)
+    }
+
+    private fun handleNativeCardSwipe(
+        deltaX: Float = 0f,
+        deltaY: Float = 0f,
+    ) {
+        val scale = webViewLayout.scale.takeIf { it > 0f } ?: 1f
+        val swipeUri =
+            Uri
+                .parse("gesture://tapOrSwipe")
+                .buildUpon()
+                .appendQueryParameter("x", "0")
+                .appendQueryParameter("y", "0")
+                .appendQueryParameter("deltaX", (deltaX / scale).roundToInt().toString())
+                .appendQueryParameter("deltaY", (deltaY / scale).roundToInt().toString())
+                .appendQueryParameter("time", System.currentTimeMillis().toString())
+                .build()
+        dispatchNativeGesture(swipeUri)
+    }
+
+    private fun handleNativeMultiTouch(touchCount: Int) {
+        val multiTouchUri =
+            Uri
+                .parse("gesture://multiFingerTap")
+                .buildUpon()
+                .appendQueryParameter("touchCount", touchCount.toString())
+                .build()
+        dispatchNativeGesture(multiTouchUri)
+    }
+
+    private fun dispatchNativeGesture(uri: Uri) {
+        val scale = webViewLayout.scale.takeIf { it > 0f } ?: 1f
+        val surfaceState =
+            GestureParser.WebViewState(
+                scale = scale,
+                scrollX = 0,
+                scrollY = 0,
+                width = binding.nativeCardCompose.width,
+                height = binding.nativeCardCompose.height,
+            )
+        gestureParser.parse(uri, surfaceState) { gesture ->
+            if (gesture != null) bindingMap.onGesture(gesture)
+        }
+    }
+
+    /** Captures the settled WebView DOM once, then keeps the IR as a local sidecar. */
+    private fun captureCurrentCardFace(expectedSide: String? = null) {
+        cardCaptureJob?.cancel()
+        if (Prefs.useWebViewCardRenderer) return
+        cardCaptureJob =
+            lifecycleScope.launch {
+                delay(120)
+                val cardId = runCatching { viewModel.getCardId() }.getOrNull() ?: return@launch
+                val side = if (viewModel.showingAnswer.value) "answer" else "question"
+                if (expectedSide != null && expectedSide != side) return@launch
+                // Keep desktop-compiled IR intact when it already rendered this
+                // face. DOM capture is only the compatibility path for a missing
+                // or unsupported native frame.
+                nativeCardLoadJob?.join()
+                if (nativeCardContent.value?.let { it.cardId == cardId && it.side == side } == true) return@launch
+                val script =
+                    "window.ankiCaptureCardIr?.(" +
+                        "${JSONObject.quote(side)}," +
+                        "${JSONObject.quote(cardId.toString())}," +
+                        "${Themes.isNightTheme}" +
+                        ");"
+                webViewLayout.evaluateJavascript(script) { result ->
+                    val snapshot =
+                        runCatching { JSONTokener(result).nextValue() as? JSONObject }
+                            .getOrNull() ?: return@evaluateJavascript
+                    if (snapshot.optString("side") != side || snapshot.optString("card_id") != cardId.toString()) {
+                        return@evaluateJavascript
+                    }
+                    val frameJson = snapshot.optJSONObject("frame")?.toString() ?: return@evaluateJavascript
+                    val variant = snapshot.optString("variant").takeIf(String::isNotBlank) ?: return@evaluateJavascript
+                    val unsupportedJson = snapshot.optJSONArray("unsupported") ?: JSONArray()
+                    val unsupported =
+                        (0 until unsupportedJson.length())
+                            .mapNotNull { index -> unsupportedJson.optString(index).takeIf(String::isNotBlank) }
+                    lifecycleScope.launch {
+                        if (viewModel.getCardId() != cardId ||
+                            (if (viewModel.showingAnswer.value) "answer" else "question") != side ||
+                            Prefs.useWebViewCardRenderer
+                        ) {
+                            return@launch
+                        }
+                        val saved =
+                            withContext(Dispatchers.IO) {
+                                val context = requireContext().applicationContext
+                                val collectionDirectory =
+                                    runCatching { CollectionHelper.getCurrentAnkiDroidDirectory(context) }
+                                        .getOrNull() ?: return@withContext false
+                                CardIrStore.writeCapturedFace(
+                                    collectionDirectory = collectionDirectory,
+                                    cardId = cardId,
+                                    side = side,
+                                    variant = variant,
+                                    frameJson = frameJson,
+                                    unsupported = unsupported,
+                                )
+                            }
+                        if (saved && !Prefs.useWebViewCardRenderer && viewModel.getCardId() == cardId &&
+                            (if (viewModel.showingAnswer.value) "answer" else "question") == side
+                        ) {
+                            refreshNativeCard()
+                        }
+                    }
+                }
+            }
+    }
+
+    override fun onDestroyView() {
+        nativeCardLoadJob?.cancel()
+        cardCaptureJob?.cancel()
+        nativeCardContent.value = null
+        super.onDestroyView()
     }
 
     private fun setupTypeAnswer() {
@@ -659,12 +1123,6 @@ class ReviewerFragment :
         private var scale: Float = if (!isRobolectric) webViewLayout.scale else 1F
         private var isScrolling: Boolean = false
         private var isScrollingJob: Job? = null
-        private val gestureParser by lazy {
-            GestureParser(
-                scope = lifecycleScope,
-                isDoubleTapEnabled = bindingMap.isBound(Gesture.DOUBLE_TAP),
-            )
-        }
         private var hasShownUnsupportedFeatureWarning = false
 
         init {
@@ -684,6 +1142,15 @@ class ReviewerFragment :
             url: Uri,
         ): Boolean {
             return when (url.scheme) {
+                "anki-wikilink" -> {
+                    val title = url.getQueryParameter("title")?.trim().orEmpty()
+                    if (title.isNotEmpty()) {
+                        val escaped = title.replace("\"", "\\\"")
+                        val query = "\"$escaped\""
+                        startActivity(BrowserDestination.Search(query, allDecks = true).toIntent(requireContext()))
+                    }
+                    true
+                }
                 "gesture" -> {
                     if (isScrolling) return true
                     gestureParser.parse(url, scale, webView) { gesture ->
@@ -726,6 +1193,16 @@ class ReviewerFragment :
             url: String?,
         ) {
             super.onPageFinished(view, url)
+            refreshNativeCard()
+            view?.evaluateJavascript(wikilinksScript, null)
+            val pageVersion = ++wikilinkPageVersion
+            val page = view
+            lifecycleScope.launch {
+                val backlinks = runCatching { viewModel.wikilinkBacklinks() }.getOrDefault(emptyList())
+                if (backlinks.isNotEmpty() && pageVersion == wikilinkPageVersion) {
+                    page?.evaluateJavascript("window.ankiAddWikilinkBacklinks(${JSONArray(backlinks)})", null)
+                }
+            }
             Prefs.cardZoom.let {
                 if (it == 100) return@let
                 val scale = it / 100.0
@@ -734,6 +1211,47 @@ class ReviewerFragment :
             }
         }
     }
+
+    /** Turn [[First field]] references into internal note-browser links and a compact chain map. */
+    private val wikilinksScript =
+        """
+        (function(){
+          const found=[];
+          function ensureMap(){
+            let map=document.getElementById('anki-wikilink-map'); if(map) return map;
+            map=document.createElement('div'); map.id='anki-wikilink-map';
+            map.style.cssText='position:fixed;z-index:2147483647;bottom:8px;left:8px;right:8px;padding:7px 10px;border-radius:8px;background:rgba(30,45,65,.92);color:white;font:13px sans-serif;overflow-x:auto;white-space:nowrap';
+            const label=document.createElement('span'); label.textContent='关联链路：当前笔记'; map.append(label); document.body.append(map); return map;
+          }
+          const walker=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT);
+          const nodes=[]; while(walker.nextNode()) nodes.push(walker.currentNode);
+          for(const node of nodes){
+            if(!node.parentElement || /^(SCRIPT|STYLE|A|TEXTAREA)$/.test(node.parentElement.tagName)) continue;
+            const text=node.nodeValue; if(!text || !/\[\[[^\]]+\]\]/.test(text)) continue;
+            const fragment=document.createDocumentFragment(); let last=0;
+            const re=/\[\[([^\]|]+)(?:\|([^\]]+))?\]\]/g; let match;
+            while((match=re.exec(text))){
+              fragment.append(document.createTextNode(text.slice(last,match.index)));
+              const title=match[1].trim(); if(!title) continue;
+              const link=document.createElement('a'); link.textContent=(match[2]||title).trim();
+              link.href='anki-wikilink://open?title='+encodeURIComponent(title);
+              link.style.cssText='color:#3978d4;text-decoration:underline'; fragment.append(link);
+              if(!found.includes(title)) found.push(title); last=re.lastIndex;
+            }
+            fragment.append(document.createTextNode(text.slice(last))); node.replaceWith(fragment);
+          }
+          const map=found.length ? ensureMap() : null;
+          for(const title of found){ const arrow=document.createElement('span'); arrow.textContent='  →  '; map.append(arrow);
+            const link=document.createElement('a'); link.textContent=title; link.href='anki-wikilink://open?title='+encodeURIComponent(title);
+            link.style.cssText='color:#b9d7ff;text-decoration:underline'; map.append(link); }
+          window.ankiAddWikilinkBacklinks=function(titles){
+            if(!titles || !titles.length) return; const graph=ensureMap();
+            for(const title of titles){ const arrow=document.createElement('span'); arrow.textContent='  → 当前笔记 · '; graph.append(arrow);
+              const link=document.createElement('a'); link.textContent=title; link.href='anki-wikilink://open?title='+encodeURIComponent(title);
+              link.style.cssText='color:#b9d7ff;text-decoration:underline'; graph.append(link); }
+          };
+        })();
+        """.trimIndent()
 
     private inner class ReviewerWebChromeClient : CardViewerWebChromeClient() {
         override fun onHideCustomView() {

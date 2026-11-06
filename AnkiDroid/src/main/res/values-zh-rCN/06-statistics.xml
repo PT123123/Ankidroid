@@ -24,4 +24,11 @@
   -->
 <resources>
     <string name="open_statistics" comment="Description of the shortcut that opens the statistics page">打开统计页</string>
+    <!-- Anki Plus:统计页分组标签与今日摘要标签(自行维护,非 Crowdin 下发) -->
+    <string name="stats_tab_overview">概览</string>
+    <string name="stats_tab_reviews">复习</string>
+    <string name="stats_tab_cards">卡片</string>
+    <string name="stats_today_studied">已学</string>
+    <string name="stats_today_accuracy">正确率</string>
+    <string name="stats_today_time">用时</string>
 </resources>

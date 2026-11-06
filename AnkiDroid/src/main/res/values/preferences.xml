@@ -11,6 +11,7 @@
     <string name="learn_cutoff_preference">learnCutoff</string>
     <string name="time_limit_preference">timeLimit</string>
     <string name="keep_screen_on_preference">keepScreenOn</string>
+    <string name="pref_use_webview_card_renderer_key">useWebViewCardRenderer</string>
     <string name="double_tap_timeout_pref_key">doubleTapTimeout</string>
     <!-- Sync -->
     <string name="pref_sync_screen_key">syncScreen</string>
@@ -21,6 +22,8 @@
     <string name="one_way_sync_key">one_way_sync</string>
     <string name="sync_status_badge_key">showSyncStatusBadge</string>
     <string name="metered_sync_key">allowMetered</string>
+    <!-- fork feature: periodic background AnkiWeb sync -->
+    <string name="sync_background_frequency_key">syncBackgroundFrequency</string>
     <string name="custom_sync_server_key">custom_sync_server_link</string>
     <string name="hkey_key">hkey</string>
     <string name="username_key">username</string>

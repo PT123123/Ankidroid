@@ -10,4 +10,12 @@
 
 <resources>
     <string name="open_statistics" comment="Description of the shortcut that opens the statistics page">Open statistics</string>
+    <!-- Tab names of the grouped statistics page (Anki Plus). -->
+    <string name="stats_tab_overview" comment="Statistics page: tab with today, calendar and future due">Overview</string>
+    <string name="stats_tab_reviews" comment="Statistics page: tab with the review graphs">Reviews</string>
+    <string name="stats_tab_cards" comment="Statistics page: tab with card counts, intervals, ease/stability and additions">Cards</string>
+    <!-- Labels under the 'today' summary numbers (Anki Plus). -->
+    <string name="stats_today_studied" comment="Statistics today summary: number of cards studied today">Studied</string>
+    <string name="stats_today_accuracy" comment="Statistics today summary: percentage of correct answers today">Accuracy</string>
+    <string name="stats_today_time" comment="Statistics today summary: time spent studying today">Time</string>
 </resources>

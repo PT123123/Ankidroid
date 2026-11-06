@@ -3,8 +3,10 @@
 
 package com.ichi2.anki.pages.statistics
 
+import androidx.annotation.StringRes
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
@@ -15,29 +17,39 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.PrimaryTabRow
 import androidx.compose.material3.Switch
+import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import anki.stats.GraphPreferences
 import anki.stats.GraphsResponse
 import com.ichi2.anki.CollectionManager.TR
+import com.ichi2.anki.R
 import com.ichi2.anki.pages.viewmodel.StatisticsUiState
+import com.ichi2.compose.theme.dimensions
+import kotlinx.coroutines.launch
 import java.time.DayOfWeek
 import java.time.LocalDate
 
@@ -53,38 +65,109 @@ private const val COLOR_SUSPENDED = 0xFF9E9E9E
 private const val COLOR_BURIED = 0xFF616161
 private const val COLOR_TODAY_RING = 0xFF43A047
 
+/** The sections the graphs are grouped into; one pager page each. */
+private enum class StatsTab(
+    @StringRes val label: Int,
+) {
+    Overview(R.string.stats_tab_overview),
+    Reviews(R.string.stats_tab_reviews),
+    Cards(R.string.stats_tab_cards),
+}
+
 @Composable
 fun StatisticsScreen(
     state: StatisticsUiState,
     onRangeSelected: (StatsRange) -> Unit,
 ) {
-    LazyColumn(
-        modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(12.dp),
-        verticalArrangement = Arrangement.spacedBy(10.dp),
-    ) {
-        item { RangeChips(state.range, onRangeSelected) }
+    Column(modifier = Modifier.fillMaxSize()) {
+        RangeChips(
+            current = state.range,
+            onRangeSelected = onRangeSelected,
+            modifier =
+                Modifier.padding(
+                    horizontal = MaterialTheme.dimensions.space150,
+                    vertical = MaterialTheme.dimensions.space100,
+                ),
+        )
         val data = state.data
         if (data == null) {
-            item { LoadingCard(state.loading) }
-        } else {
-            item { TodayCard(data, state.studiedTodayMessage) }
-            item { CalendarCard(data, state.prefs) }
-            item { FutureDueCard(data, state.range, state.prefs?.futureDueShowBacklog ?: false) }
-            item { ReviewsCard(data, state.range) }
-            item { CardCountsCard(data, state.prefs?.cardCountsSeparateInactive ?: false) }
-            item { IntervalsCard(data) }
-            if (data.fsrs) {
-                item { StabilityCard(data) }
-                item { DifficultyCard(data) }
-                item { RetrievabilityCard(data) }
-            } else {
-                item { EasesCard(data) }
+            Box(
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .weight(1f),
+                contentAlignment = Alignment.Center,
+            ) {
+                LoadingCard(loading = state.loading, modifier = Modifier.padding(horizontal = MaterialTheme.dimensions.space150))
             }
-            item { AddedCard(data) }
-            item { HoursCard(data, state.range) }
-            item { ButtonsCard(data, state.range) }
-            item { TrueRetentionCard(data) }
+        } else {
+            StatsTabs(data, state)
+        }
+    }
+}
+
+@Composable
+private fun StatsTabs(
+    data: GraphsResponse,
+    state: StatisticsUiState,
+) {
+    val scope = rememberCoroutineScope()
+    val pagerState = rememberPagerState(pageCount = { StatsTab.entries.size })
+    Column(modifier = Modifier.fillMaxSize()) {
+        PrimaryTabRow(selectedTabIndex = pagerState.currentPage) {
+            StatsTab.entries.forEachIndexed { index, tab ->
+                Tab(
+                    selected = pagerState.currentPage == index,
+                    onClick = { scope.launch { pagerState.animateScrollToPage(index) } },
+                    text = { Text(stringResource(tab.label)) },
+                )
+            }
+        }
+        HorizontalPager(
+            state = pagerState,
+            modifier = Modifier.fillMaxSize(),
+            beyondViewportPageCount = 1,
+        ) { page ->
+            StatsPage(StatsTab.entries[page], data, state)
+        }
+    }
+}
+
+@Composable
+private fun StatsPage(
+    tab: StatsTab,
+    data: GraphsResponse,
+    state: StatisticsUiState,
+) {
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(MaterialTheme.dimensions.space150),
+        verticalArrangement = Arrangement.spacedBy(MaterialTheme.dimensions.space100),
+    ) {
+        when (tab) {
+            StatsTab.Overview -> {
+                item { TodayCard(data, state.studiedTodayMessage) }
+                item { CalendarCard(data, state.prefs) }
+                item { FutureDueCard(data, state.range, state.prefs?.futureDueShowBacklog ?: false) }
+            }
+            StatsTab.Reviews -> {
+                item { ReviewsCard(data, state.range) }
+                item { ButtonsCard(data, state.range) }
+                item { HoursCard(data, state.range) }
+                item { TrueRetentionCard(data) }
+            }
+            StatsTab.Cards -> {
+                item { CardCountsCard(data, state.prefs?.cardCountsSeparateInactive ?: false) }
+                item { IntervalsCard(data) }
+                if (data.fsrs) {
+                    item { StabilityCard(data) }
+                    item { DifficultyCard(data) }
+                    item { RetrievabilityCard(data) }
+                } else {
+                    item { EasesCard(data) }
+                }
+                item { AddedCard(data) }
+            }
         }
     }
 }
@@ -93,13 +176,14 @@ fun StatisticsScreen(
 private fun RangeChips(
     current: StatsRange,
     onRangeSelected: (StatsRange) -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     Row(
         modifier =
-            Modifier
+            modifier
                 .fillMaxWidth()
                 .horizontalScroll(rememberScrollState()),
-        horizontalArrangement = Arrangement.spacedBy(6.dp),
+        horizontalArrangement = Arrangement.spacedBy(MaterialTheme.dimensions.space100),
     ) {
         StatsRange.entries.forEach { range ->
             FilterChip(
@@ -123,15 +207,16 @@ private fun rangeLabel(range: StatsRange): String =
 fun StatsCard(
     title: String,
     subtitle: String? = null,
+    modifier: Modifier = Modifier,
     content: @Composable ColumnScope.() -> Unit,
 ) {
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
         shape = MaterialTheme.shapes.small,
     ) {
-        Column(Modifier.padding(12.dp)) {
+        Column(Modifier.padding(MaterialTheme.dimensions.space150)) {
             Text(title, style = MaterialTheme.typography.titleMedium)
             if (subtitle != null) {
                 Text(
@@ -146,12 +231,15 @@ fun StatsCard(
 }
 
 @Composable
-private fun LoadingCard(loading: Boolean) {
-    StatsCard(title = TR.statisticsTitle()) {
+private fun LoadingCard(
+    loading: Boolean,
+    modifier: Modifier = Modifier,
+) {
+    StatsCard(modifier = modifier, title = TR.statisticsTitle()) {
         Row(
             Modifier
                 .fillMaxWidth()
-                .padding(vertical = 24.dp),
+                .padding(vertical = MaterialTheme.dimensions.space300),
             horizontalArrangement = Arrangement.Center,
         ) {
             if (loading) CircularProgressIndicator() else Text(TR.statisticsNoData())
@@ -198,10 +286,34 @@ private fun TodayCard(
     studiedTodayMessage: String,
 ) {
     val today = data.today
-    val lines =
+    StatsCard(title = TR.statisticsTodayTitle()) {
         if (today.answerCount == 0) {
-            listOf(TR.statisticsTodayNoCards())
+            val line = studiedTodayMessage.ifEmpty { TR.statisticsTodayNoCards() }
+            Text(line, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = MaterialTheme.dimensions.space50))
         } else {
+            Row(
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(top = MaterialTheme.dimensions.space50),
+                horizontalArrangement = Arrangement.spacedBy(MaterialTheme.dimensions.space100),
+            ) {
+                StatTile(
+                    value = today.answerCount.toString(),
+                    label = stringResource(R.string.stats_today_studied),
+                    modifier = Modifier.weight(1f),
+                )
+                StatTile(
+                    value = formatPercent(today.correctCount * 100.0 / today.answerCount) + "%",
+                    label = stringResource(R.string.stats_today_accuracy),
+                    modifier = Modifier.weight(1f),
+                )
+                StatTile(
+                    value = formatMillis(today.answerMillis.toLong()),
+                    label = stringResource(R.string.stats_today_time),
+                    modifier = Modifier.weight(1f),
+                )
+            }
             val again = today.answerCount - today.correctCount
             val againLine =
                 TR.statisticsTodayAgainCount() + " $again (" + formatPercent(again * 100.0 / today.answerCount) + "%)"
@@ -222,12 +334,37 @@ private fun TodayCard(
                 } else {
                     TR.statisticsTodayNoMatureCards()
                 }
-            listOf(studiedTodayMessage, againLine, typeCounts, matureLine)
+            listOf(againLine, typeCounts, matureLine).forEach { line ->
+                Text(
+                    line,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(top = MaterialTheme.dimensions.space50),
+                )
+            }
         }
-    StatsCard(title = TR.statisticsTodayTitle()) {
-        lines.forEach { line ->
-            Text(line, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 2.dp))
-        }
+    }
+}
+
+/** A big number with a small caption underneath, for the "today" summary strip. */
+@Composable
+private fun StatTile(
+    value: String,
+    label: String,
+    modifier: Modifier = Modifier,
+) {
+    Column(modifier = modifier, horizontalAlignment = Alignment.CenterHorizontally) {
+        Text(
+            value,
+            style = MaterialTheme.typography.headlineSmall,
+            fontWeight = FontWeight.SemiBold,
+            color = MaterialTheme.colorScheme.primary,
+        )
+        Text(
+            label,
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
     }
 }
 

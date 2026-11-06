@@ -93,6 +93,13 @@ class GestureParser(
         parseInternal(uri, webViewState, block)
     }
 
+    /** Parses a gesture against explicit surface dimensions (for native card surfaces). */
+    fun parse(
+        uri: Uri,
+        surfaceState: WebViewState,
+        block: (Gesture?) -> Unit,
+    ) = parseInternal(uri, surfaceState, block)
+
     private fun handleTap(
         data: GestureData,
         webViewState: WebViewState,

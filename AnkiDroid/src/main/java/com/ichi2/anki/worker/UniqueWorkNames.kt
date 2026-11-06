@@ -18,4 +18,7 @@ package com.ichi2.anki.worker
 object UniqueWorkNames {
     const val SYNC = "sync"
     const val SYNC_MEDIA = "syncMedia"
+
+    /** fork feature: user-scheduled periodic AnkiWeb sync */
+    const val SYNC_PERIODIC = "syncPeriodic"
 }

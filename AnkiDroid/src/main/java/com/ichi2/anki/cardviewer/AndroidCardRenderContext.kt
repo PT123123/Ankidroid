@@ -66,11 +66,18 @@ class AndroidCardRenderContext(
 
         val style = cardAppearance.style
         val script =
-            when (requiresMathjax) {
-                false -> ""
-                true ->
-                    """        <script src="file:///android_asset/backend/js/mathjax.js"></script>
-        <script src="file:///android_asset/backend/js/vendor/mathjax/tex-chtml-full.js"></script>"""
+            buildString {
+                if (requiresMathjax) {
+                    append(
+                        """        <script src="file:///android_asset/backend/js/mathjax.js"></script>
+        <script src="file:///android_asset/backend/js/vendor/mathjax/tex-chtml-full.js"></script>""",
+                    )
+                }
+                append(
+                    """
+                    <script src="file:///android_asset/scripts/card-ir-capture.js"></script>
+                    """.trimIndent(),
+                )
             }
         val cardClass = cardAppearance.getCardClass(ord + 1) + if (requiresMathjax) " mathjax-needs-to-render" else ""
 

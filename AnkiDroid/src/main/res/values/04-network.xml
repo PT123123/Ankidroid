@@ -15,6 +15,22 @@
     <string name="vague_error" comment="Network error dialog title">Error</string>
     <string name="retry">Retry</string>
 
+    <!-- fork feature: periodic background AnkiWeb sync -->
+    <string name="sync_background_frequency" maxLength="41" comment="ListPreference title: how often a background sync runs while the app is closed">Background sync frequency</string>
+    <string name="sync_background_off">Off</string>
+    <string name="sync_background_15m">Every 15 minutes</string>
+    <string name="sync_background_30m">Every 30 minutes</string>
+    <string name="sync_background_1h">Hourly</string>
+    <string name="sync_background_3h">Every 3 hours</string>
+    <string name="sync_background_6h">Every 6 hours</string>
+    <string name="sync_background_off_value">0</string>
+    <string name="sync_background_15m_value">15</string>
+    <string name="sync_background_30m_value">30</string>
+    <string name="sync_background_1h_value">60</string>
+    <string name="sync_background_3h_value">180</string>
+    <string name="sync_background_6h_value">360</string>
+    <string name="sync_background_full_sync_required">A full sync is required. Open AnkiDroid and sync manually to complete it.</string>
+
     <string name="menu_get_shared_decks">Get shared decks</string>
     <string name="connection_error_message">A network error has occurred</string>
     <string name="not_logged_in_title">Log in to AnkiWeb</string>

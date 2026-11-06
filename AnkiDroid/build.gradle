@@ -114,9 +114,9 @@ android {
         //
         // This ensures the correct ordering between the various types of releases (dev < alpha < beta < release) which is
         // needed for upgrades to be offered correctly.
-        versionCode=22500214
+        versionCode=22500216
         // If you change this to a new version, you probably also want to update .gradle/workflows/milestone.yml for the new version...
-        versionName="1.0.8"
+        versionName="1.0.9"
         minSdk = libs.versions.minSdk.get().toInteger()
 
         // After #13695: change .tests_emulator.yml
@@ -368,6 +368,84 @@ android {
         }
     }
 }
+
+// Package the same standalone Taffy kernel used by anki-qt/anki-gpui. Keep
+// this crate outside libanki: the rslib wrapper is an upstream path dependency
+// and must remain untouched by the Android renderer.
+def nativeLayoutAbis = [
+    [abi: "armeabi-v7a", target: "armv7-linux-androideabi", linker: "armv7a-linux-androideabi24-clang"],
+    [abi: "x86", target: "i686-linux-android", linker: "i686-linux-android24-clang"],
+    [abi: "arm64-v8a", target: "aarch64-linux-android", linker: "aarch64-linux-android24-clang"],
+    [abi: "x86_64", target: "x86_64-linux-android", linker: "x86_64-linux-android24-clang"],
+]
+def nativeLayoutJniLibs = layout.buildDirectory.dir("generated/jniLibs/nativeLayout")
+// Android SourceSet rejects Provider arguments on the current AGP. The
+// preBuild dependency below still guarantees this generated directory exists
+// before packaging consumes the statically declared source directory.
+android.sourceSets.main.jniLibs.srcDir(nativeLayoutJniLibs.get().asFile)
+def nativeLayoutSourceDir = file("../native-layout")
+def nativeLayoutCargoTargetDir = layout.buildDirectory.dir("cargo/native-layout")
+def nativeLayoutOutputRoot = nativeLayoutJniLibs.get().asFile
+def nativeLayoutHostTag = System.getProperty("os.name").toLowerCase(Locale.ROOT).contains("win") ? "windows-x86_64" :
+    (System.getProperty("os.name").toLowerCase(Locale.ROOT).contains("mac") ? "darwin-x86_64" : "linux-x86_64")
+def nativeLayoutExecutableSuffix = nativeLayoutHostTag.startsWith("windows") ? ".cmd" : ""
+def nativeLayoutToolchainBin = new File(android.ndkDirectory, "toolchains/llvm/prebuilt/${nativeLayoutHostTag}/bin")
+def sharedNativeLayoutSourceDir = file("../../../anki-qt/native-layout")
+def nativeLayoutParityPaths = ["src/convert.rs", "src/ir.rs", "src/measure.rs", "src/parse.rs", "src/lib.rs"]
+def nativeLayoutParityPairs = nativeLayoutParityPaths.collect { relativePath ->
+    [relativePath, new File(nativeLayoutSourceDir, relativePath), new File(sharedNativeLayoutSourceDir, relativePath)]
+}
+
+tasks.register("checkNativeLayoutParity") {
+    group = "verification"
+    description = "Checks that Android's Taffy kernel core matches the shared Qt/GPUI source when available."
+    onlyIf { sharedNativeLayoutSourceDir.isDirectory() }
+    inputs.files(nativeLayoutParityPairs.collectMany { [it[1], it[2]] })
+    doLast {
+        nativeLayoutParityPairs.each { pair ->
+            def androidText = pair[1].getText("UTF-8").replace("\r\n", "\n")
+            def sharedText = pair[2].getText("UTF-8").replace("\r\n", "\n")
+            if (pair[0] == "src/lib.rs") {
+                androidText = androidText.replace("mod android_jni;\n", "")
+                    .replaceAll("\\n{3,}", "\n\n")
+            }
+            if (androidText != sharedText) {
+                throw new GradleException("Android Taffy kernel drifted from anki-qt/native-layout: ${pair[0]}")
+            }
+        }
+    }
+}
+
+def nativeLayoutCopyTasks = nativeLayoutAbis.collect { nativeAbi ->
+    def cargoOutput = new File(nativeLayoutCargoTargetDir.get().asFile,
+        "${nativeAbi.target}/release/libanki_native_layout.so")
+    def abiOutput = new File(nativeLayoutOutputRoot, nativeAbi.abi)
+    def buildTask = tasks.register("buildNativeLayout${nativeAbi.abi.replace('-', '')}", Exec) {
+        group = "build"
+        description = "Builds the standalone Card IR layout kernel for ${nativeAbi.abi}."
+        inputs.files(fileTree(nativeLayoutSourceDir))
+        outputs.file(cargoOutput)
+        workingDir nativeLayoutSourceDir
+        environment "CARGO_TARGET_DIR", nativeLayoutCargoTargetDir.get().asFile
+        environment "CARGO_TARGET_${nativeAbi.target.toUpperCase(Locale.ROOT).replace('-', '_')}_LINKER",
+            new File(nativeLayoutToolchainBin, nativeAbi.linker + nativeLayoutExecutableSuffix).absolutePath
+        commandLine "cargo", "build", "--locked", "--release", "--target", nativeAbi.target
+    }
+    tasks.register("packageNativeLayout${nativeAbi.abi.replace('-', '')}", Sync) {
+        group = "build"
+        dependsOn(buildTask)
+        from(cargoOutput)
+        into(abiOutput)
+    }
+}
+tasks.register("buildNativeCardLayout") {
+    group = "build"
+    description = "Builds the standalone Rust/Taffy Card IR layout kernel for Android ABIs."
+    dependsOn(nativeLayoutCopyTasks)
+    outputs.dir(nativeLayoutJniLibs)
+}
+tasks.named("buildNativeCardLayout").configure { dependsOn("checkNativeLayoutParity") }
+tasks.named("preBuild").configure { dependsOn("buildNativeCardLayout") }
 
 play {
     serviceAccountCredentials.set(file("${homePath}/src/AnkiDroid-GCP-Publish-Credentials.json"))

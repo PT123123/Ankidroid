@@ -102,9 +102,12 @@ class CardIrViewModel(
             } catch (e: Exception) {
                 return Unavailable("The collection path is not set")
             }
-        val card =
-            CardIrStore.read(collectionDirectory, cardId)
+        val irText =
+            CardIrStore.readText(collectionDirectory, cardId)
                 ?: return Unavailable("This card has no Card IR yet")
+        val card =
+            CardIrParser.parse(irText)
+                ?: return Unavailable("This card has an incompatible or damaged Card IR")
 
         val mediaDirectory =
             try {
@@ -123,6 +126,7 @@ class CardIrViewModel(
 
         return Ready(
             card = card,
+            irJson = irText.encodeToByteArray(),
             frame = frame,
             variant = variant,
             fonts = CardIrFonts.load(mediaDirectory),

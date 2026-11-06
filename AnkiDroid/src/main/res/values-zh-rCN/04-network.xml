@@ -27,6 +27,22 @@
     <string name="sync_error">同步出错</string>
     <string name="vague_error" comment="Network error dialog title">错误</string>
     <string name="retry">重试</string>
+
+    <!-- fork feature: periodic background AnkiWeb sync(自行维护,非 Crowdin 下发) -->
+    <string name="sync_background_frequency" maxLength="41">后台同步频率</string>
+    <string name="sync_background_off">关闭</string>
+    <string name="sync_background_15m">每 15 分钟</string>
+    <string name="sync_background_30m">每 30 分钟</string>
+    <string name="sync_background_1h">每 1 小时</string>
+    <string name="sync_background_3h">每 3 小时</string>
+    <string name="sync_background_6h">每 6 小时</string>
+    <string name="sync_background_off_value">0</string>
+    <string name="sync_background_15m_value">15</string>
+    <string name="sync_background_30m_value">30</string>
+    <string name="sync_background_1h_value">60</string>
+    <string name="sync_background_3h_value">180</string>
+    <string name="sync_background_6h_value">360</string>
+    <string name="sync_background_full_sync_required">需要全量同步,请打开应用手动同步完成。</string>
     <string name="menu_get_shared_decks">获取共享牌组</string>
     <string name="connection_error_message">网络错误</string>
     <string name="not_logged_in_title">登录到AnkiWeb</string>

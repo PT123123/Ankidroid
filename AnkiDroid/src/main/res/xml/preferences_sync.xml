@@ -37,6 +37,14 @@
         android:key="@string/automatic_sync_choice_key"
         android:summary="@string/automatic_sync_choice_summ"
         android:title="@string/automatic_sync_choice" />
+    <!-- fork feature: periodic background AnkiWeb sync (WorkManager; 0 = off) -->
+    <ListPreference
+        android:defaultValue="0"
+        android:entries="@array/sync_background_frequency_entries"
+        android:entryValues="@array/sync_background_frequency_values"
+        android:key="@string/sync_background_frequency_key"
+        android:title="@string/sync_background_frequency"
+        app:useSimpleSummaryProvider="true"/>
     <SwitchPreferenceCompat
         android:defaultValue="true"
         android:key="@string/sync_status_badge_key"
