@@ -72,6 +72,7 @@ import com.ichi2.anki.CollectionManager.TR
 import com.ichi2.anki.CollectionManager.withCol
 import com.ichi2.anki.Whiteboard.Companion.createInstance
 import com.ichi2.anki.Whiteboard.OnPaintColorChangeListener
+import com.ichi2.anki.cardlink.CardLinks
 import com.ichi2.anki.cardviewer.CardStyle
 import com.ichi2.anki.cardviewer.Gesture
 import com.ichi2.anki.cardviewer.ViewerCommand
@@ -140,8 +141,10 @@ import com.ichi2.anki.utils.remainingTime
 import com.ichi2.themes.Themes
 import com.ichi2.themes.Themes.currentTheme
 import com.ichi2.utils.Permissions.canRecordAudio
+import com.ichi2.utils.TruncatedString
 import com.ichi2.utils.ViewGroupUtils.setRenderWorkaround
 import com.ichi2.utils.cancelable
+import com.ichi2.utils.copyToClipboard
 import com.ichi2.utils.dp
 import com.ichi2.utils.iconAlpha
 import com.ichi2.utils.increaseHorizontalPaddingOfOverflowMenuIcons
@@ -861,6 +864,11 @@ open class Reviewer :
             R.id.action_previous_card_info -> {
                 Timber.i("Card Viewer:: Previous Card Info")
                 openPreviousCardInfo()
+            }
+            R.id.action_copy_card_link -> {
+                currentCard?.let { card ->
+                    copyToClipboard(TruncatedString.from(CardLinks.text(card.id)), successMessageId = R.string.card_link_copied)
+                }
             }
             R.id.user_action_1 -> userAction(1)
             R.id.user_action_2 -> userAction(2)

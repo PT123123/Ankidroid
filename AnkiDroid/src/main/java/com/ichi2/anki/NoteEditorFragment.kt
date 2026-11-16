@@ -81,6 +81,7 @@ import com.ichi2.anki.OnContextAndLongClickListener.Companion.setOnContextAndLon
 import com.ichi2.anki.android.input.ShortcutGroup
 import com.ichi2.anki.android.input.ShortcutGroupProvider
 import com.ichi2.anki.android.input.shortcut
+import com.ichi2.anki.cardlink.CardLinks
 import com.ichi2.anki.common.android.animationEnabled
 import com.ichi2.anki.common.android.appContext
 import com.ichi2.anki.common.annotations.NeedsTest
@@ -1076,6 +1077,43 @@ class NoteEditorFragment :
     private fun insertCloze(addClozeType: AddClozeType) {
         val v = requireActivity().currentFocus as? FieldEditText ?: return
         convertSelectedTextToCloze(v, addClozeType)
+    }
+
+    /** Search-and-pick dialog inserting a `[[cardId]]` link at the cursor of the focused field. */
+    private fun showCardLinkPicker() {
+        val targetField = requireActivity().currentFocus as? FieldEditText ?: editFields?.firstOrNull() ?: return
+        val input = EditText(requireContext()).apply { hint = getString(R.string.card_link_search_hint) }
+        AlertDialog.Builder(requireContext()).show {
+            setTitle(R.string.insert_card_link)
+            setView(input)
+            positiveButton(text = getString(R.string.dialog_ok)) {
+                val query = input.text.toString().trim()
+                if (query.isEmpty()) return@positiveButton
+                lifecycleScope.launch {
+                    val results =
+                        runCatching {
+                            withCol {
+                                findCards(query).take(20).map { cardId ->
+                                    val firstField = getNote(getCard(cardId).nid).fields.firstOrNull().orEmpty()
+                                    cardId to CardLinks.plainLabel(firstField).ifEmpty { CardLinks.text(cardId) }
+                                }
+                            }
+                        }.getOrDefault(emptyList())
+                    if (results.isEmpty()) {
+                        showThemedToast(requireContext(), getString(R.string.card_link_no_results), shortLength = true)
+                        return@launch
+                    }
+                    AlertDialog.Builder(requireContext()).show {
+                        setTitle(R.string.insert_card_link)
+                        setItems(results.map { it.second }.toTypedArray()) { _, which ->
+                            val start = targetField.selectionStart.coerceAtLeast(0)
+                            targetField.text?.insert(start, CardLinks.text(results[which].first))
+                        }
+                    }
+                }
+            }
+            negativeButton(R.string.dialog_cancel)
+        }
     }
 
     private fun fetchIntentInformation(intent: Intent) {
@@ -2250,6 +2288,10 @@ class NoteEditorFragment :
                 description = TR.editingClozeDeletionRepeat(),
                 type = AddClozeType.SAME_NUMBER,
             )
+        }
+        toolbar.insertItem(0, R.drawable.ic_link) { showCardLinkPicker() }.apply {
+            contentDescription = getString(R.string.insert_card_link)
+            setTooltipTextCompat(getString(R.string.insert_card_link))
         }
         val buttons = toolbarButtons
         for (b in buttons) {

@@ -16,11 +16,14 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
@@ -29,12 +32,19 @@ import anki.stats.CardStatsResponse
 import anki.stats.RevlogEntry
 import com.ichi2.anki.CollectionManager.TR
 import com.ichi2.anki.CollectionManager.withCol
+import com.ichi2.anki.R
+import com.ichi2.anki.cardlink.CardLinks
+import com.ichi2.anki.common.destinations.CardInfoDestination
+import com.ichi2.anki.common.destinations.CardInfoDestination.EntryPoint
 import com.ichi2.anki.pages.statistics.StatsCard
 import com.ichi2.anki.pages.statistics.formatDays
 import com.ichi2.anki.pages.statistics.formatEpochDay
 import com.ichi2.anki.pages.statistics.formatEpochMs
 import com.ichi2.anki.pages.statistics.formatMillis
 import com.ichi2.anki.pages.statistics.formatPercent
+import com.ichi2.anki.pages.toIntent
+import com.ichi2.utils.TruncatedString
+import com.ichi2.utils.copyToClipboard
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -45,6 +55,8 @@ import timber.log.Timber
 class CardInfoViewModel : ViewModel() {
     private val _data = MutableStateFlow<CardStatsResponse?>(null)
     val data: StateFlow<CardStatsResponse?> = _data.asStateFlow()
+    private val _backlinks = MutableStateFlow<List<CardLinks.Backlink>>(emptyList())
+    val backlinks: StateFlow<List<CardLinks.Backlink>> = _backlinks.asStateFlow()
 
     fun load(cardId: Long) {
         if (_data.value != null) return
@@ -54,13 +66,22 @@ class CardInfoViewModel : ViewModel() {
             } catch (e: Exception) {
                 Timber.w(e, "CardInfoViewModel: failed to load card stats")
             }
+            _backlinks.value =
+                runCatching { CardLinks.backlinks(cardId) }.getOrElse {
+                    Timber.w(it, "CardInfoViewModel: failed to load backlinks")
+                    emptyList()
+                }
         }
     }
 }
 
 /** The native card info screen: card properties, the review timeline and the revlog history. */
 @Composable
-fun CardInfoScreen(data: CardStatsResponse?) {
+fun CardInfoScreen(
+    cardId: Long,
+    data: CardStatsResponse?,
+    backlinks: List<CardLinks.Backlink> = emptyList(),
+) {
     if (data == null) {
         Column(
             modifier = Modifier.fillMaxSize(),
@@ -76,9 +97,41 @@ fun CardInfoScreen(data: CardStatsResponse?) {
         contentPadding = PaddingValues(12.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
+        item { CopyCardLinkRow(cardId) }
         item { PropertiesCard(data) }
         item { RevlogTimelineCard(data) }
         item { RevlogHistoryCard(data) }
+        if (backlinks.isNotEmpty()) {
+            item { BacklinksCard(backlinks) }
+        }
+    }
+}
+
+@Composable
+private fun CopyCardLinkRow(cardId: Long) {
+    val context = LocalContext.current
+    TextButton(onClick = {
+        context.copyToClipboard(TruncatedString.from(CardLinks.text(cardId)), successMessageId = R.string.card_link_copied)
+    }) {
+        Text(stringResource(R.string.copy_card_link))
+    }
+}
+
+@Composable
+private fun BacklinksCard(backlinks: List<CardLinks.Backlink>) {
+    val context = LocalContext.current
+    StatsCard(title = stringResource(R.string.card_link_backlinks)) {
+        backlinks.forEach { entry ->
+            TextButton(onClick = {
+                context.startActivity(CardInfoDestination(entry.cardId, EntryPoint.CURRENT_CARD_STUDY).toIntent(context))
+            }) {
+                Text(
+                    entry.label,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.primary,
+                )
+            }
+        }
     }
 }
 

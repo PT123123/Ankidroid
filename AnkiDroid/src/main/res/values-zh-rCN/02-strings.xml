@@ -367,4 +367,11 @@
     <string name="switch_profile" maxLength="41" comment="Title of the screen where the user switches between profiles">切换配置文件</string>
     <string name="edit_profile" comment="Content description of the button that edits a profile in the profile list">修改配置文件</string>
     <string name="delete_profile" comment="Content description of the button that deletes a profile in the profile list">删除配置文件</string>
+    <!-- Bidirectional card links ([[cardId]]) -->
+    <string name="copy_card_link" comment="Menu item copying the current card's [[id]] link to the clipboard">复制卡片链接</string>
+    <string name="card_link_copied" comment="Snackbar shown after copying a card link">已复制卡片链接</string>
+    <string name="card_link_backlinks" comment="Card info section listing cards that link to this card">回链（引用本卡的卡片）</string>
+    <string name="insert_card_link" comment="Note editor toolbar button inserting a link to another card">插入卡片链接</string>
+    <string name="card_link_search_hint" comment="Hint of the search field in the card link picker">搜索卡片…</string>
+    <string name="card_link_no_results" comment="Shown when the card link picker search finds nothing">没有匹配的卡片</string>
 </resources>

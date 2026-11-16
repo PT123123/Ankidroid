@@ -122,6 +122,11 @@
         tools:title="Previous card info"
         ankidroid:showAsAction="never"/>
     <item
+        android:id="@+id/action_copy_card_link"
+        android:icon="@drawable/ic_link"
+        android:title="@string/copy_card_link"
+        ankidroid:showAsAction="never"/>
+    <item
         android:id="@+id/action_tag"
         android:icon="@drawable/ic_tag"
         android:title="@string/menu_edit_tags"

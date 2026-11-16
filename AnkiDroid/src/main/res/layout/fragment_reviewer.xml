@@ -158,6 +158,17 @@
             android:divider="@drawable/vertical_spacer_8dp"
             android:layout_marginHorizontal="@dimen/reviewer_side_margin">
 
+            <com.google.android.material.textview.MaterialTextView
+                android:id="@+id/review_card_info"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:textSize="12sp"
+                android:textColor="?android:attr/textColorSecondary"
+                android:visibility="gone"
+                tools:text="Interval 13d · Ease 250% · Reviews 3"
+                tools:visibility="visible" />
+
             <!-- Use the same card style of the WebView -->
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/type_answer_container"

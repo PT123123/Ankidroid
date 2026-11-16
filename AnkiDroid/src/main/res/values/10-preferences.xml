@@ -169,6 +169,10 @@
     <string name="pref_use_webview_card_renderer_summary">Prefer WebView rendering when a native Card IR is available</string>
     <string name="enable_api_title" maxLength="41">Enable AnkiDroid API</string>
     <string name="enable_api_summary">Let other apps connect to AnkiDroid and read / write data without your intervention</string>
+    <string name="ankiconnect_enable_title" maxLength="41">AnkiConnect-compatible API</string>
+    <string name="ankiconnect_enable_summary">Local AnkiConnect-compatible HTTP API on 127.0.0.1 for tools like Yomichan; never exposed to the LAN</string>
+    <string name="ankiconnect_port_title" maxLength="41">AnkiConnect port</string>
+    <string name="ankiconnect_port_summary">TCP port of the local API (1024-65535), default 8765</string>
     <string name="custom_buttons" maxLength="41">App bar buttons</string>
     <string name="custom_buttons_summary">Customize which actions appear in the app bar</string>
     <string name="custom_buttons_setting_always_show">Always show</string>

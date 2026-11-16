@@ -3,7 +3,9 @@
 
 package com.ichi2.anki.pages.statistics
 
+import java.time.DayOfWeek
 import java.time.LocalDate
+import java.time.temporal.ChronoUnit
 import java.util.Locale
 import kotlin.math.ceil
 import kotlin.math.floor
@@ -193,6 +195,50 @@ fun sqrtScale(
     value: Long,
     max: Long,
 ): Float = if (max <= 0) 0f else sqrt(value.toDouble() / max.toDouble()).toFloat()
+
+/** Cell geometry shared by the heatmap renderer and its tap hit-test, so they cannot drift. */
+data class HeatmapGeometry(
+    val labelLane: Float,
+    val monthLane: Float,
+    val cell: Float,
+    val firstCell: LocalDate,
+    val lastDate: LocalDate,
+    val weeks: Int,
+)
+
+fun heatmapGeometry(
+    width: Float,
+    height: Float,
+    year: Int,
+    firstDayOfWeek: DayOfWeek,
+    labelPx: Float,
+): HeatmapGeometry {
+    val labelLane = 3.2f * labelPx
+    val monthLane = 1.8f * labelPx
+    val endDate = LocalDate.of(year, 12, 31)
+    var firstCell = LocalDate.of(year, 1, 1)
+    while (firstCell.dayOfWeek != firstDayOfWeek) {
+        firstCell = firstCell.minusDays(1)
+    }
+    val weeks = (ChronoUnit.DAYS.between(firstCell, endDate) / 7).toInt() + 1
+    val cell = minOf((width - labelLane) / weeks, (height - monthLane) / 7f)
+    return HeatmapGeometry(labelLane, monthLane, cell, firstCell, endDate, weeks)
+}
+
+/** The date of the tapped cell, or null outside the grid (label lanes, padding, trailing empty rows). */
+fun heatmapDateAt(
+    x: Float,
+    y: Float,
+    geometry: HeatmapGeometry,
+): LocalDate? {
+    if (geometry.cell <= 0f) return null
+    val column = floor((x - geometry.labelLane) / geometry.cell).toInt()
+    val row = floor((y - geometry.monthLane) / geometry.cell).toInt()
+    if (column < 0 || column >= geometry.weeks || row < 0 || row > 6) return null
+    val date = geometry.firstCell.plusDays((column * 7 + row).toLong())
+    if (date.isAfter(geometry.lastDate)) return null
+    return date
+}
 
 /** A "blues" ramp, light to dark, for the heatmap. */
 val HEATMAP_BLUES =

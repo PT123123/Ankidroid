@@ -374,6 +374,7 @@ private fun CalendarCard(
     prefs: GraphPreferences?,
 ) {
     var year by remember { mutableStateOf(LocalDate.now().year) }
+    var selectedDay by remember(year) { mutableStateOf<LocalDate?>(null) }
     val firstDay =
         when (prefs?.calendarFirstDayOfWeek) {
             GraphPreferences.Weekday.MONDAY -> DayOfWeek.MONDAY
@@ -400,7 +401,20 @@ private fun CalendarCard(
             )
             TextButton(onClick = { year += 1 }) { Text("›") }
         }
-        CalendarHeatmap(year = year, counts = counts, firstDayOfWeek = firstDay, todayRing = Color(COLOR_TODAY_RING))
+        CalendarHeatmap(
+            year = year,
+            counts = counts,
+            firstDayOfWeek = firstDay,
+            todayRing = Color(COLOR_TODAY_RING),
+            onDayClick = { selectedDay = it },
+        )
+        selectedDay?.let { day ->
+            Text(
+                "$day · ${TR.statisticsReviews((counts[day] ?: 0L).toInt())}",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
     }
 }
 

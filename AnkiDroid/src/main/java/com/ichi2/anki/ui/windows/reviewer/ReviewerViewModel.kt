@@ -3,6 +3,7 @@
 
 package com.ichi2.anki.ui.windows.reviewer
 
+import android.net.Uri
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import anki.collection.OpChanges
@@ -15,6 +16,7 @@ import com.ichi2.anki.CollectionManager.withCol
 import com.ichi2.anki.Flag
 import com.ichi2.anki.Reviewer
 import com.ichi2.anki.asyncIO
+import com.ichi2.anki.cardlink.CardLinks
 import com.ichi2.anki.cardviewer.SingleCardSide
 import com.ichi2.anki.common.annotations.NeedsTest
 import com.ichi2.anki.common.destinations.BrowserDestination
@@ -96,6 +98,8 @@ class ReviewerViewModel(
     val undoLabelFlow = MutableStateFlow<String?>(null)
     val redoLabelFlow = MutableStateFlow<String?>(null)
     val countsFlow = savedStateHandle.getMutableStateFlow(KEY_COUNTS, StudyCounts())
+    val cardInfoFlow = MutableStateFlow<Card?>(null)
+    val copyCardLinkFlow = MutableSharedFlow<String>()
     val typeAnswerFlow = MutableStateFlow<TypeAnswer?>(null)
     val onTypedAnswerResultFlow = MutableSharedFlow<CompletableDeferred<String>>()
     val onCardUpdatedFlow = MutableSharedFlow<Unit>()
@@ -245,34 +249,43 @@ class ReviewerViewModel(
         isMarkedFlow.emit(NoteService.isMarked(note))
     }
 
-    /** Finds notes whose fields contain a wikilink to the current note's first field. */
-    suspend fun wikilinkBacklinks(): List<String> {
-        val currentNoteId = currentCard.await().nid
-        return withCol {
+    /** Chain-map entries pointing back at the current note: title wikilinks and `[[cardId]]` links. */
+    suspend fun wikilinkBacklinks(): List<Map<String, String>> {
+        val card = currentCard.await()
+        val currentNoteId = card.nid
+        val items = mutableListOf<Map<String, String>>()
+        withCol {
             val title =
                 getNote(currentNoteId)
                     .fields
                     .firstOrNull()
                     ?.trim()
                     .orEmpty()
-            if (title.isEmpty()) return@withCol emptyList()
-            val escaped = title.replace("\"", "\\\"")
-            val candidates = findNotes("\"$escaped\"").take(100)
-            val linkPattern = Regex("""\[\[([^\]|]+)(?:\|[^\]]+)?\]\]""")
-            candidates
-                .asSequence()
-                .filter { it != currentNoteId }
-                .mapNotNull { noteId ->
-                    val note = getNote(noteId)
-                    val linksHere =
-                        note.fields.any { field ->
-                            linkPattern.findAll(field).any { it.groupValues[1].trim().equals(title, ignoreCase = true) }
-                        }
-                    note.fields.firstOrNull()?.takeIf { linksHere }
-                }.distinct()
-                .take(12)
-                .toList()
+            if (title.isNotEmpty()) {
+                val escaped = title.replace("\"", "\\\"")
+                val candidates = findNotes("\"$escaped\"").take(100)
+                val linkPattern = Regex("""\[\[([^\]|]+)(?:\|[^\]]+)?\]\]""")
+                candidates
+                    .asSequence()
+                    .filter { it != currentNoteId }
+                    .mapNotNull { noteId ->
+                        val note = getNote(noteId)
+                        val linksHere =
+                            note.fields.any { field ->
+                                linkPattern.findAll(field).any { it.groupValues[1].trim().equals(title, ignoreCase = true) }
+                            }
+                        note.fields.firstOrNull()?.takeIf { linksHere }
+                    }.distinct()
+                    .forEach { label ->
+                        items.add(mapOf("label" to label, "href" to "anki-wikilink://open?title=" + Uri.encode(label)))
+                    }
+            }
         }
+        val idBacklinks = runCatching { CardLinks.backlinks(card.id) }.getOrDefault(emptyList())
+        for (backlink in idBacklinks) {
+            items.add(mapOf("label" to backlink.label, "href" to "anki-wikilink://open?cardId=${backlink.cardId}"))
+        }
+        return items.distinctBy { it["href"] }.take(12)
     }
 
     private suspend fun setFlag(flag: Flag) {
@@ -638,6 +651,7 @@ class ReviewerViewModel(
         canBuryNoteFlow.emit(isBuryNoteAvailable(card))
         canSuspendNoteFlow.emit(isSuspendNoteAvailable(card))
         countsFlow.emit(StudyCounts(state))
+        cardInfoFlow.emit(card)
     }
 
     override suspend fun typeAnsFilter(text: String): String {
@@ -748,6 +762,7 @@ class ReviewerViewModel(
                     ViewerAction.ADD_NOTE -> emitAddNoteDestination()
                     ViewerAction.CARD_INFO -> emitCardInfoDestination()
                     ViewerAction.PREVIOUS_CARD_INFO -> emitPreviousCardInfoDestination()
+                    ViewerAction.COPY_CARD_LINK -> copyCardLinkFlow.emit(CardLinks.text(getCardId()))
                     ViewerAction.DECK_OPTIONS -> emitDeckOptionsDestination()
                     ViewerAction.EDIT -> emitEditNoteDestination()
                     ViewerAction.TAG -> editNoteTags()

@@ -90,6 +90,17 @@
                 android:key="@string/enable_api_key"
                 android:summary="@string/enable_api_summary"
                 android:title="@string/enable_api_title"/>
+            <SwitchPreferenceCompat
+                android:defaultValue="true"
+                android:key="@string/ankiconnect_enable_key"
+                android:summary="@string/ankiconnect_enable_summary"
+                android:title="@string/ankiconnect_enable_title"/>
+            <EditTextPreference
+                android:defaultValue="8765"
+                android:inputType="number"
+                android:key="@string/ankiconnect_port_key"
+                android:summary="@string/ankiconnect_port_summary"
+                android:title="@string/ankiconnect_port_title"/>
             <Preference
                 android:key="@string/thirdparty_apps_key"
                 android:summary="@string/thirdparty_apps_summary"

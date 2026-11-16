@@ -455,5 +455,13 @@ opening the system text to speech settings fails">Failed to open text to speech 
     <string name="switch_profile" maxLength="41" comment="Title of the screen where the user switches between profiles">Switch profile</string>
     <string name="edit_profile" comment="Content description of the button that edits a profile in the profile list">Edit profile</string>
     <string name="delete_profile" comment="Content description of the button that deletes a profile in the profile list">Delete profile</string>
+
+    <!-- Bidirectional card links ([[cardId]]) -->
+    <string name="copy_card_link" comment="Menu item copying the current card's [[id]] link to the clipboard">Copy card link</string>
+    <string name="card_link_copied" comment="Snackbar shown after copying a card link">Card link copied</string>
+    <string name="card_link_backlinks" comment="Card info section listing cards that link to this card">Backlinks (cards referencing this card)</string>
+    <string name="insert_card_link" comment="Note editor toolbar button inserting a link to another card">Insert card link</string>
+    <string name="card_link_search_hint" comment="Hint of the search field in the card link picker">Search cards…</string>
+    <string name="card_link_no_results" comment="Shown when the card link picker search finds nothing">No matching cards</string>
 </resources>
 

@@ -48,12 +48,14 @@ class CardInfoFragment : Fragment(R.layout.page_card_info) {
         }
         binding.toolbar.setNavigationOnClickListener { requireActivity().finish() }
 
-        viewModel.load(requireArguments().getLong(KEY_CARD_ID))
+        val cardId = requireArguments().getLong(KEY_CARD_ID)
+        viewModel.load(cardId)
 
         binding.composeView.setContent {
             AnkiDroidTheme {
                 val data by viewModel.data.collectAsStateWithLifecycle()
-                CardInfoScreen(data = data)
+                val backlinks by viewModel.backlinks.collectAsStateWithLifecycle()
+                CardInfoScreen(cardId = cardId, data = data, backlinks = backlinks)
             }
         }
     }

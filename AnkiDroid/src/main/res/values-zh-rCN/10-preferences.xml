@@ -176,6 +176,10 @@
     <string name="pref_use_webview_card_renderer_summary">有原生 Card IR 时优先使用 WebView 渲染</string>
     <string name="enable_api_title" maxLength="41">启用 AnkiDroid API</string>
     <string name="enable_api_summary">让其他的应用程序连接到 AnkiDroid 读写数据</string>
+    <string name="ankiconnect_enable_title" maxLength="41">AnkiConnect 兼容 API</string>
+    <string name="ankiconnect_enable_summary">在本机 127.0.0.1 上提供 AnkiConnect 兼容 HTTP 接口（供 Yomichan 等第三方工具连接），不会暴露到局域网</string>
+    <string name="ankiconnect_port_title" maxLength="41">AnkiConnect 端口</string>
+    <string name="ankiconnect_port_summary">本地 API 的 TCP 端口（1024-65535），默认 8765</string>
     <string name="custom_buttons" maxLength="41">顶栏按钮</string>
     <string name="custom_buttons_summary">自定义顶栏按钮</string>
     <string name="custom_buttons_setting_always_show">总是显示</string>

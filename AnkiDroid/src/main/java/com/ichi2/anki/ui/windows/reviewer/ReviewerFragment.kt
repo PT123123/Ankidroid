@@ -55,6 +55,8 @@ import com.ichi2.anki.browser.toIntent
 import com.ichi2.anki.cardviewer.Gesture
 import com.ichi2.anki.common.annotations.NeedsTest
 import com.ichi2.anki.common.destinations.BrowserDestination
+import com.ichi2.anki.common.destinations.CardInfoDestination
+import com.ichi2.anki.common.destinations.CardInfoDestination.EntryPoint
 import com.ichi2.anki.common.destinations.DeckOptionsDestination
 import com.ichi2.anki.common.destinations.navigate
 import com.ichi2.anki.common.storage.CollectionHelper
@@ -103,6 +105,8 @@ import com.ichi2.anki.utils.ext.showDialogFragment
 import com.ichi2.anki.utils.ext.window
 import com.ichi2.anki.workarounds.SafeWebViewLayout
 import com.ichi2.themes.Themes
+import com.ichi2.utils.TruncatedString
+import com.ichi2.utils.copyToClipboard
 import com.ichi2.utils.dp
 import com.ichi2.utils.show
 import com.squareup.seismic.ShakeDetector
@@ -240,6 +244,7 @@ class ReviewerFragment :
         setupTypeAnswer()
         setupAnswerButtons()
         setupCounts()
+        setupCardInfo()
         setupMenu()
         setupToolbarPosition()
         setupAnswerTimer()
@@ -876,6 +881,15 @@ class ReviewerFragment :
         }
     }
 
+    private fun setupCardInfo() {
+        viewModel.cardInfoFlow
+            .flowWithLifecycle(lifecycle)
+            .collectLatestIn(lifecycleScope) { card ->
+                binding.reviewCardInfo.isVisible = card != null
+                binding.reviewCardInfo.text = card?.let { ReviewCardInfo.text(it) }
+            }
+    }
+
     private fun setupMenu() {
         binding.reviewerMenuView.apply {
             setup(lifecycle, viewModel)
@@ -1075,6 +1089,10 @@ class ReviewerFragment :
             SetDueDateDialog.show(requireActivity(), listOf(cardId))
         }
 
+        viewModel.copyCardLinkFlow.collectIn(lifecycleScope) { link ->
+            requireContext().copyToClipboard(TruncatedString.from(link), successMessageId = R.string.card_link_copied)
+        }
+
         viewModel.pageUpFlow.flowWithLifecycle(lifecycle).collectIn(lifecycleScope) {
             webViewLayout.pageUp()
         }
@@ -1143,6 +1161,11 @@ class ReviewerFragment :
         ): Boolean {
             return when (url.scheme) {
                 "anki-wikilink" -> {
+                    val cardId = url.getQueryParameter("cardId")?.toLongOrNull()
+                    if (cardId != null && cardId > 0) {
+                        navigate(CardInfoDestination(cardId, EntryPoint.CURRENT_CARD_STUDY))
+                        return true
+                    }
                     val title = url.getQueryParameter("title")?.trim().orEmpty()
                     if (title.isNotEmpty()) {
                         val escaped = title.replace("\"", "\\\"")
@@ -1212,7 +1235,7 @@ class ReviewerFragment :
         }
     }
 
-    /** Turn [[First field]] references into internal note-browser links and a compact chain map. */
+    /** Turn [[cardId]] / [[First field]] references into internal links and a compact chain map. */
     private val wikilinksScript =
         """
         (function(){
@@ -1233,21 +1256,22 @@ class ReviewerFragment :
             while((match=re.exec(text))){
               fragment.append(document.createTextNode(text.slice(last,match.index)));
               const title=match[1].trim(); if(!title) continue;
-              const link=document.createElement('a'); link.textContent=(match[2]||title).trim();
-              link.href='anki-wikilink://open?title='+encodeURIComponent(title);
+              const link=document.createElement('a');
+              if(/^\d+$/.test(title)){ link.href='anki-wikilink://open?cardId='+title; link.textContent=match[2]?match[2].trim():('卡片 '+title); }
+              else { link.href='anki-wikilink://open?title='+encodeURIComponent(title); link.textContent=(match[2]||title).trim(); }
               link.style.cssText='color:#3978d4;text-decoration:underline'; fragment.append(link);
-              if(!found.includes(title)) found.push(title); last=re.lastIndex;
+              if(!found.some(f=>f.href===link.href)) found.push({label:link.textContent,href:link.href}); last=re.lastIndex;
             }
             fragment.append(document.createTextNode(text.slice(last))); node.replaceWith(fragment);
           }
           const map=found.length ? ensureMap() : null;
-          for(const title of found){ const arrow=document.createElement('span'); arrow.textContent='  →  '; map.append(arrow);
-            const link=document.createElement('a'); link.textContent=title; link.href='anki-wikilink://open?title='+encodeURIComponent(title);
+          for(const item of found){ const arrow=document.createElement('span'); arrow.textContent='  →  '; map.append(arrow);
+            const link=document.createElement('a'); link.textContent=item.label; link.href=item.href;
             link.style.cssText='color:#b9d7ff;text-decoration:underline'; map.append(link); }
-          window.ankiAddWikilinkBacklinks=function(titles){
-            if(!titles || !titles.length) return; const graph=ensureMap();
-            for(const title of titles){ const arrow=document.createElement('span'); arrow.textContent='  → 当前笔记 · '; graph.append(arrow);
-              const link=document.createElement('a'); link.textContent=title; link.href='anki-wikilink://open?title='+encodeURIComponent(title);
+          window.ankiAddWikilinkBacklinks=function(items){
+            if(!items || !items.length) return; const graph=ensureMap();
+            for(const item of items){ const arrow=document.createElement('span'); arrow.textContent='  → 当前笔记 · '; graph.append(arrow);
+              const link=document.createElement('a'); link.textContent=item.label; link.href=item.href;
               link.style.cssText='color:#b9d7ff;text-decoration:underline'; graph.append(link); }
           };
         })();

@@ -5,6 +5,7 @@ package com.ichi2.anki.pages.statistics
 
 import android.graphics.Paint
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -22,12 +23,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.format.TextStyle
-import java.time.temporal.ChronoUnit
 import java.util.Locale
 import kotlin.math.ceil
 
@@ -159,6 +160,7 @@ fun niceCeiling(value: Long): Long {
     firstDayOfWeek: DayOfWeek,
     modifier: Modifier = Modifier,
     todayRing: Color = Color(0xFF43A047),
+    onDayClick: ((LocalDate) -> Unit)? = null,
 ) {
     val emptyColor = MaterialTheme.colorScheme.surfaceVariant
     val density = LocalDensity.current
@@ -166,19 +168,27 @@ fun niceCeiling(value: Long): Long {
     val labelColor = MaterialTheme.colorScheme.onSurfaceVariant
     val today = LocalDate.now()
 
-    val startDate = LocalDate.of(year, 1, 1)
     val endDate = LocalDate.of(year, 12, 31)
-    var firstCell = startDate
-    while (firstCell.dayOfWeek != firstDayOfWeek) {
-        firstCell = firstCell.minusDays(1)
-    }
-    val weeks = (ChronoUnit.DAYS.between(firstCell, endDate) / 7).toInt() + 1
     val maxCount = counts.values.maxOrNull() ?: 0L
 
-    Canvas(modifier = modifier.height(130.dp).fillMaxWidth()) {
-        val labelLane = 3.2f * labelPx
-        val monthLane = 1.8f * labelPx
-        val cell = minOf((size.width - labelLane) / weeks, (size.height - monthLane) / 7f)
+    val tapModifier =
+        if (onDayClick == null) {
+            Modifier
+        } else {
+            Modifier.pointerInput(year, firstDayOfWeek, onDayClick) {
+                detectTapGestures { offset ->
+                    val geometry =
+                        heatmapGeometry(size.width.toFloat(), size.height.toFloat(), year, firstDayOfWeek, labelPx)
+                    heatmapDateAt(offset.x, offset.y, geometry)?.let(onDayClick)
+                }
+            }
+        }
+
+    Canvas(modifier = modifier.then(tapModifier).height(130.dp).fillMaxWidth()) {
+        val geometry = heatmapGeometry(size.width, size.height, year, firstDayOfWeek, labelPx)
+        val labelLane = geometry.labelLane
+        val monthLane = geometry.monthLane
+        val cell = geometry.cell
         val paint =
             Paint().apply {
                 isAntiAlias = true
@@ -198,7 +208,7 @@ fun niceCeiling(value: Long): Long {
             )
         }
         // month labels + cells
-        var date = firstCell
+        var date = geometry.firstCell
         var column = 0
         while (!date.isAfter(endDate)) {
             val x = labelLane + column * cell

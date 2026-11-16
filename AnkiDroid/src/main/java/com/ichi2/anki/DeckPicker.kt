@@ -151,6 +151,7 @@ import com.ichi2.anki.libanki.DeckId
 import com.ichi2.anki.libanki.sched.DeckNode
 import com.ichi2.anki.mediacheck.MediaCheckFragment
 import com.ichi2.anki.observability.ChangeManager
+import com.ichi2.anki.pages.AnkiConnectManager
 import com.ichi2.anki.pages.AnkiPackageImporterFragment
 import com.ichi2.anki.pages.CongratsPage
 import com.ichi2.anki.pages.CongratsPage.Companion.onDeckCompleted
@@ -478,6 +479,7 @@ open class DeckPicker :
         }
 
         super.onCreate(savedInstanceState)
+        AnkiConnectManager.start()
         enableEdgeToEdge(
             statusBarStyle =
                 SystemBarStyle.auto(Color.TRANSPARENT, Color.TRANSPARENT) {
@@ -1441,6 +1443,11 @@ open class DeckPicker :
         // The deck count will be computed on resume. No need to compute it now
         viewModel.loadDeckCounts?.cancel()
         super.onPause()
+    }
+
+    override fun onDestroy() {
+        AnkiConnectManager.stop()
+        super.onDestroy()
     }
 
     /**

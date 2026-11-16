@@ -21,6 +21,7 @@ import com.ichi2.anki.common.storage.CollectionHelper
 import com.ichi2.anki.compat.CompatHelper
 import com.ichi2.anki.exception.StorageAccessException
 import com.ichi2.anki.launchCatchingTask
+import com.ichi2.anki.pages.AnkiConnectManager
 import com.ichi2.anki.provider.CardContentProvider
 import com.ichi2.anki.settings.Prefs
 import com.ichi2.anki.snackbar.showSnackbar
@@ -158,6 +159,18 @@ class AdvancedSettingsFragment : SettingsFragment() {
                     PackageManager.COMPONENT_ENABLED_STATE_DISABLED
                 }
             requireActivity().packageManager.setComponentEnabledSetting(providerName, state, PackageManager.DONT_KILL_APP)
+        }
+
+        // AnkiConnect-compatible local API (port of the foosoft/anki-connect add-on)
+        requirePreference<SwitchPreferenceCompat>(R.string.ankiconnect_enable_key).setOnPreferenceChangeListener { _, enabled ->
+            AnkiConnectManager.onEnabledChanged(enabled == true)
+            true
+        }
+        requirePreference<EditTextPreference>(R.string.ankiconnect_port_key).setOnPreferenceChangeListener { _, newValue ->
+            val port = (newValue as? String)?.toIntOrNull() ?: return@setOnPreferenceChangeListener false
+            if (port !in 1024..65535) return@setOnPreferenceChangeListener false
+            AnkiConnectManager.onPortChanged(port)
+            true
         }
 
         setupNewStudyScreenSettings()
