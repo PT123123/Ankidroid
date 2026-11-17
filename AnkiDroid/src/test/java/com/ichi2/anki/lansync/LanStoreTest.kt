@@ -192,15 +192,19 @@ class LanStoreTest {
     fun `the v2 switches and the schedule default to the safe side`() {
         assertFalse(store.allowPlaintextV1)
         assertFalse(store.keepOnline)
-        assertEquals(LanStore.SCHEDULE_OFF, store.scheduleSeconds)
+        // B22 zero-config: schedule defaults to a fixed 60 s cadence and
+        // auto-pairing defaults on — pairing codes are still available manually.
+        assertEquals(LanStore.SCHEDULE_DEFAULT, store.scheduleSeconds)
+        assertTrue(store.autoPair)
         store.allowPlaintextV1 = true
         store.keepOnline = true
         store.scheduleSeconds = 300
+        store.autoPair = false
         val reopened = freshStore()
         assertTrue(reopened.allowPlaintextV1)
         assertTrue(reopened.keepOnline)
         assertEquals(300, reopened.scheduleSeconds)
-        assertTrue(LanStore.SCHEDULE_PERIODS.containsAll(listOf(10, 300, 1800)))
+        assertFalse(reopened.autoPair)
     }
 
     @Test

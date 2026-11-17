@@ -27,7 +27,6 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -563,20 +562,10 @@ private fun ScheduleCard(
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
-            Row(horizontalArrangement = Arrangement.spacedBy(MaterialTheme.dimensions.space100)) {
-                FilterChip(
-                    selected = scheduleSeconds == 0,
-                    onClick = { onScheduleSelected(0) },
-                    label = { Text(stringResource(R.string.lansync_schedule_off)) },
-                )
-                LanStore.SCHEDULE_PERIODS.forEach { seconds ->
-                    FilterChip(
-                        selected = scheduleSeconds == seconds,
-                        onClick = { onScheduleSelected(seconds) },
-                        label = { Text(if (seconds < 60) "$seconds s" else "${seconds / 60} min") },
-                    )
-                }
-            }
+            Text(
+                text = stringResource(R.string.lansync_schedule_fixed),
+                style = MaterialTheme.typography.bodySmall,
+            )
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.padding(top = MaterialTheme.dimensions.space100),

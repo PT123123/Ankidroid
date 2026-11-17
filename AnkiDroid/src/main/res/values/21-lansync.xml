@@ -66,6 +66,7 @@
 
     <string name="lansync_schedule" translatable="false">Auto-sync</string>
     <string name="lansync_schedule_hint" translatable="false">Also syncs shortly after local edits and when a paired peer comes online.</string>
+    <string name="lansync_schedule_fixed" translatable="false">Auto-sync is always on: every 60 seconds, plus right after local edits.</string>
     <string name="lansync_schedule_off" translatable="false">Off</string>
     <string name="lansync_keep_online" translatable="false">Keep online</string>
     <string name="lansync_keep_online_hint" translatable="false">Keeps serving via a persistent notification after this screen closes. Some phone makers kill background services aggressively - exclude this app from battery optimisation if peers stop finding it.</string>

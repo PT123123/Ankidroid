@@ -14,6 +14,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import org.json.JSONObject
 import timber.log.Timber
 import java.io.IOException
 import java.util.concurrent.ConcurrentHashMap
@@ -97,6 +99,12 @@ object LanSyncManager {
             store.allowPlaintextV1 = value
         }
 
+    var autoPair: Boolean
+        get() = store.autoPair
+        set(value) {
+            store.autoPair = value
+        }
+
     var scheduleSeconds: Int
         get() = store.scheduleSeconds
         set(value) {
@@ -138,12 +146,19 @@ object LanSyncManager {
         val started = startServer() ?: return
         server = started
         started.onRoundNotify = { peerId, peerName -> onPeerNotify(peerId, peerName) }
+        started.onInfoPatch = { infoEnvelopePatch() }
         _selfPort.value = started.listeningPort
         discovery =
             LanDiscovery(context, scope) { ip, port, source, info ->
                 onEndpoint(ip, port, source, info)
             }.also { it.start(started.listeningPort) }
         scheduler.start()
+        scope.launch {
+            while (true) {
+                delay(5_000)
+                autoPairTick()
+            }
+        }
         _serving.value = true
         addressJob =
             scope.launch {
@@ -223,6 +238,99 @@ object LanSyncManager {
     fun openLocalPairing(): LanPairSession = store.pairing.beginLocal()
 
     fun activePairingSession(): LanPairSession? = store.pairing.activeSession()
+
+    /**
+     * Zero-config auto-pairing (B22): keeps a live pairing session standing at
+     * all times and answers `/info` with its ticket; when a peer that also
+     * advertises autopair shows up unpaired, the lexicographically smaller
+     * device id drives the handshake — no human code anywhere. The security
+     * code is still computed on both ends and logged for post-hoc comparison.
+     */
+    fun autoPairTick() {
+        if (!store.autoPair) return
+        ensureLocalPairing()
+        val peer =
+            store.devices.value.firstOrNull { candidate ->
+                !candidate.paired &&
+                    !store.isSelf(candidate.id) &&
+                    store.isOnline(candidate.id) &&
+                    candidate.id < store.deviceId // single deterministic initiator
+            } ?: return
+        val now = System.currentTimeMillis()
+        if (now < (autoPairRetryAt[peer.id] ?: 0L)) return
+        autoPairRetryAt[peer.id] = now + AUTO_PAIR_COOLDOWN_MS
+        scope.launch {
+            try {
+                val info = fetchPeerInfo(peer.ip, peer.port) ?: return@launch
+                if (!info.optBoolean("autopair", false)) return@launch
+                val ticketText = info.optString("pair_ticket").ifBlank { return@launch }
+                val ticket = LanPairQr.decode(ticketText)
+                if (ticket.deviceId != peer.id || ticket.pairCode.isBlank()) return@launch
+                pairWithTicket(ticket)
+                autoPairRetryAt.remove(peer.id)
+                Timber.i("autopair with %s done", peer.id)
+            } catch (error: Exception) {
+                Timber.w(error, "autopair with %s failed", peer.id)
+            }
+        }
+    }
+
+    /** GET /info of a peer (autopair probe), parsed as a generic JSON object. */
+    private suspend fun fetchPeerInfo(
+        ip: String,
+        port: Int,
+    ): JSONObject? {
+        return withContext(Dispatchers.IO) {
+            runCatching {
+                val request =
+                    okhttp3.Request
+                        .Builder()
+                        .url("http://$ip:$port/info")
+                        .header(LanProtocol.REQUEST_HEADER, LanProtocol.REQUEST_HEADER_VALUE)
+                        .get()
+                        .build()
+                okhttp3.OkHttpClient
+                    .Builder()
+                    .connectTimeout(3, java.util.concurrent.TimeUnit.SECONDS)
+                    .readTimeout(5, java.util.concurrent.TimeUnit.SECONDS)
+                    .build()
+                    .newCall(request)
+                    .execute()
+                    .use { response ->
+                        if (!response.isSuccessful) return@use null
+                        val bodyText = response.body.string()
+                        JSONObject(bodyText)
+                    }
+            }.getOrNull()
+        }
+    }
+
+    fun ensureLocalPairing(): LanPairSession {
+        val live = activePairingSession()
+        if (live != null && live.isLiveAt(System.currentTimeMillis())) return live
+        return openLocalPairing()
+    }
+
+    /** Adds `autopair` + `pair_ticket` to the /info payload when a live session exists. */
+    fun infoEnvelopePatch(): Pair<Boolean, String?> {
+        if (!store.autoPair) return false to null
+        val session = ensureLocalPairing()
+        val host = _selfAddress.value ?: return true to null
+        val ticket =
+            LanPairQr.encode(
+                deviceId = store.deviceId,
+                name = store.deviceName,
+                kind = "android",
+                host = host,
+                port = _selfPort.value,
+                pairCode = session.pairCode,
+            )
+        return true to ticket
+    }
+
+    private val autoPairRetryAt = ConcurrentHashMap<String, Long>()
+
+    private const val AUTO_PAIR_COOLDOWN_MS = 60_000L
 
     /**
      * The pairing QR text (SPEC-v2 §4.7) for the current local session: this device's

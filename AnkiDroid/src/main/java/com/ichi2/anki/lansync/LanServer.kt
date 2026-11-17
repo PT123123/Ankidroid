@@ -45,6 +45,9 @@ class LanSyncServer(
     /** Called when a peer notifies it has changes; the manager schedules a pull round. */
     var onRoundNotify: ((peerId: String, peerName: String) -> Unit)? = null
 
+    /** B22: returns (autopair, pair_ticket) for /info, evaluated per request. */
+    var onInfoPatch: (() -> Pair<Boolean, String?>)? = null
+
     /** Replays are remembered across the whole server lifetime, not per request. */
     private val replayWindow = LanReplayWindow()
 
@@ -653,9 +656,11 @@ class LanSyncServer(
         val store = LanStore.instance
         val speaksV2 = session.header(LanProtocol.REQUEST_HEADER) == LanProtocol.REQUEST_HEADER_VALUE
         val info = store.selfInfo(listeningPort)
+        val (autoPair, pairTicket) = onInfoPatch?.invoke() ?: (false to null)
+        val patched = info.copy(autopair = autoPair, pairTicket = pairTicket)
         val body =
             if (speaksV2) {
-                LanProtocol.json.encodeToString(LanPeerInfo.serializer(), info)
+                LanProtocol.json.encodeToString(LanPeerInfo.serializer(), patched)
             } else {
                 LanProtocol.json.encodeToString(LanPeerInfoV1.serializer(), info.asV1(store.appVersion))
             }

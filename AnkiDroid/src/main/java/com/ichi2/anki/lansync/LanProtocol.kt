@@ -167,6 +167,10 @@ data class LanPeerInfo(
     @SerialName("hub_port") val hubPort: Int = 0,
     /** Profile this device would read/write; import must not silently land elsewhere (§7). */
     val profile: String = "",
+    /** B22 zero-config autopair: this device pairs with peers that also advertise it. */
+    val autopair: Boolean = false,
+    /** The standing pairing ticket (§4.7 text) while autopair is on; null otherwise. */
+    @SerialName("pair_ticket") val pairTicket: String? = null,
 )
 
 /**

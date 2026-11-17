@@ -102,9 +102,18 @@ class LanStore internal constructor(
 
     /** Auto-sync period in seconds: one of 10/300/1800 (SPEC-v2 §8). */
     var scheduleSeconds: Int
-        get() = prefs.getInt(KEY_SCHEDULE_SECONDS, SCHEDULE_OFF)
+        get() = prefs.getInt(KEY_SCHEDULE_SECONDS, SCHEDULE_DEFAULT)
         set(value) {
             prefs.edit { putInt(KEY_SCHEDULE_SECONDS, value) }
+        }
+
+    /** Zero-config auto-pairing (B22): any peer that also advertises autopair
+     *  pairs with this device without a human-entered code. Default on — the
+     *  whole point of this mode is "no hands". */
+    var autoPair: Boolean
+        get() = prefs.getBoolean(KEY_AUTO_PAIR, true)
+        set(value) {
+            prefs.edit { putBoolean(KEY_AUTO_PAIR, value) }
         }
 
     /** Version name advertised to peers, cached in prefs because the lookup is not free. */
@@ -433,12 +442,16 @@ class LanStore internal constructor(
         private const val KEY_ALLOW_V1 = "lanAllowPlaintextV1"
         private const val KEY_KEEP_ONLINE = "lanKeepOnline"
         private const val KEY_SCHEDULE_SECONDS = "lanScheduleSeconds"
+        const val KEY_AUTO_PAIR = "lanAutoPair"
         private const val KEY_MIGRATED = "lanMigratedToV2"
         private const val MAX_LOG_ENTRIES = 200
         private const val MAX_ROUND_DETAILS = 200
 
         /** [scheduleSeconds] value meaning "no auto-sync". */
         const val SCHEDULE_OFF = 0
+
+        /** Zero-config default (B22): fixed 60 s cadence, no tier UI. */
+        const val SCHEDULE_DEFAULT = 60
 
         /** The three allowed periods (SPEC-v2 §8). */
         val SCHEDULE_PERIODS = listOf(10, 300, 1800)
