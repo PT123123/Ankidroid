@@ -884,9 +884,12 @@ class ReviewerFragment :
     private fun setupCardInfo() {
         viewModel.cardInfoFlow
             .flowWithLifecycle(lifecycle)
-            .collectLatestIn(lifecycleScope) { card ->
-                binding.reviewCardInfo.isVisible = card != null
-                binding.reviewCardInfo.text = card?.let { ReviewCardInfo.text(it) }
+            .collectLatestIn(lifecycleScope) { info ->
+                binding.reviewCardInfo.isVisible = info != null
+                binding.reviewCardInfo.text =
+                    info?.let {
+                        ReviewCardInfo.text(it, getString(R.string.review_recent_ratings), getString(R.string.review_eta))
+                    }
             }
     }
 

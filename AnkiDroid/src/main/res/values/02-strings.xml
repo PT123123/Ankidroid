@@ -244,6 +244,7 @@
     <string name="format_insert_bold">Format as bold</string>
     <string name="format_insert_italic">Format as italic</string>
     <string name="format_insert_underline">Format as underline</string>
+    <string name="format_insert_highlight">Format as highlight</string>
     <string name="insert_horizontal_line">Insert horizontal line</string>
     <string name="insert_heading">Insert heading</string>
     <string name="format_font_size">Change font size</string>
@@ -463,5 +464,11 @@ opening the system text to speech settings fails">Failed to open text to speech 
     <string name="insert_card_link" comment="Note editor toolbar button inserting a link to another card">Insert card link</string>
     <string name="card_link_search_hint" comment="Hint of the search field in the card link picker">Search cards…</string>
     <string name="card_link_no_results" comment="Shown when the card link picker search finds nothing">No matching cards</string>
+
+    <!-- Speed focus / recent ratings (add-on ports) -->
+    <string name="review_recent_ratings" comment="Prefix of the recent-ratings list in the reviewer bottom info strip">Recent</string>
+    <string name="review_eta" comment="Estimated time left in the review queue; %1$s is a compact duration like 5s or 2.3m">%1$s left (est.)</string>
+    <string name="auto_advance_title" comment="Deck options section title for timed auto reveal/answer">Auto advance (speed focus)</string>
+    <string name="auto_advance_hint" comment="Deck options hint explaining the auto advance seconds fields">Seconds before the action runs; 0 disables that side.</string>
 </resources>
 

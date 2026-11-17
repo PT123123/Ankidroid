@@ -28,6 +28,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
@@ -40,6 +41,7 @@ import com.ichi2.anki.CollectionManager
 import com.ichi2.anki.CollectionManager.TR
 import com.ichi2.anki.CollectionManager.withCol
 import com.ichi2.anki.ProgressContext
+import com.ichi2.anki.R
 import com.ichi2.anki.libanki.updateDeckConfigsRaw
 import com.ichi2.anki.observability.undoableOp
 import com.ichi2.anki.pages.statistics.StatsCard
@@ -185,6 +187,16 @@ class DeckOptionsViewModel : ViewModel() {
 
     fun setMinimumInterval(days: Int) = updateConfig { it.minimumLapseInterval = days }
 
+    fun setSecondsToShowQuestion(seconds: Int) = updateConfig { it.secondsToShowQuestion = seconds.toFloat() }
+
+    fun setSecondsToShowAnswer(seconds: Int) = updateConfig { it.secondsToShowAnswer = seconds.toFloat() }
+
+    fun setQuestionAction(action: DeckConfig.Config.QuestionAction) = updateConfig { it.questionAction = action }
+
+    fun setAnswerAction(action: DeckConfig.Config.AnswerAction) = updateConfig { it.answerAction = action }
+
+    fun setWaitForAudio(wait: Boolean) = updateConfig { it.waitForAudio = wait }
+
     fun save(onSaved: () -> Unit) {
         val current = _state.value
         if (current.saving || !current.dirty || current.deckId == 0L) return
@@ -306,6 +318,43 @@ fun DeckOptionsScreen(
                 }
                 StatsCard(title = TR.deckConfigDesiredRetention()) {
                     PercentRow(TR.deckConfigDesiredRetention(), config.desiredRetention * 100) { viewModel.setDesiredRetention(it) }
+                }
+                StatsCard(title = stringResource(R.string.auto_advance_title)) {
+                    Text(
+                        stringResource(R.string.auto_advance_hint),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    NumberRow(TR.deckConfigSecondsToShowQuestion(), config.secondsToShowQuestion.toInt()) {
+                        viewModel.setSecondsToShowQuestion(it)
+                    }
+                    DropdownRow(
+                        label = TR.deckConfigQuestionAction().trim(),
+                        items =
+                            listOf(
+                                DeckConfig.Config.QuestionAction.QUESTION_ACTION_SHOW_ANSWER to TR.deckConfigQuestionActionShowAnswer(),
+                                DeckConfig.Config.QuestionAction.QUESTION_ACTION_SHOW_REMINDER to TR.deckConfigQuestionActionShowReminder(),
+                            ),
+                        selected = config.questionAction,
+                        onSelect = { viewModel.setQuestionAction(it) },
+                    )
+                    NumberRow(TR.deckConfigSecondsToShowAnswer(), config.secondsToShowAnswer.toInt()) {
+                        viewModel.setSecondsToShowAnswer(it)
+                    }
+                    DropdownRow(
+                        label = TR.deckConfigAnswerAction(),
+                        items =
+                            listOf(
+                                DeckConfig.Config.AnswerAction.ANSWER_ACTION_BURY_CARD to TR.studyingBuryCard(),
+                                DeckConfig.Config.AnswerAction.ANSWER_ACTION_ANSWER_AGAIN to TR.studyingAgain(),
+                                DeckConfig.Config.AnswerAction.ANSWER_ACTION_ANSWER_GOOD to TR.studyingGood(),
+                                DeckConfig.Config.AnswerAction.ANSWER_ACTION_ANSWER_HARD to TR.studyingHard(),
+                                DeckConfig.Config.AnswerAction.ANSWER_ACTION_SHOW_REMINDER to TR.deckConfigQuestionActionShowReminder(),
+                            ),
+                        selected = config.answerAction,
+                        onSelect = { viewModel.setAnswerAction(it) },
+                    )
+                    SwitchRow(TR.deckConfigWaitForAudio(), config.waitForAudio) { viewModel.setWaitForAudio(it) }
                 }
                 FilledTonalButton(
                     onClick = { viewModel.save(onSaved) },

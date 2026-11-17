@@ -220,6 +220,7 @@
     <string name="format_insert_bold">粗体格式</string>
     <string name="format_insert_italic">斜体格式</string>
     <string name="format_insert_underline">下划线格式</string>
+    <string name="format_insert_highlight">高亮格式</string>
     <string name="insert_horizontal_line">插入水平线</string>
     <string name="insert_heading">插入标题</string>
     <string name="format_font_size">更改字号</string>
@@ -374,4 +375,9 @@
     <string name="insert_card_link" comment="Note editor toolbar button inserting a link to another card">插入卡片链接</string>
     <string name="card_link_search_hint" comment="Hint of the search field in the card link picker">搜索卡片…</string>
     <string name="card_link_no_results" comment="Shown when the card link picker search finds nothing">没有匹配的卡片</string>
+    <!-- Speed focus / recent ratings (add-on ports) -->
+    <string name="review_recent_ratings" comment="Prefix of the recent-ratings list in the reviewer bottom info strip">最近</string>
+    <string name="review_eta" comment="Estimated time left in the review queue; %1$s is a compact duration like 5s or 2.3m">预计还需 %1$s</string>
+    <string name="auto_advance_title" comment="Deck options section title for timed auto reveal/answer">自动推进（限时专注）</string>
+    <string name="auto_advance_hint" comment="Deck options hint explaining the auto advance seconds fields">到时自动执行动作；填 0 关闭该侧。</string>
 </resources>

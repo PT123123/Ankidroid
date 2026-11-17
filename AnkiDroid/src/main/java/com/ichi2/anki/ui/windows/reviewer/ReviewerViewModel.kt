@@ -98,7 +98,7 @@ class ReviewerViewModel(
     val undoLabelFlow = MutableStateFlow<String?>(null)
     val redoLabelFlow = MutableStateFlow<String?>(null)
     val countsFlow = savedStateHandle.getMutableStateFlow(KEY_COUNTS, StudyCounts())
-    val cardInfoFlow = MutableStateFlow<Card?>(null)
+    val cardInfoFlow = MutableStateFlow<ReviewCardInfo.Data?>(null)
     val copyCardLinkFlow = MutableSharedFlow<String>()
     val typeAnswerFlow = MutableStateFlow<TypeAnswer?>(null)
     val onTypedAnswerResultFlow = MutableSharedFlow<CompletableDeferred<String>>()
@@ -651,7 +651,9 @@ class ReviewerViewModel(
         canBuryNoteFlow.emit(isBuryNoteAvailable(card))
         canSuspendNoteFlow.emit(isSuspendNoteAvailable(card))
         countsFlow.emit(StudyCounts(state))
-        cardInfoFlow.emit(card)
+        val revlog = withCol { cardStatsData(card.id).revlogList }
+        val remaining = state.counts.new + state.counts.lrn + state.counts.rev
+        cardInfoFlow.emit(ReviewCardInfo.Data(card, revlog, remaining))
     }
 
     override suspend fun typeAnsFilter(text: String): String {
