@@ -891,6 +891,43 @@ class ReviewerFragment :
                         ReviewCardInfo.text(it, getString(R.string.review_recent_ratings), getString(R.string.review_eta))
                     }
             }
+
+        // B28 · optional clickable note tags. Mirrors the desktop chip row:
+        // a tag tap opens the browser filtered by a quoted tag search.
+        lifecycleScope.launch {
+            viewModel.cardInfoFlow
+                .flowWithLifecycle(lifecycle)
+                .collectLatestIn(lifecycleScope) { info ->
+                    val tags = info?.tags.orEmpty()
+                    if (tags.isEmpty()) {
+                        binding.reviewCardTags.isVisible = false
+                        return@collectLatestIn
+                    }
+                    val spannable = android.text.SpannableString(tags.joinToString("  "))
+                    var offset = 0
+                    for (tag in tags) {
+                        val query =
+                            com.ichi2.anki.addons.AddonTools
+                                .tagSearchQuery(tag)
+                        spannable.setSpan(
+                            object : android.text.style.ClickableSpan() {
+                                override fun onClick(widget: android.view.View) {
+                                    startActivity(BrowserDestination.Search(query, allDecks = true).toIntent(requireContext()))
+                                }
+                            },
+                            offset,
+                            offset + tag.length,
+                            android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE,
+                        )
+                        offset += tag.length + 2
+                    }
+                    binding.reviewCardTags.text = spannable
+                    binding.reviewCardTags.movementMethod =
+                        android.text.method.LinkMovementMethod
+                            .getInstance()
+                    binding.reviewCardTags.isVisible = true
+                }
+        }
     }
 
     private fun setupMenu() {

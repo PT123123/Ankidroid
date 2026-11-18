@@ -24,6 +24,7 @@ object ReviewCardInfo {
         val card: Card,
         val revlog: List<CardStatsResponse.StatsRevlogEntry>,
         val remaining: Int = 0,
+        val tags: List<String> = emptyList(),
     )
 
     fun text(card: Card): String {

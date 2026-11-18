@@ -651,9 +651,12 @@ class ReviewerViewModel(
         canBuryNoteFlow.emit(isBuryNoteAvailable(card))
         canSuspendNoteFlow.emit(isSuspendNoteAvailable(card))
         countsFlow.emit(StudyCounts(state))
-        val revlog = withCol { cardStatsData(card.id).revlogList }
+        val (revlog, tags) =
+            withCol {
+                cardStatsData(card.id).revlogList to card.note(this).tags.filter { it.isNotBlank() }
+            }
         val remaining = state.counts.new + state.counts.lrn + state.counts.rev
-        cardInfoFlow.emit(ReviewCardInfo.Data(card, revlog, remaining))
+        cardInfoFlow.emit(ReviewCardInfo.Data(card, revlog, remaining, tags))
     }
 
     override suspend fun typeAnsFilter(text: String): String {
