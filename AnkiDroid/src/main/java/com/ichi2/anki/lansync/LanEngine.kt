@@ -9,6 +9,7 @@ import anki.import_export.exportLimit
 import anki.import_export.importAnkiPackageOptions
 import com.ichi2.anki.CollectionManager.withCol
 import com.ichi2.anki.common.android.appContext
+import com.ichi2.anki.common.storage.CollectionHelper.getMediaDirectory
 import com.ichi2.anki.libanki.exportAnkiPackage
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -120,8 +121,15 @@ object LanEngine {
         }
     }
 
-    /** Exports the whole collection and returns the file to hand over to a peer. */
-    suspend fun exportPackage(peer: String): File =
+    /**
+     * Exports the collection and returns the file to hand over to a peer.
+     * B22 media heuristic: routine rounds pass `withMedia = false` — the peer
+     * already has the media, so the package is the collection alone (~17 MB).
+     */
+    suspend fun exportPackage(
+        peer: String,
+        withMedia: Boolean = true,
+    ): File =
         exclusive {
             _progress.value = LanProgress(peer, LanStep.EXPORTING)
             outgoing.delete()
@@ -132,7 +140,7 @@ object LanEngine {
                         exportAnkiPackageOptions {
                             withScheduling = true
                             withDeckConfigs = true
-                            withMedia = true
+                            this.withMedia = withMedia
                             legacy = false
                         },
                     limit = exportLimit { wholeCollection = anki.generic.Empty.getDefaultInstance() },
@@ -143,6 +151,32 @@ object LanEngine {
             }
             outgoing
         }
+
+    // ---- B22 media heuristic (mirror of the desktop's lansync_node.cpp) ----
+
+    /** Signature (file count, total bytes) of the media folder at the last successful with-media push. */
+    private var mediaPushedSnapshot: Pair<Long, Long>? = null
+
+    /** Cheap change signature for the media folder: a flat file count + total bytes walk. */
+    private fun mediaSignature(): Pair<Long, Long>? =
+        runCatching {
+            var files = 0L
+            var bytes = 0L
+            getMediaDirectory(appContext).listFiles()?.forEach { file ->
+                if (file.isFile) {
+                    files += 1
+                    bytes += file.length()
+                }
+            }
+            files to bytes
+        }.getOrNull()
+
+    /** Media must ride along when we never pushed it here, or the folder moved since we did. */
+    private fun mediaChangedSincePush(): Boolean {
+        val signature = mediaSignature() ?: return true // cannot scan → play safe, include media
+        val snapshot = mediaPushedSnapshot ?: return true // no with-media push in this process yet
+        return signature != snapshot
+    }
 
     /** Merges a received package into the open collection. */
     suspend fun importPackage(
@@ -308,7 +342,12 @@ object LanEngine {
         val started = lanNow()
         return runCatching {
             val (kid, secret) = requireOutbound(device)
-            val file = exportPackage(device.name)
+            // B22 media heuristic: the peer never synced with us, or the media
+            // folder moved since our last with-media push → carry media; routine
+            // rounds carry the collection alone.
+            val withMedia = device.lastSyncAt == 0L || mediaChangedSincePush()
+            val signatureAtExport = if (withMedia) mediaSignature() else null
+            val file = exportPackage(device.name, withMedia)
             _progress.value = LanProgress(device.name, LanStep.SENDING)
             val meta =
                 LanProtocol.json.encodeToString(
@@ -316,6 +355,9 @@ object LanEngine {
                     ImportMeta(profile = LanStore.instance.activeProfileName, bytes = file.length()),
                 )
             postPackage(device, "apkg/import", meta, kid, secret, file)
+            if (signatureAtExport != null) {
+                mediaPushedSnapshot = signatureAtExport // peer has the media as of this signature
+            }
             log(device, LanDirection.PUSH, LanResult.OK, file.length(), started, "")
         }.getOrElse { error ->
             Timber.w(error, "LAN v2 push to %s failed", device.name)

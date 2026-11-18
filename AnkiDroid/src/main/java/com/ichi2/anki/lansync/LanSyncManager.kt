@@ -153,6 +153,8 @@ object LanSyncManager {
                 onEndpoint(ip, port, source, info)
             }.also { it.start(started.listeningPort) }
         scheduler.start()
+        com.ichi2.anki.observability.ChangeManager
+            .subscribe(changeSubscriber)
         scope.launch {
             while (true) {
                 delay(5_000)
@@ -200,19 +202,38 @@ object LanSyncManager {
         return null
     }
 
-    /** Runs one round, swallowing (but logging) failures so callers stay fire-and-forget safe. */
-    private suspend fun runRoundGuarded(device: LanDevice): LanRoundResult? =
-        runCatching { LanEngine.round(device) }
-            .onFailure { Timber.d(it, "round with %s refused", device.name) }
-            .getOrNull()
+    /** Runs one round, swallowing (but logging) failures so callers stay fire-and-forget safe.
+     *  B22 event-driven: automatic rounds are skipped for peers with nothing pending — a clean
+     *  peer would mean a full-collection export + 900 MB transfer for nothing. */
+    private suspend fun runRoundGuarded(device: LanDevice): LanRoundResult? {
+        val due = pushDirty.remove(device.id) == true || pullDue.remove(device.id) == true
+        if (!due) {
+            Timber.d("LAN round skipped for %s: nothing pending", device.id)
+            return null
+        }
+        return runRoundUngated(device)
+    }
 
-    suspend fun sync(device: LanDevice): LanRoundResult = LanEngine.round(device)
-
-    /** Syncs every peer currently answering *and usable*, one at a time (SPEC-v2 §6.3). */
+    /** Manual round ("sync now"): never gated by pending flags; consumes them so the next
+     *  automatic round does not redo a transfer the user just did by hand. */
     suspend fun syncAll(): List<LanRoundResult> =
         devices.value
             .filter { store.isOnline(it.id) && LanEngine.selectMode(it) != null }
-            .mapNotNull { runRoundGuarded(it) }
+            .mapNotNull { runRoundUngated(it) }
+
+    private suspend fun runRoundUngated(device: LanDevice): LanRoundResult? {
+        val result =
+            runCatching { LanEngine.round(device) }
+                .onFailure { Timber.d(it, "round with %s refused", device.name) }
+                .getOrNull()
+        if (result == null || !result.ok) {
+            // the round did not deliver everything: keep the local work pending for the next trigger
+            pushDirty[device.id] = true
+        }
+        return result
+    }
+
+    suspend fun sync(device: LanDevice): LanRoundResult = LanEngine.round(device)
 
     // region pairing
 
@@ -330,6 +351,29 @@ object LanSyncManager {
 
     private val autoPairRetryAt = ConcurrentHashMap<String, Long>()
 
+    /** B22 event-driven sync: per-peer pending work. Push = local changes not yet delivered;
+     *  pull = the peer announced changes (round/notify) or came online after being offline. */
+    private val pushDirty = ConcurrentHashMap<String, Boolean>()
+    private val pullDue = ConcurrentHashMap<String, Boolean>()
+
+    /** ChangeManager hook: ANY collection op (review/edit/add/import) marks every paired peer
+     *  dirty and schedules a debounced round. This is what makes reviews propagate within
+     *  seconds without a blind polling cadence. */
+    private val changeSubscriber =
+        object : com.ichi2.anki.observability.ChangeManager.Subscriber {
+            override fun opExecuted(
+                changes: anki.collection.OpChanges,
+                handler: Any?,
+            ) {
+                if (_serving.value) {
+                    store.devices.value
+                        .filter { it.paired }
+                        .forEach { pushDirty[it.id] = true }
+                    scheduler.noteLocalWrite()
+                }
+            }
+        }
+
     private const val AUTO_PAIR_COOLDOWN_MS = 60_000L
 
     /**
@@ -403,6 +447,7 @@ object LanSyncManager {
         lastNotifyHandled[peerId] = now
         val device = store.devices.value.firstOrNull { it.id == peerId } ?: return
         Timber.i("LAN sync: %s notifies changes, pulling", peerName.ifBlank { device.name })
+        pullDue[device.id] = true
         scope.launch { runRoundGuarded(device) }
     }
 
