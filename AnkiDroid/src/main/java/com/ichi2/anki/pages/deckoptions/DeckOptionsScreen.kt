@@ -25,9 +25,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
@@ -42,6 +44,12 @@ import com.ichi2.anki.CollectionManager.TR
 import com.ichi2.anki.CollectionManager.withCol
 import com.ichi2.anki.ProgressContext
 import com.ichi2.anki.R
+import com.ichi2.anki.addons.AddonTools
+import com.ichi2.anki.addons.CornerReviewReceiver
+import com.ichi2.anki.addons.ExamPlanner
+import com.ichi2.anki.addons.FsrsTools
+import com.ichi2.anki.addons.TtsBatch
+import com.ichi2.anki.common.storage.CollectionHelper
 import com.ichi2.anki.libanki.updateDeckConfigsRaw
 import com.ichi2.anki.observability.undoableOp
 import com.ichi2.anki.pages.statistics.StatsCard
@@ -52,7 +60,11 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.withContext
 import timber.log.Timber
+import java.util.Locale
+import kotlin.coroutines.resume
 
 /** One entry of the preset dropdown. */
 data class DeckPresetItem(
@@ -363,7 +375,163 @@ fun DeckOptionsScreen(
                 ) {
                     Text(TR.deckConfigSaveButton())
                 }
+                AddonToolsCard(state.deckId, state.deckName)
             }
+        }
+    }
+}
+
+/** TextToSpeech must be created on a Looper thread; wait for its init callback. */
+private suspend fun createTts(context: android.content.Context): android.speech.tts.TextToSpeech? =
+    suspendCancellableCoroutine { cont ->
+        var engine: android.speech.tts.TextToSpeech? = null
+        try {
+            engine =
+                android.speech.tts.TextToSpeech(context.applicationContext) { status ->
+                    if (cont.isActive) {
+                        cont.resume(if (status == android.speech.tts.TextToSpeech.SUCCESS) engine else null)
+                    }
+                }
+        } catch (e: Exception) {
+            if (cont.isActive) cont.resume(null)
+        }
+        cont.invokeOnCancellation { engine?.shutdown() }
+    }
+
+/** B24/B26: user-reachable entry points for the ported add-on actions. */
+@Composable
+private fun AddonToolsCard(
+    deckId: Long,
+    deckName: String,
+) {
+    val scope = rememberCoroutineScope()
+    var offset by remember { mutableStateOf("+3") }
+    var examDays by remember { mutableStateOf("14") }
+    var examNew by remember { mutableStateOf("100") }
+    var status by remember { mutableStateOf("") }
+    var ttsStatus by remember { mutableStateOf("") }
+    var cornerOn by remember { mutableStateOf(false) }
+    val context = LocalContext.current
+
+    StatsCard(title = "插件工具 · 语音 / FSRS / 考试计划") {
+        FilledTonalButton(
+            onClick = {
+                scope.launch {
+                    val engine = createTts(context)
+                    if (engine == null) {
+                        ttsStatus = "TTS 引擎不可用"
+                        return@launch
+                    }
+                    ttsStatus = "正在合成…"
+                    val generated =
+                        withContext(Dispatchers.IO) {
+                            val noteIds = withCol { findNotes("deck:\"$deckName\"") }
+                            val mediaDir = CollectionHelper.getMediaDirectory(context)
+                            TtsBatch.generate(
+                                noteIds = noteIds,
+                                fieldIndex = 0,
+                                locale = Locale.getDefault(),
+                                mediaDir = mediaDir,
+                                synthesizer = TtsBatch.AndroidSynthesizer(engine),
+                            )
+                        }
+                    engine.shutdown()
+                    ttsStatus = "已写入 ${generated.updatedNotes} 个语音；失败 ${generated.failures.size}"
+                }
+            },
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            Text("批量生成语音（本牌组第一字段）")
+        }
+        if (ttsStatus.isNotBlank()) {
+            Text(ttsStatus, style = MaterialTheme.typography.bodySmall)
+        }
+        FilledTonalButton(
+            onClick = {
+                cornerOn = !cornerOn
+                if (cornerOn) {
+                    CornerReviewReceiver.schedule(context.applicationContext, 10)
+                } else {
+                    CornerReviewReceiver.cancel(context.applicationContext)
+                }
+            },
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            Text(if (cornerOn) "关闭速记复习提醒" else "开启速记复习提醒（每 10 分钟）")
+        }
+        OutlinedTextField(
+            value = offset,
+            onValueChange = { offset = it },
+            label = { Text("到期偏移，如 +3 / -1") },
+            singleLine = true,
+            modifier = Modifier.fillMaxWidth(),
+        )
+        FilledTonalButton(
+            onClick = {
+                scope.launch(Dispatchers.IO) {
+                    val cards =
+                        runCatching { withCol { findCards("deck:\"$deckName\"") } }
+                            .getOrElse {
+                                status = "搜索失败：${it.message}"
+                                return@launch
+                            }
+                    val result = FsrsTools.shiftDue(cards, offset)
+                    status =
+                        if (result.isSuccess) {
+                            "已调整 ${result.getOrDefault(0)} 张卡"
+                        } else {
+                            "失败：${result.exceptionOrNull()?.message}"
+                        }
+                }
+            },
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            Text("调整本牌组到期日")
+        }
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            OutlinedTextField(
+                value = examDays,
+                onValueChange = { examDays = it },
+                label = { Text("距考试天数") },
+                singleLine = true,
+                modifier = Modifier.weight(1f),
+            )
+            OutlinedTextField(
+                value = examNew,
+                onValueChange = { examNew = it },
+                label = { Text("待学新卡") },
+                singleLine = true,
+                modifier = Modifier.weight(1f),
+            )
+        }
+        FilledTonalButton(
+            onClick = {
+                scope.launch(Dispatchers.IO) {
+                    val plan =
+                        AddonTools.examPlan(
+                            examNew.toIntOrNull() ?: 100,
+                            examDays.toIntOrNull() ?: 14,
+                            7,
+                        )
+                    if (!plan.viable) {
+                        status = "计划不可行"
+                        return@launch
+                    }
+                    val result = ExamPlanner.applyDailyNew(deckId, plan.dailyNew)
+                    status =
+                        if (result.isSuccess) {
+                            "每日新卡已设为 ${plan.dailyNew}"
+                        } else {
+                            "失败：${result.exceptionOrNull()?.message}"
+                        }
+                }
+            },
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            Text("按考试日期设置每日新卡")
+        }
+        if (status.isNotBlank()) {
+            Text(status, style = MaterialTheme.typography.bodySmall)
         }
     }
 }

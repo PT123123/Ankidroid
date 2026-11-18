@@ -14,18 +14,32 @@ import timber.log.Timber
  * Ctrl-Z restores the whole batch; the decisions themselves live in AddonTools.
  */
 object FsrsTools {
-    /** Shift every card's due by a relative offset ("+3d", "-1w", "10"). */
+    /**
+     * Resolves a relative offset against a card's current due into the ABSOLUTE
+     * day spec rslib expects (`"N"`, `"N-M"`, `"N!"`). Relative "+3d" strings
+     * are rejected by rslib's parse_due_date_str at runtime — never send them.
+     * Returns null on an unparseable offset.
+     */
+    fun absoluteDue(
+        currentDue: Int,
+        offset: String,
+    ): Int? {
+        val delta = AddonTools.parseDueOffset(offset) ?: return null
+        return maxOf(1, currentDue + delta)
+    }
+
+    /** Shift every card's due by a relative offset ("+3", "-1", "10"). */
     suspend fun shiftDue(
         cardIds: List<CardId>,
         offset: String,
     ): Result<Int> =
         runCatching {
-            val days =
-                AddonTools.parseDueOffset(offset)?.let {
-                    if (offset.trim().matches(Regex("^[+-]?\\d+$"))) "$it" else "${if (it >= 0) "+" else ""}${it}d"
-                } ?: throw IllegalArgumentException("invalid offset: $offset")
+            require(absoluteDue(0, offset) != null) { "invalid offset: $offset" }
             undoableOp {
-                sched.setDueDate(cardIds, SetDueDateDays(days))
+                for (cid in cardIds) {
+                    val absolute = absoluteDue(getCard(cid).due, offset)!!
+                    sched.setDueDate(listOf(cid), SetDueDateDays("$absolute"))
+                }
             }
             cardIds.size
         }.onFailure { Timber.w(it, "FSRS shiftDue failed") }
@@ -44,11 +58,15 @@ object FsrsTools {
             val plan = AddonTools.loadBalancePlan(cardIds.size, days)
             require(plan.isNotEmpty())
             var cursor = 0
-            plan.forEachIndexed { bucket, count ->
-                if (count == 0) return@forEachIndexed
-                val slice = cardIds.subList(cursor, cursor + count)
-                undoableOp { sched.setDueDate(slice, SetDueDateDays("+$bucket")) }
-                cursor += count
+            undoableOp {
+                plan.forEachIndexed { bucket, count ->
+                    if (count == 0) return@forEachIndexed
+                    val slice = cardIds.subList(cursor, cursor + count)
+                    cursor += count
+                    // Bucket 0 would be today; spread over the coming days so
+                    // nothing lands retroactively. Absolute "N" is required.
+                    sched.setDueDate(slice, SetDueDateDays("${bucket + 1}"))
+                }
             }
             plan
         }.onFailure { Timber.w(it, "FSRS loadBalance failed") }

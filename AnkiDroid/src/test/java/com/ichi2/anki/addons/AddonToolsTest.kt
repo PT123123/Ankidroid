@@ -5,6 +5,7 @@ package com.ichi2.anki.addons
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -83,6 +84,19 @@ class AddonToolsTest {
         // a long interval is clipped to the remaining active window (2-hour policy)
         val longPolicy = policy.copy(intervalMin = 120)
         assertEquals(60, CornerReview.nextFireInMinutes(longPolicy, 20, 5, false))
+    }
+
+    @Test
+    fun fsrsDueSpecIsAbsoluteNeverRelative() {
+        // rslib's parse_due_date_str accepts only "N"/"N-M"/"N!";
+        // a "+3d" string would throw at runtime even though parseDueOffset
+        // happily reads it as input.
+        assertEquals(8, FsrsTools.absoluteDue(5, "+3"))
+        assertEquals(8, FsrsTools.absoluteDue(5, "+3d"))
+        assertEquals(2, FsrsTools.absoluteDue(5, "-3d"))
+        assertEquals(26, FsrsTools.absoluteDue(5, "3w"))
+        assertEquals(1, FsrsTools.absoluteDue(0, "-30")) // clamped, never <= 0
+        assertNull(FsrsTools.absoluteDue(5, "nonsense"))
     }
 
     @Test
