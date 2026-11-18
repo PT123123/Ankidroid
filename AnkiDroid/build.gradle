@@ -114,7 +114,7 @@ android {
         //
         // This ensures the correct ordering between the various types of releases (dev < alpha < beta < release) which is
         // needed for upgrades to be offered correctly.
-        versionCode=22500220
+        versionCode=22500221
         // If you change this to a new version, you probably also want to update .gradle/workflows/milestone.yml for the new version...
         versionName="1.0.11"
         minSdk = libs.versions.minSdk.get().toInteger()
