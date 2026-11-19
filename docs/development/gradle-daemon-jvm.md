@@ -71,3 +71,21 @@ Budgets, the measured peaks behind them, and `kotlin.daemon.jvmargs` are in
 [fork-build-speed.md](fork-build-speed.md); `BuildMemoryBudgetTest` fails the build if they drift.
 
 Override the ABI with `just ABI=x86_64 install`.
+
+## Never pipe a `just`/gradle invocation
+
+Redirect to a file instead of piping (`just verify > build.log 2>&1`, then read the file):
+
+```powershell
+# hangs forever - the daemon keeps the inherited stdout open, so the pipe never reaches EOF
+just verify | Select-String 'BUILD'
+
+# fine
+just verify > "$env:TEMP\verify.log" 2>&1
+Get-Content "$env:TEMP\verify.log" -Tail 20
+```
+
+The Gradle daemon inherits the client's stdout and stays alive after the client exits, so a
+pipe downstream of `just`/`gradlew` never sees EOF and the shell waits on it indefinitely -
+the build itself is long finished by then. This hits every recipe, including the fast
+`just verify`.
