@@ -179,3 +179,95 @@ Deletion follows a **disk-first, registry-last** pattern: if the app crashes mid
 3. **SharedPreferences cleanup:** scan `shared_prefs/` and delete every file matching `profile_<profileId>_*.xml`.
 4. **External data wipe:** delete the profile's external collection directory (`<external>/<profileId>/` for non-default, or `<external>/AnkiDroid/` for the Default profile).
 5. **Registry removal:** only after all files are confirmed gone, remove the entry from `profiles_prefs.xml`.
+
+---
+
+## Known issue: the Application base context breaks manifest-receiver instantiation
+
+**Status: unfixed.** Present in every build of this tree that ships the current
+`AnkiDroidApp.attachBaseContext` - including the `322500222` build already published to
+the LAN repo, so it is *not* a regression of `322500223`.
+
+### Symptom
+
+On the first launch after a package update the app process dies right away:
+
+```
+E/AndroidRuntime: FATAL EXCEPTION: main
+E/AndroidRuntime: Process: com.pt123123.ankiplus, PID: 25758
+E/AndroidRuntime: java.lang.RuntimeException: Unable to instantiate receiver com.ichi2.widget.DayRolloverAlarm:
+E/AndroidRuntime: java.lang.ClassCastException: gr6 cannot be cast to android.app.ContextImpl
+E/AndroidRuntime:     at android.app.ActivityThread.handleReceiver(ActivityThread.java:5212)
+E/AndroidRuntime:     at android.app.ActivityThread.-$$Nest$mhandleReceiver(Unknown Source:0)
+```
+
+`gr6` is the R8-obfuscated name of `com.ichi2.anki.multiprofile.ProfileContextWrapper`
+(`outputs/mapping/playRelease/mapping.txt` → `com.ichi2.anki.multiprofile.ProfileContextWrapper -> gr6:`).
+The cast happens inside the framework's `ActivityThread.handleReceiver`, before any of
+`DayRolloverAlarm`'s own code runs, so the receiver logic itself is not at fault.
+
+### Trigger
+
+Both of these have to hold:
+
+1. the app has just been updated (package replace), and
+2. the system delivers a pending broadcast to a **manifest-declared** receiver -
+   `com.ichi2.widget.DayRolloverAlarm` listens for `ACTION_ROLLOVER`,
+   `ACTION_TIMEZONE_CHANGED` and `ACTION_TIME_CHANGED`.
+
+Without a pending broadcast the crash does not happen: every later launch of the same
+install is fine. The receiver is `android:exported="false"`, so the crash cannot be
+re-triggered from `adb shell` - it needs the system's own pending broadcast.
+
+### Why
+
+`AnkiDroidApp.attachBaseContext` installs `ProfileManager.activeProfileContext` as the
+Application's base context **unconditionally**, even for the default profile:
+
+```kotlin
+override fun attachBaseContext(base: Context) {
+    profileManager = ProfileManager.create(base)
+    super.attachBaseContext(profileManager.activeProfileContext)   // <- always the wrapper
+}
+```
+
+Activities do not do that. `AnkiActivity.attachBaseContext` routes through
+`ProfileManager.profileContextFor()`, which returns the base context unchanged for the
+default profile ("The default profile is a no-op passthrough"):
+
+```kotlin
+override fun attachBaseContext(newBase: Context) {
+    val app = newBase.applicationContext as? AnkiDroidApp
+    super.attachBaseContext(app?.profileManager?.profileContextFor(newBase) ?: newBase)
+}
+```
+
+For the default profile every override in `ProfileContextWrapper` is a pass-through
+anyway (`getFilesDir`, `getCacheDir`, `getCodeCacheDir`, `getNoBackupFilesDir`,
+`getDatabasePath`, `getDir` and `getSharedPreferences` all delegate to `super` when
+`profileId.isDefault()`), so the Application-level wrapper buys nothing - it only changes
+the runtime type of the Application's base context from `ContextImpl` to a `ContextWrapper`.
+The framework's manifest-receiver instantiation path expects a `ContextImpl` there, and the
+cast fails.
+
+### Proposed fix
+
+Let the Application follow the same rule as the Activities: install the wrapper only when
+the active profile is not the default one.
+
+```kotlin
+override fun attachBaseContext(base: Context) {
+    profileManager = ProfileManager.create(base)
+    val active = profileManager.activeProfileContext
+    super.attachBaseContext(if (profileManager.activeProfileId.isDefault()) base else active)
+}
+```
+
+This is behaviour-preserving for the default profile (the wrapper is a pass-through there)
+and it removes the non-`ContextImpl` application base context that the framework trips
+over.
+
+**Not applied yet**: the crash only reproduces when the system delivers a pending
+broadcast right after a package update, and that cannot be reproduced from `adb shell` on
+a device where the receiver is `exported="false"`. Verify the fix on a device that does
+reproduce the crash before shipping it.
