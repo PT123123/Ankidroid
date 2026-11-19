@@ -72,3 +72,8 @@ hs_err_pid*
 
 # Claude Code related
 /.claude/worktrees/
+
+# SQLite sidecar files left behind when a test opens a fixture collection
+# (the -wal/-shm pair is runtime state, never source)
+*.anki2-wal
+*.anki2-shm

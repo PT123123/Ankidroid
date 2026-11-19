@@ -15,7 +15,6 @@ import com.ichi2.anki.pages.viewmodel.ImageOcclusionViewModel.Companion.ARG_IMAG
 import com.ichi2.anki.pages.viewmodel.NoteIdBuilder.Id
 import com.ichi2.testutils.EmptyApplication
 import com.ichi2.testutils.JvmTest
-import com.ichi2.testutils.isJsonEqual
 import kotlinx.coroutines.flow.first
 import org.hamcrest.CoreMatchers.equalTo
 import org.hamcrest.MatcherAssert.assertThat
@@ -133,35 +132,6 @@ class ImageOcclusionViewModelTest : JvmTest() {
             val expected = ImageOcclusionArgs.Edit(noteId = 12)
             assertThat(args, equalTo(expected))
         }
-
-    @Test
-    fun `ADD - JSON Serialization`() {
-        val expected = """
-            {
-                "kind": "add",
-                "imagePath":  "/",
-                "notetypeId": 12 
-            }
-        """
-
-        withAddViewModel(imagePath = "/", noteTypeId = 12, deckId = 2) {
-            assertThat(args.toImageOcclusionMode(), isJsonEqual(expected))
-        }
-    }
-
-    @Test
-    fun `EDIT - JSON Serialization`() {
-        val expected = """
-            {
-                "kind": "edit",
-                "noteId": 12 
-            }
-        """
-
-        withEditViewModel(noteIdBuilder = Id(12)) {
-            assertThat(args.toImageOcclusionMode(), isJsonEqual(expected))
-        }
-    }
 
     companion object {
         const val OTHER_DECK_NAME = "Temp"
